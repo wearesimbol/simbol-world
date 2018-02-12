@@ -1,0 +1,13 @@
+This application uses Open Source components. You can find the source code of their open source projects along with license information below. We acknowledge and are grateful to these developers for their contributions to open source.
+
+Project: aframe-teleport-controls https://github.com/fernandojsg/aframe-teleport-controls
+Copyright (c) 2016 Fernando Serrano
+License (MIT) https://github.com/fernandojsg/aframe-teleport-controls/blob/master/LICENSE
+
+Project: aframe-daydream-controller-component https://github.com/ryanbetts/aframe-daydream-controller-component
+Copyright (c) 2015 Kevin Ngo
+License (MIT) https://github.com/ryanbetts/aframe-daydream-controller-component/blob/master/LICENSE
+
+Project: ray-input https://github.com/borismus/ray-input
+Copyright (c) 2015 Google Inc
+License (Apache) https://github.com/borismus/ray-input/blob/master/COPYING

@@ -1,0 +1,5 @@
+test/*
+build/*
+gulpfile.js
+karma.conf.js
+node_modules/*
