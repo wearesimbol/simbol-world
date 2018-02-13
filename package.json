@@ -1,17 +1,17 @@
 {
-  "name": "@holonet/holonet",
+  "name": "holonet",
   "version": "1.0.0-alpha.0",
-  "description": "Decentralized WebVR metaverse where each user is the owner of their data",
+  "description": "Easily create 3D WebXR compatible sites with a global self-sovereign identity system",
   "main": "build/holonet.umd.js",
   "module": "build/holonet.js",
   "repository": {
-    "url": "https://github.com/Holonet/holonet.git",
+    "url": "https://github.com/holonet/holonet.git",
     "type": "git"
   },
   "author": "Alberto Elias <hi@albertoelias.me>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Holonet/holonet/issues"
+    "url": "https://github.com/holonet/holonet/issues"
   },
   "homepage": "https://holonet.one",
   "engines": {
