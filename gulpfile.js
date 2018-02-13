@@ -87,8 +87,8 @@ gulp.task('test', (done) => {
 	new karmaServer({
 		configFile: __dirname + '/karma.conf.js',
 		singleRun: true
-	}, (err) => {
-		done(err);
+	}, (exitCode) => {
+		exitCode ? process.exit(exitCode) : done();
 	}).start();
 });
 
