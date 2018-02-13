@@ -107,5 +107,5 @@ gulp.task('watch', gulp.series('js', () => {
 	gulp.watch(['./src/**/*'], gulp.series('js'));
 }));
 
-gulp.task('default', gulp.parallel('eslint', 'build'));
+gulp.task('default', gulp.parallel('eslint', 'test'));
 

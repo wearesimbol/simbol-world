@@ -1,6 +1,6 @@
 {
   "name": "@holonet/holonet",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.0",
   "description": "Decentralized WebVR metaverse where each user is the owner of their data",
   "main": "build/holonet.umd.js",
   "module": "build/holonet.js",
