@@ -1,88 +1,168 @@
 import * as THREE from 'three';
-import {Physics} from '../../physics/physics';
-import {Utils} from '../../utils/utils';
+import {Physics} from '../physics/physics';
+import {Utils} from '../utils/utils';
 
-/**
- * Teleportation
- * @namespace
- */
-const Teleportation = {
+/** Class for the teleportation system */
+class Teleportation {
 
 	/** @property {number} rayCurvePoints - Number of points on the Ray Curve Mesh */
-	rayCurvePoints: 30,
+	get rayCurvePoints() {
+		if (!this._rayCurvePoints) {
+			this._rayCurvePoints = 30;
+		}
+		return this._rayCurvePoints;
+	}
+
+	set rayCurvePoints(rayCurvePoints) {
+		this._rayCurvePoints = rayCurvePoints;
+	}
 
 	/** @property {number} rayWidth - The Ray Curve's width (m) */
-	rayCurveWidth: 0.025,
+	get rayCurveWidth() {
+		if (!this._rayCurveWidth) {
+			this._rayCurveWidth = 0.025;
+		}
+		return this._rayCurveWidth;
+	}
+
+	set rayCurveWidth(rayCurveWidth) {
+		this._rayCurveWidth = rayCurveWidth;
+	}
 
 	/** @property {number} hitCylinderRadius - The HitCylinder's radius (m) */
-	hitCylinderRadius: 0.25,
+	get hitCylinderRadius() {
+		if (!this._hitCylinderRadius) {
+			this._hitCylinderRadius = 0.25;
+		}
+		return this._hitCylinderRadius;
+	}
+
+	set hitCylinderRadius(hitCylinderRadius) {
+		this._hitCylinderRadius = hitCylinderRadius;
+	}
 
 	/** @property {number} hitCylinderHeight - The HitCylinder's height (m) */
-	hitCylinderHeight: 0.3,
+	get hitCylinderHeight() {
+		if (!this._hitCylinderHeight) {
+			this._hitCylinderHeight = 0.3;
+		}
+		return this._hitCylinderHeight;
+	}
+
+	set hitCylinderHeight(hitCylinderHeight) {
+		this._hitCylinderHeight = hitCylinderHeight;
+	}
 
 	/** @property {number} maxAngle - Maximum angle a mesh can be in so you can teleport to it */
-	maxAngle: 45,
+	get maxAngle() {
+		if (!this._maxAngle) {
+			this._maxAngle = 45;
+		}
+		return this._maxAngle;
+	}
+
+	set maxAngle(maxAngle) {
+		this._maxAngle = maxAngle;
+	}
 
 	/** @property {THREE.Color} hitColor - Color applied to the Ray Curve and the Hit Cylinder when there's a valid intersection */
-	hitColor: new THREE.Color('#99ff99'),
+	get hitColor() {
+		if (!this._hitColor) {
+			this._hitColor = new THREE.Color('#99ff99');
+		}
+		return this._hitColor;
+	}
+
+	set hitColor(hitColor) {
+		this._hitColor = hitColor;
+	}
 
 	/** @property {THREE.Color} missColor - Color applied to the Ray Curve and the Hit Cylinder */
-	missColor: new THREE.Color('#ff0000'),
+	get missColor() {
+		if (!this._missColor) {
+			this._missColor = new THREE.Color('#ff0000');
+		}
+		return this._missColor;
+	}
+
+	set missColor(missColor) {
+		this._missColor = missColor;
+	}
 
 	/** @property {number} velocity - The ray's speed */
-	velocity: 5,
+	get velocity() {
+		if (!this._velocity) {
+			this._velocity = 5;
+		}
+		return this._velocity;
+	}
+
+	set velocity(velocity) {
+		this._velocity = velocity;
+	}
 
 	/** @property {number} _acceleration - Gravity */
-	acceleration: -9.8,
+	get acceleration() {
+		if (!this._acceleration) {
+			this._acceleration = -9.8;
+		}
+		return this._acceleration;
+	}
 
-	/**
-	 * @property {THREE.Vector3} _direction - The ray's direction
-	 *
-	 * @private
-	 */
-	_direction: new THREE.Vector3(),
-
-	/**
-	 * @property {THREE.Vector3} _shootAxis - Axis where the ray will be shooted at
-	 *
-	 * @private
-	 */
-	_shootAxis: new THREE.Vector3(0, 0, -1),
-
-	/**
-	 * @property {THREE.Vector3} _referenceNormal - The normal vector used to compare with the ray curve's landing angle and represents the y axis
-	 *
-	 * @private
-	 */
-	_referenceNormal: new THREE.Vector3(0, 1, 0),
-
-	/**
-	 * @property {number} _teleportActivationTimeout - Time (s) that needs to pass for the teleportation to activate
-	 *
-	 * @private
-	 */
-	_teleportActivationTimeout: 0.5,
+	set acceleration(acceleration) {
+		this._acceleration = acceleration;
+	}
 
 	/** @property {boolean} isRayCurveActive - Whether the ray is being displayed */
-	isRayCurveActive: false,
+	get isRayCurveActive() {
+		if (typeof this._isRayCurveActive === 'undefined') {
+			this._isRayCurveActive = false;
+		}
+		return this._isRayCurveActive;
+	}
+
+	set isRayCurveActive(isRayCurveActive) {
+		this._isRayCurveActive = isRayCurveActive;
+	}
 
 	/**
 	 * @property {boolean} isTeleportActive - Whether the ray has been held at a specific position
 	 * for more than _teleportActivationTimeout
 	 */
-	isTeleportActive: false,
+	get isTeleportActive() {
+		if (typeof this._isTeleportActive === 'undefined') {
+			this._isTeleportActive = false;
+		}
+		return this._isTeleportActive;
+	}
+
+	set isTeleportActive(isTeleportActive) {
+		this._isTeleportActive = isTeleportActive;
+	}
 
 	/** @property {boolean|THREE.Vector3} _hitPoint - Point where there was the last successful hit  */
-	hitPoint: false,
+	get hitPoint() {
+		if (typeof this._hitPoint === 'undefined') {
+			this._hitPoint = false;
+		}
+		return this._hitPoint;
+	}
+
+	set hitPoint(hitPoint) {
+		this._hitPoint = hitPoint;
+	}
 
 	/**
-	 * Initialises teleportation component
+	 * Initialises a teleportation instance
 	 *
 	 * @param {Scene} scene - The scene to add teleporation controls to
-	 *
-	 * @return {undefined}
 	 */
-	init(scene) {
+	constructor(scene) {
+		this._direction = new THREE.Vector3();
+		this._shootAxis = new THREE.Vector3(0, 0, -1);
+		this._referenceNormal = new THREE.Vector3(0, 1, 0);
+		this._teleportActivationTimeout = 0.5;
+
 		this.scene = scene;
 		this.rayCaster = new THREE.Raycaster();
 		this.rayCurve = this.renderRayCurve();
@@ -91,7 +171,7 @@ const Teleportation = {
 		this.scene.addToScene([this.rayCurve, this.hitCylinder], false, false);
 
 		this.activateTeleport = Utils.debounce(this.activateTeleport.bind(this), this._teleportActivationTimeout * 1000);
-	},
+	}
 
 	/**
 	 * Sets whether the Ray Curve is active or not
@@ -102,7 +182,7 @@ const Teleportation = {
 	 */
 	setRayCurveState(active) {
 		this.isRayCurveActive = active;
-	},
+	}
 
 	/**
 	 * Activates teleportation
@@ -111,7 +191,7 @@ const Teleportation = {
 	 */
 	activateTeleport() {
 		this.isTeleportActive = true;
-	},
+	}
 
 	/**
 	 * Resets teleportation
@@ -125,7 +205,7 @@ const Teleportation = {
 		this.hitPoint = false;
 		this.rayCurve.visible = false;
 		this.hitCylinder.visible = false;
-	},
+	}
 
 	/**
 	 * Parabolic curve equation
@@ -141,7 +221,7 @@ const Teleportation = {
 	 */
 	_parabolicCurveScalar(point, velocity, acceleration, time) {
 		return point + velocity * time + 0.5 * acceleration * time * time;
-	},
+	}
 
 	/**
 	 * Calculates a parabolic curve for a 3D Vector3
@@ -160,7 +240,7 @@ const Teleportation = {
 		returnedVector.y = this._parabolicCurveScalar(point.y, velocity.y, this.acceleration, time);
 		returnedVector.z = this._parabolicCurveScalar(point.z, velocity.z, 0, time);
 		return returnedVector;
-	},
+	}
 
 	/**
 	 * Sets each point of the ray
@@ -188,14 +268,14 @@ const Teleportation = {
 		this.rayCurve.vertices[idx++] = posB.z;
 
 		this.rayCurve.geometry.attributes.position.needsUpdate = true;
-	},
+	}
 
 	_isValidNormalsAngle(collision) {
 		const collisionNormalMatrix = new THREE.Matrix3().getNormalMatrix(collision.object.matrixWorld);
 		const collisionNormal = collision.face.normal.clone().applyMatrix3(collisionNormalMatrix);
 		const angleNormal = this._referenceNormal.angleTo(collisionNormal);
 		return THREE.Math.RAD2DEG * angleNormal <= this.maxAngle;
-	},
+	}
 
 	/**
 	 * Sets direction
@@ -210,7 +290,7 @@ const Teleportation = {
 			.cross(this._referenceNormal)
 			.normalize()
 			.multiplyScalar(this.rayCurveWidth / 2);
-	},
+	}
 
 	/**
 	 * Renders the ray
@@ -233,7 +313,7 @@ const Teleportation = {
 		mesh.visible = false;
 
 		return mesh;
-	},
+	}
 
 	/**
 	 * Renders the hit cylinder
@@ -253,7 +333,7 @@ const Teleportation = {
 		hitCylinder.visible = false;
 
 		return hitCylinder;
-	},
+	}
 
 	/**
 	 * Updates the ray, when active, depending on the world position
@@ -327,6 +407,6 @@ const Teleportation = {
 			clearTimeout(this.activateTeleport.id);
 		}
 	}
-};
+}
 
 export {Teleportation};

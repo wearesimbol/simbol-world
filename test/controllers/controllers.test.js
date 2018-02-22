@@ -1,44 +1,43 @@
 'use strict';
 
-import {Controllers} from '../../../src/virtualpersona/controllers/controllers';
-import {PoseController} from '../../../src/virtualpersona/controllers/posecontroller';
-import {GamepadController} from '../../../src/virtualpersona/controllers/gamepadcontroller';
+import * as THREE from 'three';
+import {Controllers} from '../../src/controllers/controllers';
+import {PoseController} from '../../src/controllers/posecontroller';
+import {GamepadController} from '../../src/controllers/gamepadcontroller';
 
 describe('Controllers', () => {
 
 	let controllers;
+	let locomotion;
 
 	beforeEach(() => {
-		controllers = Object.create(Controllers);
+		locomotion = {};
+		sinon.stub(Controllers.prototype, 'updateControllers');
+
+		controllers = new Controllers(locomotion);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Controllers);
+	afterEach(() => {
+		Controllers.prototype.updateControllers.restore && Controllers.prototype.updateControllers.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(Controllers);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Controllers.init);
-		assert.isFunction(Controllers.getGamepad);
-		assert.isFunction(Controllers.addController);
-		assert.isFunction(Controllers.removeController);
-		assert.isFunction(Controllers.updateControllers);
+		assert.isFunction(Controllers.prototype.getGamepad);
+		assert.isFunction(Controllers.prototype.addController);
+		assert.isFunction(Controllers.prototype.removeController);
+		assert.isFunction(Controllers.prototype.updateControllers);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(Controllers.currentControllers, {});
-		assert.equal(Controllers.mainHandController, null);
+		assert.deepEqual(Controllers.prototype.currentControllers, {});
+		assert.equal(Controllers.prototype.mainHandController, null);
 	});
 
-	describe('init', () => {
-
-		let locomotion;
-
-		beforeEach(() => {
-			locomotion = {};
-			sinon.stub(controllers, 'updateControllers');
-
-			controllers.init(locomotion);
-		});
+	describe('#constructor', () => {
 
 		it('should set locomotion and add controllers', () => {
 			assert.equal(controllers.locomotion, locomotion);
@@ -81,7 +80,6 @@ describe('Controllers', () => {
 				id: 'testController',
 				hand: 'left'
 			};
-			controllers.locomotion = {};
 		});
 
 		describe('existing controller', () => {
@@ -99,42 +97,40 @@ describe('Controllers', () => {
 		describe('pose controller', () => {
 
 			beforeEach(() => {
-				sinon.stub(PoseController, 'init');
 				gamepad.pose = true;
 				controllers.currentControllers = {};
 
 				controllers.addController(gamepad);
 			});
 
-			afterEach(() => {
-				PoseController.init.restore();
-			});
-
 			it('should save PoseController', () => {
-				assert.isTrue(PoseController.init.calledOnce);
-				assert.isTrue(PoseController.init.calledWith(gamepad, controllers.locomotion));
-				assert.isTrue(PoseController.isPrototypeOf(controllers.currentControllers['testController (left)']));
-				assert.isTrue(PoseController.isPrototypeOf(controllers.mainHandController));
+				assert.instanceOf(controllers.currentControllers['testController (left)'], PoseController);
+				assert.instanceOf(controllers.mainHandController, PoseController);
 			});
 		});
 
 		describe('gamepad controller', () => {
 
 			beforeEach(() => {
-				sinon.stub(GamepadController, 'init');
+				sinon.stub(THREE.Quaternion.prototype, 'fromArray');
 				controllers.currentControllers = {};
+				controllers.locomotion.scene = {
+					camera: {
+						quaternion: 1
+					}
+				};
 
 				controllers.addController(gamepad);
 			});
 
 			afterEach(() => {
-				GamepadController.init.restore();
+				THREE.Quaternion.prototype.fromArray.restore();
 			});
 
 			it('should save GamepadController', () => {
-				assert.isTrue(GamepadController.init.calledOnce);
-				assert.isTrue(GamepadController.init.calledWith(gamepad, controllers.locomotion));
-				assert.isTrue(GamepadController.isPrototypeOf(controllers.currentControllers['testController (left)']));
+				assert.isTrue(THREE.Quaternion.prototype.fromArray.calledOnce);
+				assert.isTrue(THREE.Quaternion.prototype.fromArray.calledWith(1));
+				assert.instanceOf(controllers.currentControllers['testController (left)'], GamepadController);
 			});
 		});
 	});
@@ -165,6 +161,10 @@ describe('Controllers', () => {
 	});
 
 	describe('updateControllers', () => {
+
+		beforeEach(() => {
+			Controllers.prototype.updateControllers.restore();
+		});
 
 		describe('event', () => {
 

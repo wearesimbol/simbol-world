@@ -1,22 +1,39 @@
-// 0x04698541ee0770a5774a94364172322d6b3191de8e8c560cb470a30a4bad2ab913c02f1978d0b7a085dcaad648e63b6c7ee95eaa82d6be9dd3a069aac29a399c5a
 import uport from '../libs/uport-connect';
 
-const ANONYMOUS_AVATAR_PATH = 'assets/models/AnonymousVP.gltf';
+const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
 
-const Identity = {
+class Identity {
 
 	/** @property {boolean} signedIn - Whether the human is signed in */
-	signedIn: false,
+	get signedIn() {
+		if (typeof this._signedIn === 'undefined') {
+			this._signedIn = false;
+		}
+		return this._signedIn;
+	}
+
+	set signedIn(signedIn) {
+		this._signedIn = signedIn;
+	}
 
 	/** @property {string} avatarPath = Path to the current human's avatar, defaults to the anonymous avatar path */
-	avatarPath: ANONYMOUS_AVATAR_PATH,
+	get avatarPath() {
+		if (!this._avatarPath) {
+			this._avatarPath = ANONYMOUS_AVATAR_PATH;
+		}
+		return this._avatarPath;
+	}
+
+	set avatarPath(avatarPath) {
+		this._avatarPath = avatarPath;
+	}
 
 	/**
 	 * Initializes an identity by instantiating uPort and fethcing the current identity
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
-	init() {
+	constructor() {
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
 			network: 'rinkeby',
@@ -25,14 +42,14 @@ const Identity = {
 
 		const identity = this.getIdentity();
 		this.signedIn = !!identity;
-	},
+	}
 
 	/**
 	 * Signs the human in by showing a uPort QR code, and then saving the data
 	 *
 	 * @param {string} information - Pieces of information to be requested to the human
 	 *
-	 * @return {Promise} promise
+	 * @returns {Promise} promise
 	 */
 	signIn(...information) {
 		return this.uPort.requestCredentials({
@@ -44,26 +61,26 @@ const Identity = {
 			this.signedIn = true;
 			return Promise.resolve();
 		}, (error) => Promise.reject(error));
-	},
+	}
 
 	/**
 	 * Signs the human out, removes saved data and resets avatar path
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	signOut() {
 		localStorage.removeItem('currentIdentity');
 		this.avatarPath = ANONYMOUS_AVATAR_PATH;
 		delete this.uPortData;
 		this.signedIn = false;
-	},
+	}
 
 	/**
 	 * Fetches the identity trying the following options in this order:
 	 * 1. Saved in this instance
 	 * 2. Saved in LocalStorage
 	 *
-	 * @return {object} identity
+	 * @returns {object} identity
 	 */
 	getIdentity() {
 		if (this.uPortData) {
@@ -83,7 +100,7 @@ const Identity = {
 		} catch (error) {
 			console.log(error);
 		}
-	},
+	}
 
 	/**
 	 * Saves the received credentials to this instance and optionally saves them to LocalStorage
@@ -91,7 +108,7 @@ const Identity = {
 	 * @param {object} credentials - The human's credentials from uPort
 	 * @param {boolean} save - Whether to save the credentials to LocalStorage
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	setUPortData(credentials, save) {
 		this.uPortData = credentials;
@@ -105,7 +122,7 @@ const Identity = {
 			localStorage.setItem('currentIdentity', JSON.stringify(this.uPortData));
 		}
 	}
-};
+}
 
 export {Identity};
 

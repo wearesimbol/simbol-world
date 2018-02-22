@@ -1,63 +1,104 @@
-// Gamepads: Xbox, Oculus Remote, Touch, Vive Wands, button (gearvr and cardboard), Daydream remote
-// Keyboard / Mouse
-// Directional movement and teleportation
-
 import * as THREE from 'three';
-import {VirtualPersona} from './../virtualpersona';
+import {VirtualPersona} from '../virtualpersona/virtualpersona';
 import {Teleportation} from './_teleportation';
-import {Controllers} from './../controllers/controllers';
+import {Controllers} from '../controllers/controllers';
 
-/**
- * Locomotion
- * @namespace
- */
-const Locomotion = {
+/** Class for all general locomotion purposes */
+class Locomotion {
 
 	/** @property {number} velocity - translation velocity in m/s */
-	velocity: 1.5,
+	get velocity() {
+		if (!this._velocity) {
+			this._velocity = 1.5;
+		}
+		return this._velocity;
+	}
+
+	set velocity(velocity) {
+		this._velocity = velocity;
+	}
+
 	/** @property {number} angularVelocity - angular velocity */
-	angularVelocity: 1,
-	/**
-	 * @property {number} phi - current phi euler angle
-	 *
-	 * @private
-	 */
-	_phi: 0,
-	/**
-	 * @property {number} theta - current theta euler angle
-	 *
-	 * @private
-	 */
-	_theta: 0,
+	get angularVelocity() {
+		if (!this._angularVelocity) {
+			this._angularVelocity = 1;
+		}
+		return this._angularVelocity;
+	}
+
+	set angularVelocity(angularVelocity) {
+		this._angularVelocity = angularVelocity;
+	}
+
 	/**
 	 * @property {object} orientation - contains quaternion and euler angles
 	 * @property {THREE.Quaternion} orientation.quaternion - Quaternion representing the orientation set by phi and theta
 	 * @property {THREE.Euler} orientation.euler - Euler angles representing the orientation set by phi and theta
 	 */
-	orientation: {
-		quaternion: new THREE.Quaternion(),
-		euler: new THREE.Euler()
-	},
+	get orientation() {
+		if (!this._orientation) {
+			this._orientation = {
+				quaternion: new THREE.Quaternion(),
+				euler: new THREE.Euler()
+			};
+		}
+		return this._orientation;
+	}
+
+	set orientation(orientation) {
+		this._orientation = orientation;
+	}
+
 	/** @property {THREE.Vector2} currentRotation - current rotation vector */
-	currentRotation: new THREE.Vector2(),
+	get currentRotation() {
+		if (!this._currentRotation) {
+			this._currentRotation = new THREE.Vector2();
+		}
+		return this._currentRotation;
+	}
+
+	set currentRotation(currentRotation) {
+		this._currentRotation = currentRotation;
+	}
+
 	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
-	translatingZ: false,
+	get translatingZ() {
+		if (typeof this._translatingZ === 'undefined') {
+			this._translatingZ = false;
+		}
+		return this._translatingZ;
+	}
+
+	set translatingZ(translatingZ) {
+		this._translatingZ = translatingZ;
+	}
+
 	/** @property {boolean|number} translatingX - is there translation in the X axis and by how much */
-	translatingX: false,
+	get translatingX() {
+		if (typeof this._translatingX === 'undefined') {
+			this._translatingX = false;
+		}
+		return this._translatingX;
+	}
+
+	set translatingX(translatingX) {
+		this._translatingX = translatingX;
+	}
 
 	/**
 	 * Initialises a Locomotion instance for a VirtualPersona
 	 *
 	 * @param {VirtualPersona} virtualPersona - The VirtualPersona this will add movement controls to
- 	 *
-	 * @return {undefined}
 	 */
-	init(virtualPersona) {
-		if (!virtualPersona || !VirtualPersona.isPrototypeOf(virtualPersona)) {
+	constructor(virtualPersona) {
+		if (!virtualPersona || !VirtualPersona.prototype.isPrototypeOf(virtualPersona)) {
 			throw 'A VirtualPersona is required';
 		}
 
-		this._canvas = virtualPersona.scene.renderer.domElement;
+		this._theta = 0;
+		this._phi = 0;
+
+		this._canvas = virtualPersona.scene.canvas;
 		this._moveHandler = this._moveHandler.bind(this);
 		this.scene = virtualPersona.scene;
 		this.virtualPersona = virtualPersona;
@@ -67,25 +108,48 @@ const Locomotion = {
 		this.initTouchInput();
 		this.initGamepadInputs();
 
-		this.teleportation = Object.create(Teleportation);
-		this.teleportation.init(this.scene);
-	},
+		this.teleportation = new Teleportation(this.scene);
+	}
 
+	/**
+	 * Starts translating across the Z axis at the stated velocity
+	 *
+	 * @param {number} velocity - Value to translate by
+	 *
+	 * @returns {undefined}
+	 */
 	translateZ(velocity) {
 		this.translatingZ = velocity;
-	},
+	}
 
+	/**
+	 * Starts translating across the X axis at the stated velocity
+	 *
+	 * @param {number} velocity - Value to translate by
+	 *
+	 * @returns {undefined}
+	 */
 	translateX(velocity) {
 		this.translatingX = velocity;
-	},
+	}
 
+	/**
+	 * Stops translating across the Z axis
+	 *
+	 * @returns {undefined}
+	 */
 	stopTranslateZ() {
 		this.translatingZ = false;
-	},
+	}
 
+	/**
+	 * Stops translating across the X axis
+	 *
+	 * @returns {undefined}
+	 */
 	stopTranslateX() {
 		this.translatingX = false;
-	},
+	}
 
 	/**
 	 * Helper function that moves the first person camera along to a position in the scene
@@ -95,8 +159,8 @@ const Locomotion = {
 	 * @return {undefined}
 	*/
 	translateTo(position) {
-		this.currentPosition.position.set(...position);
-	},
+		this.scene.camera.position.set(...position);
+	}
 
 	/**
 	 * Handles direction keys to move the VirtualPersona
@@ -130,7 +194,7 @@ const Locomotion = {
 			this.translateX(this.velocity);
 			break;
 		}
-	},
+	}
 
 	/**
 	 * Handles direction keys to move the VirtualPersona
@@ -158,7 +222,7 @@ const Locomotion = {
 			this.stopTranslateX();
 			break;
 		}
-	},
+	}
 
 	/**
 	 * Listens to keyboard presses and translates VirtualPersona accordingly
@@ -168,7 +232,7 @@ const Locomotion = {
 	initKeyboardInput() {
 		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
 		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
-	},
+	}
 
 	/**
 	 * Handler to rotate VirtualPersona on mousemove and touchmove
@@ -212,7 +276,7 @@ const Locomotion = {
 			// Debounced function
 			this.teleportation.activateTeleport();
 		}
-	},
+	}
 
 	/**
 	 * Handles pointer lock changes to enable/disable mousemouve event handlers
@@ -230,7 +294,7 @@ const Locomotion = {
 			this.teleportation.resetTeleport();
 			document.removeEventListener('mousemove', this._moveHandler);
 		}
-	},
+	}
 
 	/**
 	 * Locks the pointer if not displaying to an HMD when canvas is clicked
@@ -244,7 +308,7 @@ const Locomotion = {
 	_pointerLock(event) {
 		this.currentRotation.set(event.clientX, event.clientY);
 		this._canvas.requestPointerLock();
-	},
+	}
 
 	/**
 	 * Handles teleportation
@@ -255,7 +319,7 @@ const Locomotion = {
 	 */
 	_handleTeleportation() {
 		this.teleportation.setRayCurveState(true);
-	},
+	}
 
 	/**
 	 * Handles click events. Either locks the pointer, or if it's already locked, shows the teleportation ray curve
@@ -281,7 +345,7 @@ const Locomotion = {
 				this._handleTeleportation();
 			}
 		}
-	},
+	}
 
 	/**
 	 * Listens to mouse click to lock the cursor to rotate the VirtualPersona
@@ -292,7 +356,7 @@ const Locomotion = {
 	initMouseInput() {
 		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
 		this._canvas.addEventListener('click', this._handleClick.bind(this));
-	},
+	}
 
 	/**
 	 * Handles touch inputs to listen to doueble taps
@@ -322,7 +386,7 @@ const Locomotion = {
 			this._lastTouch = event.timeStamp;
 		}
 
-	},
+	}
 
 	/**
 	 * Listens to touch events to rotate and translate the VirtualPersona
@@ -333,15 +397,29 @@ const Locomotion = {
 		this._canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
 		this._canvas.addEventListener('touchend', this.stopTranslateZ.bind(this));
 		this._canvas.addEventListener('touchmove', this._moveHandler);
-	},
+	}
 
+	/**
+	 * Event handler for 'gamepadconnected' indicating the controllers that a controller has been added
+	 *
+	 * @param {Event} event - Event object with the gamepad information
+	 *
+	 * @returns {undefined}
+	 */
 	_handleGamepadConnected(event) {
 		this.controllers.updateControllers(event, true);
-	},
+	}
 
+	/**
+	 * Event handler for 'gamepaddisconnected' indicating the controllers that a controller has been removed
+	 *
+	 * @param {Event} event - Event object with the gamepad information
+	 *
+	 * @returns {undefined}
+	 */
 	_handleGamepadDisconnected(event) {
 		this.controllers.updateControllers(event, false);
-	},
+	}
 
 	/**
 	 * Looks for gamepads and initialises them
@@ -349,11 +427,10 @@ const Locomotion = {
 	 * @return {undefined}
 	 */
 	initGamepadInputs() {
-		this.controllers = Object.create(Controllers);
-		this.controllers.init(this);
+		this.controllers = new Controllers(this);
 		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
 		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
 	}
-};
+}
 
 export {Locomotion};

@@ -8,58 +8,56 @@ import {MultiVP} from '../../src/virtualpersona/multivp';
 describe('MultiVP', () => {
 
 	let multiVP;
+	let config;
+	let scene;
+	let vp;
 
 	beforeEach(() => {
-		multiVP = Object.create(MultiVP);
+		config = {
+			test: false
+		};
+		scene = {
+			addAnimateFunctions: sinon.stub()
+		};
+		vp = {
+			scene: scene
+		};
+		sinon.stub(MultiVP.prototype, 'createSocket').returns(1);
+
+		multiVP = new MultiVP(config, vp);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(MultiVP);
+	afterEach(() => {
+		MultiVP.prototype.createSocket.restore && MultiVP.prototype.createSocket.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(MultiVP);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(MultiVP.init);
-		assert.isFunction(MultiVP.animate);
-		assert.isFunction(MultiVP.createSocket);
-		assert.isFunction(MultiVP._socketError);
-		assert.isFunction(MultiVP._socketMessage);
-		assert.isFunction(MultiVP.createPeer);
-		assert.isFunction(MultiVP._peerSignal);
-		assert.isFunction(MultiVP._peerError);
-		assert.isFunction(MultiVP._peerConnect);
-		assert.isFunction(MultiVP._peerData);
-		assert.isFunction(MultiVP._peerClose);
-		assert.isFunction(MultiVP.sendData);
-		assert.isFunction(MultiVP.update);
-		assert.isFunction(MultiVP._decodeBuffer);
-		assert.isFunction(MultiVP._loadAvatar);
+		assert.isFunction(MultiVP.prototype.animate);
+		assert.isFunction(MultiVP.prototype.createSocket);
+		assert.isFunction(MultiVP.prototype._socketError);
+		assert.isFunction(MultiVP.prototype._socketMessage);
+		assert.isFunction(MultiVP.prototype.createPeer);
+		assert.isFunction(MultiVP.prototype._peerSignal);
+		assert.isFunction(MultiVP.prototype._peerError);
+		assert.isFunction(MultiVP.prototype._peerConnect);
+		assert.isFunction(MultiVP.prototype._peerData);
+		assert.isFunction(MultiVP.prototype._peerClose);
+		assert.isFunction(MultiVP.prototype.sendData);
+		assert.isFunction(MultiVP.prototype.update);
+		assert.isFunction(MultiVP.prototype._decodeBuffer);
+		assert.isFunction(MultiVP.prototype._loadAvatar);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(MultiVP.meshes, {});
-		assert.deepEqual(MultiVP.remotePeers, {});
+		assert.deepEqual(MultiVP.prototype.meshes, {});
+		assert.deepEqual(MultiVP.prototype.remotePeers, {});
 	});
 	
-	describe('#init', () => {
-
-		let config;
-		let scene;
-		let vp;
-
-		beforeEach(() => {
-			config = {
-				test: false
-			};
-			scene = {
-				addAnimateFunctions: sinon.stub()
-			};
-			vp = {
-				scene: scene
-			};
-			sinon.stub(multiVP, 'createSocket').returns(1);
-
-			multiVP.init(config, vp);
-		});
+	describe('#constructor', () => {
 
 		it('should set properties', () => {
 			assert.deepEqual(multiVP.config, {
@@ -112,6 +110,8 @@ describe('MultiVP', () => {
 		let socket;
 
 		beforeEach(() => {
+			MultiVP.prototype.createSocket.restore();
+
 			currentWebSocket = window.WebSocket;
 			const websocket = function(url) {
 				this.url = url;
@@ -143,7 +143,7 @@ describe('MultiVP', () => {
 		});
 	});
 		
-	describe('#_socketError', () => {
+	xdescribe('#_socketError', () => {
 		// Currently only logs the error
 	});
 	
@@ -303,7 +303,7 @@ describe('MultiVP', () => {
 		});
 	});
 
-	describe('#_peerError', () => {
+	xdescribe('#_peerError', () => {
 		// Currently just logs
 	});
 
@@ -439,7 +439,7 @@ describe('MultiVP', () => {
 		});
 	})
 
-	describe('#sendData', () => {
+describe('#sendData', () => {
 
 		beforeEach(() => {
 			sinon.stub(multiVP, 'update');

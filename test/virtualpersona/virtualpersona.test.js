@@ -2,8 +2,8 @@
 
 import * as THREE from 'three';
 import {VRControls} from '../../src/libs/VRControls';
-import {Locomotion} from '../../src/virtualpersona/locomotion/locomotion';
-import {Interactions} from '../../src/virtualpersona/interactions/interactions';
+import {Locomotion} from '../../src/locomotion/locomotion';
+import {Interactions} from '../../src/interactions/interactions';
 import {Identity} from '../../src/virtualpersona/identity';
 import {MultiVP} from '../../src/virtualpersona/multivp';
 import {Scene} from '../../src/scene/scene';
@@ -13,85 +13,57 @@ import {VirtualPersona} from '../../src/virtualpersona/virtualpersona';
 
 describe('VirtualPersona', () => {
 
-	let vp;
 	let scene;
+	let vp;
 
 	beforeEach(() => {
-		scene = Object.create(Scene);
+		scene = {
+			addToScene: sinon.stub(),
+			addAnimateFunctions: sinon.stub()
+		};
+		Object.setPrototypeOf(scene, Scene.prototype);
+		scene = Object.create(scene);
 
-		vp = Object.create(VirtualPersona);
+		vp = new VirtualPersona(scene);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(VirtualPersona);
+	it('should be a class', () => {
+		assert.isFunction(VirtualPersona);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(VirtualPersona.init);
-		assert.isFunction(VirtualPersona.loadMesh);
-		assert.isFunction(VirtualPersona._setUpVP);
-		assert.isFunction(VirtualPersona.render);
-		assert.isFunction(VirtualPersona._setUpMesh);
-		assert.isFunction(VirtualPersona.signIn);
-		assert.isFunction(VirtualPersona.signOut);
-		assert.isFunction(VirtualPersona._setFloorHeight);
-		assert.isFunction(VirtualPersona.animate);
+		assert.isFunction(VirtualPersona.prototype.init);
+		assert.isFunction(VirtualPersona.prototype.loadMesh);
+		assert.isFunction(VirtualPersona.prototype._setUpMesh);
+		assert.isFunction(VirtualPersona.prototype.render);
+		assert.isFunction(VirtualPersona.prototype._setUpVP);
+		assert.isFunction(VirtualPersona.prototype.signIn);
+		assert.isFunction(VirtualPersona.prototype.signOut);
+		assert.isFunction(VirtualPersona.prototype._setFloorHeight);
+		assert.isFunction(VirtualPersona.prototype.animate);
 	});
 
 	it('should have a set of properties', () => {
-		assert.equal(VirtualPersona.floorHeight, 0);
-		assert.equal(VirtualPersona.userHeight, 1.7);
-		assert.equal(VirtualPersona.climbableHeight, 0.4);
-		assert.deepEqual(VirtualPersona._feetPosition, new THREE.Vector3());
+		assert.equal(VirtualPersona.prototype.floorHeight, 0);
+		assert.equal(VirtualPersona.prototype.userHeight, 1.7);
+		assert.equal(VirtualPersona.prototype.climbableHeight, 0.4);
 	});
 
-	describe('#init', () => {
-
-		beforeEach(() => {
-			sinon.stub(Interactions, 'init');
-			sinon.stub(Identity, 'init');
-			sinon.stub(MultiVP, 'init');
-			sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
-			sinon.stub(vp, '_setUpVP');
-		});
-
-		afterEach(() => {
-			Interactions.init.restore();
-			Identity.init.restore();
-			MultiVP.init.restore();
-		});
+	describe('#constructor', () => {
 
 		describe('defaults options', () => {
 
-			beforeEach(() => {
-				vp.init(scene);
-			});
-	
 			it('should save the scene and set some properties', () => {
+				assert.deepEqual(vp._feetPosition, new THREE.Vector3());
 				assert.equal(vp.scene, scene);
-				assert.deepEqual(vp.locomotion, Object.create(Locomotion));
 				assert.instanceOf(vp._floorRayCaster, THREE.Raycaster);
 				assert.equal(vp._floorRayCaster.far, 11.7);
 				assert.instanceOf(vp.fakeCamera, THREE.Object3D);
 				assert.instanceOf(vp.vrControls, VRControls);
-				assert.isTrue(Interactions.init.calledOnce);
-				assert.isTrue(Identity.init.calledOnce);
-				assert.isTrue(MultiVP.init.calledOnce);
-				assert.deepEqual(MultiVP.init.firstCall.args[0], {});
-				assert.equal(MultiVP.init.firstCall.args[1], vp);
-			});
-		});
-
-		describe('load mesh', () => {
-
-			beforeEach((done) => {
-				vp.init(scene).then(done);
-			});
-
-			it('should load mesh', () => {
-				assert.isTrue(vp.loadMesh.calledOnce);
-				assert.isTrue(vp.loadMesh.calledWith('assets/models/AnonymousVP.gltf', true));
-				assert.isTrue(vp._setUpVP.calledOnce);
+				assert.instanceOf(vp.interactions, Interactions);
+				assert.instanceOf(vp.identity, Identity);
+				assert.instanceOf(vp.multiVP, MultiVP);
+				assert.equal(vp.multiVP.vp, vp);
 			});
 		});
 
@@ -99,13 +71,12 @@ describe('VirtualPersona', () => {
 
 			let error;
 
-			beforeEach((done) => {
-                sinon.spy(vp, 'init');
-
-                vp.init().catch((e) => {
+			beforeEach(() => {
+                try {
+					new VirtualPersona();
+				} catch (e) {
 					error = e;
-					done();
-				}); 
+				}
 			});
 
 			it('should throw an error', () => {
@@ -117,13 +88,12 @@ describe('VirtualPersona', () => {
 
 			let error;
 
-			beforeEach((done) => {
-                sinon.spy(vp, 'init');
-
-                vp.init().catch((e) => {
+			beforeEach(() => {
+                try {
+					new VirtualPersona({});
+				} catch (e) {
 					error = e;
-					done();
-				}); 
+				}
 			});
 
 			it('should throw an error', () => {
@@ -132,15 +102,29 @@ describe('VirtualPersona', () => {
 		});
 	});
 
+	describe('#init', () => {
+
+		beforeEach((done) => {
+			sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+			sinon.stub(vp, '_setUpVP');
+			vp.init().then(done);
+		});
+
+		it('should load mesh', () => {
+			assert.isTrue(vp.loadMesh.calledOnce);
+			assert.isTrue(vp.loadMesh.calledWith('https://holonet.one/assets/models/AnonymousVP.gltf', true));
+			assert.isTrue(vp._setUpVP.calledOnce);
+		});
+	});
+
 	describe('#loadMesh', () => {
 
 		const mesh = {};
 
 		beforeEach((done) => {
-			sinon.stub(Loader, 'init');
-			sinon.stub(Loader, 'load');
+			sinon.stub(Loader.prototype, 'load');
 			
-			Loader.load.returns(new Promise((resolve) => {
+			Loader.prototype.load.returns(new Promise((resolve) => {
 				resolve(mesh);
 			}));
 
@@ -152,14 +136,12 @@ describe('VirtualPersona', () => {
 		});
 
 		afterEach(() => {
-			Loader.init.restore();
-			Loader.load.restore();
+			Loader.prototype.load.restore();
 		})
 
 		it('should load mesh', () => {
-			assert.isTrue(Loader.init.calledOnce);
-			assert.isTrue(Loader.init.calledWith(1));
-			assert.isTrue(Loader.load.calledOnce);
+			// assert.isTrue(Loader.calledWith(1));
+			assert.isTrue(Loader.prototype.load.calledOnce);
 		});
 
 		it('should call _setUpMesh', () => {
@@ -204,44 +186,6 @@ describe('VirtualPersona', () => {
 		});
 	});
 
-	describe('#_setUpVP', () => {
-
-		let returnValue;
-
-		beforeEach((done) => {
-			scene.addAnimateFunctions = sinon.stub();
-			scene.addToScene = sinon.stub();
-			vp.scene = scene;
-			vp.locomotion = {
-				init: sinon.stub()
-			};
-			vp.interactions = {
-				getMeshes: sinon.stub().returns([1])
-			};
-
-			returnValue = vp._setUpVP().then(done);
-		});
-
-		it('should initialise locomotion passing in the vp', () => {
-			assert.isTrue(vp.locomotion.init.calledOnce);
-			assert.isTrue(vp.locomotion.init.calledWith(vp));
-		});
-
-		it('should add mesh to the scene', () => {
-			assert.isTrue(vp.scene.addToScene.calledOnce);
-			assert.deepEqual(vp.scene.addToScene.firstCall.args[0], [1]);
-			assert.isTrue(vp.interactions.getMeshes.calledOnce);
-		});
-
-		it('should add animate to scene animate functions', () => {
-			assert.isTrue(scene.addAnimateFunctions.calledOnce);
-		});
-
-		it('should return a promise', () => {
-			assert.instanceOf(returnValue, Promise);
-		});
-	});
-
 	describe('#render', () => {
 
 		let mesh;
@@ -259,11 +203,9 @@ describe('VirtualPersona', () => {
 
 			sinon.stub(vp, '_setUpMesh').returns(mesh);
 
-			scene.addToScene = sinon.stub();
 			scene.scene = {
 				remove: sinon.stub()
 			};
-			vp.scene = scene;
 		});
 
 		afterEach(() => {
@@ -302,6 +244,42 @@ describe('VirtualPersona', () => {
 				assert.isTrue(vp.scene.scene.remove.calledOnce);
 				assert.isTrue(vp.scene.scene.remove.calledWith(true));
 			});
+		});
+	});
+
+	describe('#_setUpVP', () => {
+
+		let returnValue;
+
+		beforeEach((done) => {
+			vp.scene.canvas = {
+				addEventListener: sinon.stub()
+			}
+			vp.interactions = {
+				getMeshes: sinon.stub().returns([1])
+			};
+
+			returnValue = vp._setUpVP().then(done);
+		});
+
+		it('should initialise locomotion passing in the vp', () => {
+			assert.instanceOf(vp.locomotion, Locomotion);
+		});
+
+		it('should add mesh to the scene', () => {
+			// Also called by teleportation
+			assert.isTrue(vp.scene.__proto__.addToScene.calledTwice);
+			assert.deepEqual(vp.scene.__proto__.addToScene.secondCall.args[0], [1]);
+			assert.isTrue(vp.interactions.getMeshes.calledOnce);
+		});
+
+		it('should add animate to scene animate functions', () => {
+			// Also called by MultiVP
+			assert.isTrue(vp.scene.__proto__.addAnimateFunctions.calledTwice);
+		});
+
+		it('should return a promise', () => {
+			assert.instanceOf(returnValue, Promise);
 		});
 	});
 

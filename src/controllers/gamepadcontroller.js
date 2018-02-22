@@ -1,39 +1,39 @@
 import * as THREE from 'three';
-import {Utils} from '../../utils/utils';
+import {Utils} from '../utils/utils';
 
 const ControllerButtons = {
 	'Trigger': 0
 };
 
-/**
- * GamepadController
- * @namespace
- */
-const GamepadController = {
+/** Class wrapped for gamepad-like controllers that don't have a pose */
+class GamepadController {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
-	pressedButtons: {},
+	get pressedButtons() {
+		if (!this._pressedButtons) {
+			this._pressedButtons = {};
+		}
+		return this._pressedButtons;
+	}
 
 	/**
 	 * Initialises a GamepadController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 * @param {Locomotion} locomotion - Locomotion instance this controller is associated to
-	 *
-	 * @return {undefined}
 	 */
-	init(gamepad, locomotion) {
+	constructor(gamepad, locomotion) {
 		this.locomotion = locomotion;
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.cameraQuaternion = new THREE.Quaternion().fromArray(this.locomotion.scene.camera.quaternion);
-	},
+	}
 
 	/**
 	 * Activates transportation if trigger is pressed
 	 *
 	 * @param {boolean} state - Whether trigger is pressed
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	handleTriggerPressed(state) {
 		if (state) {
@@ -50,8 +50,14 @@ const GamepadController = {
 		} else {
 			this.locomotion.virtualPersona.interactions.selection.unselect();
 		}
-	},
+	}
 
+	/**
+	 * Gets latest information from gamepad
+	 * It also applies the handlers for different buttons
+	 *
+	 * @returns {undefined}
+	 */
 	update() {
 		const gamepad = this.locomotion.controllers.getGamepad(this.id);
 
@@ -85,6 +91,6 @@ const GamepadController = {
 			}
 		}
 	}
-};
+}
 
 export {GamepadController};

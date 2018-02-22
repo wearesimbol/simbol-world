@@ -10,13 +10,31 @@ const defaultConfig = {
 	}
 };
 
-const MultiVP = {
+class MultiVP {
 
 	/** @property {Object} meshes - Map of all meshes to their ids */
-	meshes: {},
+	get meshes() {
+		if (!this._meshes) {
+			this._meshes = {};
+		}
+		return this._meshes;
+	}
+
+	set meshes(meshes) {
+		this._meshes = meshes;
+	}
 
 	/** @property {Object} remotePeer - Map of all peers to their ids */
-	remotePeers: {},
+	get remotePeers() {
+		if (!this._remotePeers) {
+			this._remotePeers = {};
+		}
+		return this._remotePeers;
+	}
+
+	set remotePeers(remotePeers) {
+		this._remotePeers = remotePeers;
+	}
 
 	/**
 	 * Initializes a MultiVP instance
@@ -24,21 +42,21 @@ const MultiVP = {
 	 * @param {Object} config - Configuration parameters
 	 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
-	init(config, vp) {
+	constructor(config, vp) {
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
 		this.scene = vp.scene;
 		this.socket = this.createSocket();
 		this.scene.addAnimateFunctions(this.animate.bind(this));
-	},
+	}
 
 	/**
 	 * Updates all peer meshes with their current position and rotation
 	 * Executed on every animation frame
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	animate() {
 		for (const peerId of Object.keys(this.meshes)) {
@@ -46,12 +64,12 @@ const MultiVP = {
 			peerMesh.mesh.position.set(...peerMesh.position);
 			peerMesh.mesh.rotation.y = peerMesh.rotation;
 		}
-	},
+	}
 
 	/**
 	 * Creates a new WebSocket with the set configuration
 	 *
-	 * @return {WebSocket} socket - Created WebSocket
+	 * @returns {WebSocket} socket - Created WebSocket
 	 */
 	createSocket() {
 		const socket = new WebSocket(`${this.config.socketURL}:${this.config.socketPort}`);
@@ -60,27 +78,27 @@ const MultiVP = {
 		socket.addEventListener('message', this._socketMessage.bind(this));
 
 		return socket;
-	},
+	}
 
 	/**
 	 * Error handler for a WebSocket
 	 *
 	 * @param {Object} error - Error event Object
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
 	_socketError(error) {
 		console.log('socket error', error);
-	},
+	}
 
 	/**
 	 * Message handler for a WebSocket
 	 *
 	 * @param {Object} event - Event object for a socket message
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -105,7 +123,7 @@ const MultiVP = {
 		} else if (message.type === 'disconnected') {
 			delete this.remotePeers[message.from];
 		}
-	},
+	}
 
 	/**
 	 * Creates a new SimplePeer with the default configuration
@@ -113,7 +131,7 @@ const MultiVP = {
 	 * @param {boolean} initiator - Whether this peer is the initiator of the communication
 	 * @param {number} id - This peer's id, sent by the signalling server
 	 *
-	 * @return {Peer} peer - Created SimplePeer
+	 * @returns {Peer} peer - Created SimplePeer
 	 */
 	createPeer(initiator, id) {
 		this.config.peer.initiator = initiator;
@@ -130,14 +148,14 @@ const MultiVP = {
 		peer.on('close', this._peerClose.bind(peer));
 
 		return peer;
-	},
+	}
 
 	/**
 	 * Signal handler for a Peer instance
 	 *
 	 * @param {Object} data - Event object for a signal handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -148,25 +166,25 @@ const MultiVP = {
 			from: this.multiVP.id,
 			to: this.id
 		}));
-	},
+	}
 
 	/**
 	 * Error handler for a Peer instance
 	 *
 	 * @param {Object} error - Event object for an error handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
 	_peerError(error) {
 		console.log('peer error', error);
-	},
+	}
 
 	/**
 	 * Connect handler for a Peer instance
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -177,14 +195,14 @@ const MultiVP = {
 			type: 'connected',
 			avatar: this.multiVP.vp.identity.avatarPath
 		}));
-	},
+	}
 
 	/**
 	 * Data handler for a Peer instance
 	 *
 	 * @param {Object} data - Event object for a data handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -205,12 +223,12 @@ const MultiVP = {
 				mesh.rotation = data.rotation;
 			}
 		}
-	},
+	}
 
 	/**
 	 * Close handler for a Peer instance
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -221,14 +239,14 @@ const MultiVP = {
 			this.multiVP.scene.scene.remove(this.multiVP.meshes[this.id].mesh);
 			delete this.multiVP.meshes[this.id];
 		}
-	},
+	}
 
 	/**
 	 * Sends data from a VirtualPersona to all peers
 	 *
 	 * @param {THREE.Mesh} vp - VirtualPersona from where to get the data
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	sendData(vp) {
 		const payload = {
@@ -243,14 +261,14 @@ const MultiVP = {
 		positionBuffer[3] = vp.rotation.y;
 
 		this.update(JSON.stringify(payload));
-	},
+	}
 
 	/**
 	 * Sends a piece of data to all peers
 	 *
 	 * @param {ArrayBuffer} data - Data to be shared to other peers
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	update(data) {
 		for (const peerId of Object.keys(this.remotePeers)) {
@@ -259,14 +277,14 @@ const MultiVP = {
 				peer.send(data);
 			}
 		}
-	},
+	}
 
 	/**
 	 * Helper function to convert an ArrayBuffer to a String
 	 *
 	 * @param {ArrayBuffer|TypedArray} buffer - ArrayBuffer to be converted
 	 *
-	 * @return {string} string
+	 * @returns {string} string
 	*/
 	_decodeBuffer(buffer) {
 		buffer = buffer.buffer || buffer;
@@ -288,7 +306,7 @@ const MultiVP = {
 		}
 
 		return string;
-	},
+	}
 
 	/**
 	 * Helper function to load an avatar from a path
@@ -296,7 +314,7 @@ const MultiVP = {
 	 * @param {string} path - Path from where to load an avatar
 	 * @param {string} id - This avatar's id
 	 *
-	 * @return {Promise} promise - Resolves to a loaded avatar
+	 * @returns {Promise} promise - Resolves to a loaded avatar
 	 *
 	 * @private
 	 */
@@ -313,6 +331,6 @@ const MultiVP = {
 			})
 			.catch(console.log);
 	}
-};
+}
 
 export {MultiVP};

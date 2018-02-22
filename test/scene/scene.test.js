@@ -3,69 +3,91 @@
 import * as THREE from 'three';
 import {VREffect} from '../../src/libs/VREffect';
 import {GLTFLoader} from '../../src/libs/GLTFLoader';
+import {Loader} from '../../src/utils/loader';
 import {Scene} from '../../src/scene/scene';
 
 describe('Scene', () => {
 
 	let scene;
+	const canvas = document.createElement('canvas');
 
 	beforeEach(() => {
-		scene = Object.create(Scene);
+		sinon.stub(window, 'addEventListener');
+
+		const config = {
+			render: true,
+			canvas,
+			sceneToLoad: 'test'
+		};
+		scene = new Scene(config);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Scene);
+	afterEach(() => {
+		window.addEventListener.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(Scene);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Scene.init);
-		assert.isFunction(Scene._render);
-		assert.isFunction(Scene.animate);
-		assert.isFunction(Scene.cancelAnimate);
-		assert.isFunction(Scene.addToScene);
-		assert.isFunction(Scene.onResize);
+		assert.isFunction(Scene.prototype.init);
+		assert.isFunction(Scene.prototype._render);
+		assert.isFunction(Scene.prototype.animate);
+		assert.isFunction(Scene.prototype.cancelAnimate);
+		assert.isFunction(Scene.prototype.addToScene);
+		assert.isFunction(Scene.prototype.onResize);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(Scene.animateFunctions, []);
-		assert.deepEqual(Scene.collidableMeshes, []);
-		assert.equal(Scene._animationFrameID, 0);
+		assert.deepEqual(Scene.prototype.animateFunctions, []);
+		assert.deepEqual(Scene.prototype.collidableMeshes, []);
 	});
 
-	describe('#init', () => {
-
-		let addEventListener;
-		let canvas;
-
-		beforeEach(() => {
-			addEventListener = Window.prototype.addEventListener;
-			Window.prototype.addEventListener = sinon.stub();
-			scene.onResize = sinon.stub();
-			scene.animate = sinon.stub();
-			
-			canvas = document.createElement('canvas');
-
-			scene.init(canvas, 'myscene.json');
-		});
-
-		afterEach(() => {
-			Window.prototype.addEventListener = addEventListener;
-		});
+	describe('#constructor', () => {
 
 		it('should set some properties', () => {
+			assert.instanceOf(scene.camera, THREE.PerspectiveCamera);
 			assert.instanceOf(scene.renderer, THREE.WebGLRenderer);
-			assert.instanceOf(scene.scene, THREE.Scene);
-            assert.instanceOf(scene.camera, THREE.PerspectiveCamera);
-            assert.instanceOf(scene.vrEffect, VREffect);
+			assert.instanceOf(scene.vrEffect, VREffect);
+			assert.instanceOf(scene._sceneLoader, Loader);
+			assert.equal(scene.canvas, canvas);
 		});
 
 		it('should add a resize handler on window', () => {
 			// Other calls are with 'vrdisplaypresentchange'
-			assert.isTrue(Window.prototype.addEventListener.called);
-			assert.isTrue(Window.prototype.addEventListener.thirdCall.calledWith('resize'));
+			assert.isTrue(window.addEventListener.called);
+			assert.isTrue(window.addEventListener.secondCall.calledWith('resize'));
 		});
 
-		it('should call animate', () => {
+		it('should add a vrdisplayactivate handler on window', () => {
+			// Other calls are with 'vrdisplaypresentchange'
+			assert.isTrue(window.addEventListener.getCall(3).calledWith('vrdisplayactivate'));
+		});
+	});
+
+	describe('#init', () => {
+
+		let mesh;
+	
+		beforeEach((done) => {
+			mesh = {};
+	
+			scene._sceneLoader = {
+				load: sinon.stub().resolves(mesh)
+			};
+			scene._setupMeshes = sinon.stub();
+			scene.animate = sinon.stub();
+
+			scene.init().then(done);
+		});
+
+		it('should load scene', () => {
+			assert.isTrue(scene._sceneLoader.load.calledOnce);
+			assert.equal(mesh.name, 'HolonetMainScene');
+			assert.equal(scene.scene, mesh);
+			assert.isTrue(scene._setupMeshes.calledOnce);
+			assert.isTrue(scene._setupMeshes.calledWith(mesh));
 			assert.isTrue(scene.animate.calledOnce);
 		});
 	});

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import {Utils} from '../../utils/utils';
-import {MTLLoader} from './../../libs/MTLLoader';
-import {OBJLoader} from './../../libs/OBJLoader';
+import {Utils} from '../utils/utils';
+import {MTLLoader} from '../libs/MTLLoader';
+import {OBJLoader} from '../libs/OBJLoader';
 
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 
@@ -23,24 +23,24 @@ const ControllerButtons = {
 const eyesToElbow = new THREE.Vector3(0.175, -0.3, -0.03);
 const forearm = new THREE.Vector3(0, 0, -0.175);
 
-/**
- * PoseController
- * @namespace
- */
-const PoseController = {
+/** Class wrapper for all controllers that have a pose */
+class PoseController {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
-	pressedButtons: {},
+	get pressedButtons() {
+		if (!this._pressedButtons) {
+			this._pressedButtons = {};
+		}
+		return this._pressedButtons;
+	}
 
 	/**
 	 * Initialises a PoseController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 * @param {Locomotion} locomotion - Locomotion instance this controller is associated to
-	 *
-	 * @return {undefined}
 	 */
-	init(gamepad, locomotion) {
+	constructor(gamepad, locomotion) {
 		this.locomotion = locomotion;
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
@@ -75,7 +75,7 @@ const PoseController = {
 				this._configureControllerModel(gamepad.id, modelRootPath);
 			});
 		});
-	},
+	}
 
 	/**
 	 * Configures the controller model depending on the controller
@@ -101,7 +101,7 @@ const PoseController = {
 			this.model.material.color = new THREE.Color(1, 1, 1);
 			break;
 		}
-	},
+	}
 
 	/**
 	 * Activates transportation if thumbpad is pressed
@@ -120,7 +120,7 @@ const PoseController = {
 				this.locomotion.teleportation.setRayCurveState(true);
 			}
 		}
-	},
+	}
 
 	/**
 	 * Activates z translation if thumbpad is touched
@@ -138,7 +138,7 @@ const PoseController = {
 			clearTimeout(this._thumbpadTouchedTimeout);
 			this.locomotion.stopTranslateZ();
 		}
-	},
+	}
 
 	/**
 	 * Handles trigger pressed
@@ -154,7 +154,7 @@ const PoseController = {
 		} else {
 			this.locomotion.virtualPersona.interactions.selection.unselect();
 		}
-	},
+	}
 
 	/**
 	 * Handles grip pressed
@@ -165,7 +165,7 @@ const PoseController = {
 	 */
 	handleGripPressed(state) {
 		state;
-	},
+	}
 
 	/**
 	 * Handles menu pressed
@@ -176,10 +176,12 @@ const PoseController = {
 	 */
 	handleAppMenuPressed(state) {
 		state;
-	},
+	}
 
 	/**
-	 * Gets latest information from gamepad
+	 * Gets latest information from gamepad and updates the model based on it
+	 * It applies an arm model if it's a 3DOF controller
+	 * It also applies the handlers for different buttons
 	 *
 	 * @return {undefined}
 	 */
@@ -269,6 +271,6 @@ const PoseController = {
 			}
 		}
 	}
-};
+}
 
 export {PoseController};

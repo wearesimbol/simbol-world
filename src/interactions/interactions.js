@@ -1,24 +1,18 @@
 import EventEmitter from 'eventemitter3';
 import {Selection} from './selection';
 
-/**
- * Interactions
- * @namespace
- */
-const Interactions = {
+/** Class utility for all interactions*/
+class Interactions {
 
 	/**
-	 * Initializes all interactions
-	 *
-	 * @return {undefined}
+	 * Constructs an Interactions instance by initialising all interactions
 	 */
-	init() {
+	constructor() {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
 
-		this.selection = Object.create(Selection);
-		this.selection.init();
-	},
+		this.selection = new Selection();
+	}
 
 	/**
 	 * Updates the different interaction elements
@@ -30,16 +24,16 @@ const Interactions = {
 	 */
 	update(position, orientation) {
 		this.selection.update(position, orientation);
-	},
+	}
 
 	/**
 	 * Gets all the meshes that serve as guides in all interactions
 	 *
-	 * @return {array} meshes
+	 * @returns {array} meshes
 	 */
 	getMeshes() {
 		return [this.selection.reticle];
 	}
-};
+}
 
 export {Interactions};

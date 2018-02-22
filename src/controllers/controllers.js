@@ -1,47 +1,61 @@
 import {PoseController} from './posecontroller';
 import {GamepadController} from './gamepadcontroller';
 
-/**
- * Controllers
- * @namespace
- */
-const Controllers = {
+/** Class to act as a wrapper for all controllers */
+class Controllers {
 
 	/** @property {object} currentControllers - maps of controller ids to controller instances */
-	currentControllers: {},
+	get currentControllers() {
+		if (!this._currentControllers) {
+			this._currentControllers = {};
+		}
+		return this._currentControllers;
+	}
+
+	set currentControllers(currentControllers) {
+		this._currentControllers = currentControllers;
+	}
+
 	/** @property {PoseController} mainHandController - Controller associated to your main hand */
-	mainHandController: null,
+	get mainHandController() {
+		if (typeof this._mainHandController === 'undefined') {
+			this._mainHandController = null;
+		}
+		return this._mainHandController;
+	}
+
+	set mainHandController(mainHandController) {
+		this._mainHandController = mainHandController;
+	}
 
 	/**
 	 * Initialises a Controllers instance
 	 *
 	 * @param {Locomotion} locomotion - Locomotion instance ccontrollers will be associated to
-	 *
-	 * @return {undefined}
 	 */
-	init(locomotion) {
+	constructor(locomotion) {
 		this.locomotion = locomotion;
 		this.updateControllers();
-	},
+	}
 
 	/**
 	 * Gets unique GamePad id
 	 *
 	 * @param {Gamepad} gamepad - Gamepad to generate id from
 	 *
-	 * @return {string} id
+	 * @returns {string} id
 	 */
 	getGamepadId(gamepad) {
 		const id = `${gamepad.id} (${gamepad.hand})`;
 		return id;
-	},
+	}
 
 	/**
 	 * Gets GamePad in its latest state
 	 *
 	 * @param {string} id - The gamepad's id that you want to receive
 	 *
-	 * @return {Gamepad} gamepad
+	 * @returns {Gamepad} gamepad
 	 */
 	getGamepad(id) {
 		const gamepads = navigator.getGamepads();
@@ -51,14 +65,14 @@ const Controllers = {
 				return gamepad;
 			}
 		}
-	},
+	}
 
 	/**
 	 * Adds a controller to the list
 	 *
 	 * @param {Gamepad} gamepad - Controller to add
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	addController(gamepad) {
 		if (!gamepad) {
@@ -68,24 +82,22 @@ const Controllers = {
 		const gamepadId = this.getGamepadId(gamepad);
 		if (!this.currentControllers[gamepadId]) {
 			if (gamepad.pose) {
-				const poseController = Object.create(PoseController);
-				poseController.init(gamepad, this.locomotion);
+				const poseController = new PoseController(gamepad, this.locomotion);
 				this.currentControllers[gamepadId] = poseController;
 				this.mainHandController = poseController;
 			} else {
-				const gamepadController = Object.create(GamepadController);
-				gamepadController.init(gamepad, this.locomotion);
+				const gamepadController = new GamepadController(gamepad, this.locomotion);
 				this.currentControllers[gamepadId] = gamepadController;
 			}
 		}
-	},
+	}
 
 	/**
 	 * Removes a controller from the list
 	 *
 	 * @param {Gamepad} gamepad - Controller to Adds
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	removeController(gamepad) {
 		const gamepadId = this.getGamepadId(gamepad);
@@ -98,7 +110,7 @@ const Controllers = {
 			}
 			delete this.currentControllers[gamepadId];
 		}
-	},
+	}
 
 	/**
 	 * Updates controller list
@@ -106,7 +118,7 @@ const Controllers = {
 	 * @param {Event} event - Gamepad connection event object
 	 * @param {boolean} connected - Whether a given gamepad is being connected or not
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	updateControllers(event, connected) {
 		if (event) {
@@ -122,6 +134,6 @@ const Controllers = {
 			}
 		}
 	}
-};
+}
 
 export {Controllers};

@@ -1,93 +1,84 @@
 'use strict';
 
 import * as THREE from 'three';
-import {Locomotion} from '../../../src/virtualpersona/locomotion/locomotion';
-import {Teleportation} from '../../../src/virtualpersona/locomotion/_teleportation';
-import {VirtualPersona} from '../../../src/virtualpersona/virtualpersona';
-import {Controllers} from '../../../src/virtualpersona/controllers/controllers';
+import {Locomotion} from '../../src/locomotion/locomotion';
+import {Teleportation} from '../../src/locomotion/_teleportation';
+import {VirtualPersona} from '../../src/virtualpersona/virtualpersona';
+import {Controllers} from '../../src/controllers/controllers';
 
 describe('Locomotion', () => {
 
     let locomotion;
 	let vp;
 
-	before(() => {
-		sinon.stub(VirtualPersona);
-		vp = Object.create(VirtualPersona);
-		vp.scene = {
-			renderer: {
-				domElement: document.createElement('canvas')
+	beforeEach(() => {
+		vp = {
+			scene: {
+				canvas: document.createElement('canvas'),
+				addToScene: sinon.stub()
 			}
 		};
+		Object.setPrototypeOf(vp, VirtualPersona.prototype);
+		vp = Object.create(vp);
+
+		sinon.stub(Locomotion.prototype, 'initKeyboardInput');
+		sinon.stub(Locomotion.prototype, 'initMouseInput');
+		sinon.stub(Locomotion.prototype, 'initTouchInput');
+		sinon.stub(Locomotion.prototype, 'initGamepadInputs');
+
+		locomotion = new Locomotion(vp);
 	});
 
-	after(() => {
-		for (let property in VirtualPersona) {
-			if (typeof VirtualPersona[property] === 'function') {
-				VirtualPersona[property].restore();
-			}
-		}
+	afterEach(() => {
+		Locomotion.prototype.initKeyboardInput.restore && Locomotion.prototype.initKeyboardInput.restore();
+		Locomotion.prototype.initMouseInput.restore && Locomotion.prototype.initMouseInput.restore();
+		Locomotion.prototype.initTouchInput.restore && Locomotion.prototype.initTouchInput.restore();
+		Locomotion.prototype.initGamepadInputs.restore && Locomotion.prototype.initGamepadInputs.restore();
 	});
 
-	beforeEach(() => {
-		locomotion = Object.create(Locomotion);
-	});
-
-	it('should be an object', () => {
-		assert.isObject(Locomotion);
+	it('should be a class', () => {
+		assert.isFunction(Locomotion);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Locomotion.init);
-		assert.isFunction(Locomotion.translateZ);
-		assert.isFunction(Locomotion.translateX);
-		assert.isFunction(Locomotion.stopTranslateZ);
-		assert.isFunction(Locomotion.stopTranslateX);
-		assert.isFunction(Locomotion.translateTo);
-		assert.isFunction(Locomotion._handleKeyDownEvent);
-		assert.isFunction(Locomotion._handleKeyUpEvent);
-		assert.isFunction(Locomotion.initKeyboardInput);
-		assert.isFunction(Locomotion._moveHandler);
-		assert.isFunction(Locomotion._handlePointerLockChange);
-		assert.isFunction(Locomotion._pointerLock);
-		assert.isFunction(Locomotion._handleTeleportation);
-		assert.isFunction(Locomotion._handleClick);
-		assert.isFunction(Locomotion.initMouseInput);
+		assert.isFunction(Locomotion.prototype.translateZ);
+		assert.isFunction(Locomotion.prototype.translateX);
+		assert.isFunction(Locomotion.prototype.stopTranslateZ);
+		assert.isFunction(Locomotion.prototype.stopTranslateX);
+		assert.isFunction(Locomotion.prototype.translateTo);
+		assert.isFunction(Locomotion.prototype._handleKeyDownEvent);
+		assert.isFunction(Locomotion.prototype._handleKeyUpEvent);
+		assert.isFunction(Locomotion.prototype.initKeyboardInput);
+		assert.isFunction(Locomotion.prototype._moveHandler);
+		assert.isFunction(Locomotion.prototype._handlePointerLockChange);
+		assert.isFunction(Locomotion.prototype._pointerLock);
+		assert.isFunction(Locomotion.prototype._handleTeleportation);
+		assert.isFunction(Locomotion.prototype._handleClick);
+		assert.isFunction(Locomotion.prototype.initMouseInput);
+		assert.isFunction(Locomotion.prototype.initTouchInput);
+		assert.isFunction(Locomotion.prototype.initGamepadInputs);
 	});
 
 	it('should have a set of properties', () => {
-		assert.equal(Locomotion.velocity, 1.5);
-		assert.equal(Locomotion.angularVelocity, 1);
-		assert.equal(Locomotion._phi, 0);
-		assert.equal(Locomotion._theta, 0);
-		assert.deepEqual(Locomotion.currentRotation, new THREE.Vector2());
-		assert.equal(Locomotion.translatingZ, false);
-		assert.equal(Locomotion.translatingX, false);
-		assert.deepEqual(Locomotion.orientation, {
+		assert.equal(Locomotion.prototype.velocity, 1.5);
+		assert.equal(Locomotion.prototype.angularVelocity, 1);
+		assert.deepEqual(Locomotion.prototype.currentRotation, new THREE.Vector2());
+		assert.equal(Locomotion.prototype.translatingZ, false);
+		assert.equal(Locomotion.prototype.translatingX, false);
+		assert.deepEqual(Locomotion.prototype.orientation, {
 			quaternion: new THREE.Quaternion(),
 			euler: new THREE.Euler()
 		});
 	});
 
-	describe('#init', () => {
+	describe('#constructor', () => {
 
-		beforeEach(() => {
-			sinon.stub(Teleportation, 'init');
-
-			locomotion.initKeyboardInput = sinon.stub();
-			locomotion.initMouseInput = sinon.stub();
-			locomotion.initTouchInput = sinon.stub();
-            locomotion.initGamepadInputs = sinon.stub();
-
-			locomotion.init(vp);
-		});
-
-		afterEach(() => {
-			Teleportation.init.restore();
-		});
-
-		it('should save the canvas', () => {
-			assert.equal(locomotion._canvas, vp.scene.renderer.domElement);
+		it('should set some properties', () => {
+			assert.equal(locomotion._phi, 0);
+			assert.equal(locomotion._theta, 0);
+			assert.equal(locomotion._canvas, vp.scene.canvas);
+			assert.equal(locomotion.scene, vp.scene);
+			assert.equal(locomotion.virtualPersona, vp);
 		});
 
         it('should initialise inputs', () => {
@@ -98,27 +89,25 @@ describe('Locomotion', () => {
         });
 
 		it('should initialise Teleportation', () => {
-			assert.isTrue(Teleportation.isPrototypeOf(locomotion.teleportation))
-			assert.isTrue(locomotion.teleportation.init.calledOnce);
-			assert.isTrue(Teleportation.init.calledWith(vp.scene));
+			assert.instanceOf(locomotion.teleportation, Teleportation)
+			assert.equal(locomotion.teleportation.scene, vp.scene);
 		});
 
-		describe('no VirtualPersona provided', () => {
+		xdescribe('no VirtualPersona provided', () => {
+
+			let error;
 
 			beforeEach(() => {
-                sinon.spy(locomotion, 'init');
 
                 try {
-                   locomotion.init(); 
-                } catch (e) {}
+                   new Locomotion(); 
+                } catch (e) {
+					error = e;
+				}
 			});
 
-			afterEach(() => {
-				locomotion.init.restore();
-			})
-
 			it('should throw an error', () => {
-				assert.isTrue(locomotion.init.threw('A VirtualPersona is required'));
+				assert.equal(error, 'A VirtualPersona is required');
 			});
 		});
 	});
@@ -166,6 +155,30 @@ describe('Locomotion', () => {
 			assert.isFalse(locomotion.translatingX);
 		});
 	});
+
+	describe('#translateTo', () => {
+
+		let newPosition;
+
+		beforeEach(() => {
+			newPosition = [1, 1, 1];
+
+			vp.scene.camera = {
+				position: {
+					set: sinon.stub()
+				}
+			};
+			locomotion.virtualPersona = vp;
+
+			locomotion.translateTo(newPosition);
+		});
+
+		it('should set position of the first person camera', () => {
+			assert.isTrue(vp.scene.camera.position.set.calledOnce);
+			assert.isTrue(vp.scene.camera.position.set.calledWith(...newPosition));
+		});
+	});
+
 
 	describe('#_handleKeyDownEvent', () => {
 
@@ -278,6 +291,7 @@ describe('Locomotion', () => {
 	describe('#initKeyboardInput', () => {
 
         beforeEach(() => {
+			Locomotion.prototype.initKeyboardInput.restore();
 			sinon.spy(document, 'addEventListener');
 
 			locomotion.initKeyboardInput();
@@ -417,19 +431,14 @@ describe('Locomotion', () => {
 	describe('#_handleTeleportation', () => {
 
 		beforeEach(() => {
-			sinon.stub(Teleportation, 'setRayCurveState');
-			locomotion.teleportation = Object.create(Teleportation);
+			locomotion.teleportation.setRayCurveState = sinon.stub();
 
 			locomotion._handleTeleportation();
 		});
-
-		afterEach(() => {
-			Teleportation.setRayCurveState.restore();
-		});
 		
 		it('should activate the ray curve', () => {
-			assert.isTrue(Teleportation.setRayCurveState.calledOnce);
-			assert.isTrue(Teleportation.setRayCurveState.calledWith(true));
+			assert.isTrue(locomotion.teleportation.setRayCurveState.calledOnce);
+			assert.isTrue(locomotion.teleportation.setRayCurveState.calledWith(true));
 		});
 	});
 
@@ -504,8 +513,9 @@ describe('Locomotion', () => {
 		let canvas;
 
 		beforeEach(() => {
+			Locomotion.prototype.initMouseInput.restore();
 			sinon.stub(document, 'addEventListener');
-			canvas = vp.scene.renderer.domElement;
+			canvas = vp.scene.canvas;
 			sinon.stub(canvas, 'addEventListener');
 
 			locomotion._canvas = canvas;
@@ -528,30 +538,6 @@ describe('Locomotion', () => {
 			assert.isTrue(canvas.addEventListener.calledWith('click'));
 		});
 	});
-
-	xdescribe('#translateTo', () => {
-
-		let newPosition;
-
-		beforeEach(() => {
-			newPosition = [1, 1, 1];
-
-			vp.scene.camera = {
-				position: {
-					set: sinon.stub()
-				}
-			};
-			locomotion.virtualPersona = vp;
-
-			locomotion.translateTo(newPosition);
-		});
-
-		it('should set position of the first person camera', () => {
-			assert.isTrue(vp.scene.camera.position.set.calledOnce);
-			assert.isTrue(vp.scene.camera.position.set.calledWith(...newPosition));
-		});
-	});
-
 	describe('#_handleTouchStart', () => {
 
 		let event;
@@ -659,7 +645,8 @@ describe('Locomotion', () => {
 	describe('#initTouchInput', () => {
 
 		beforeEach(() => {
-			locomotion._canvas = vp.scene.renderer.domElement;
+			Locomotion.prototype.initTouchInput.restore();
+			locomotion._canvas = vp.scene.canvas;
 			sinon.stub(locomotion._canvas, 'addEventListener');
 
 			locomotion.initTouchInput();
@@ -718,21 +705,18 @@ describe('Locomotion', () => {
 	describe('#initGamepadInputs', () => {
 
 		beforeEach(() => {
-			sinon.stub(Controllers, 'init');
+			Locomotion.prototype.initGamepadInputs.restore();
 			sinon.stub(window, 'addEventListener');
 
 			locomotion.initGamepadInputs();
 		});
 
 		afterEach(() => {
-			Controllers.init.restore();
 			window.addEventListener.restore();
 		});
 
 		it('should set controllers', () => {
-			assert.isTrue(Controllers.isPrototypeOf(locomotion.controllers));
-			assert.isTrue(Controllers.init.calledOnce);
-			assert.isTrue(Controllers.init.calledWith(locomotion));
+			assert.instanceOf(locomotion.controllers, Controllers);
 		});
 
 		it('should set event handlers for gamepad', () => {

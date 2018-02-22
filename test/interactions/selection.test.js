@@ -2,42 +2,42 @@
 
 import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
-import {Physics} from '../../../src/physics/physics';
-import {Selection} from '../../../src/virtualpersona/interactions/selection';
+import {Physics} from '../../src/physics/physics';
+import {Selection} from '../../src/interactions/selection';
 
 describe('Selection', () => {
 
 	let selection;
 
 	beforeEach(() => {
-		selection = Object.create(Selection);
+		sinon.stub(Selection.prototype, '_createReticle');
+
+		selection = new Selection();
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Selection);
+	afterEach(() => {
+		Selection.prototype._createReticle.restore && Selection.prototype._createReticle.restore();
+	});
+
+
+	it('should be a class', () => {
+		assert.isFunction(Selection);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Selection.init);
-		assert.isFunction(Selection.add);
-		assert.isFunction(Selection.remove);
+		assert.isFunction(Selection.prototype.add);
+		assert.isFunction(Selection.prototype.remove);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(Selection.objects, {});
-		assert.deepEqual(Selection.hovering, {});
-		assert.equal(Selection.innerRadius, 0.02);
-		assert.equal(Selection.outerRadius, 0.04);
-		assert.equal(Selection.reticleDistance, 3);
+		assert.deepEqual(Selection.prototype.objects, {});
+		assert.deepEqual(Selection.prototype.hovering, {});
+		assert.equal(Selection.prototype.innerRadius, 0.02);
+		assert.equal(Selection.prototype.outerRadius, 0.04);
+		assert.equal(Selection.prototype.reticleDistance, 3);
 	});
 
-	describe('#init', () => {
-
-		beforeEach(() => {
-			sinon.stub(selection, '_createReticle');
-
-			selection.init();
-		});
+	describe('#constructor', () => {
 
 		it('should initialize EventEmitter and Selection', () => {
 			assert.instanceOf(selection.__proto__, EventEmitter);
@@ -282,6 +282,8 @@ describe('Selection', () => {
 		let reticle;
 
 		beforeEach(() => {
+			Selection.prototype._createReticle.restore();
+
 			reticle = selection._createReticle();
 		});
 

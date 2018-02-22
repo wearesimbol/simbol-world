@@ -1,31 +1,42 @@
 'use strict';
 
 import * as THREE from 'three';
-import {Link} from '../../src/scene/link';
+import {Link} from '../../src/utils/link';
 
 describe('Link', () => {
 
 	let link;
+	let path;
+	let position;
+	let scene;
 
 	beforeEach(() => {
-		link = Object.create(Link);
+		path = 'mypath';
+		position = [1, 2, 3];
+		scene = {};
+		sinon.stub(Link.prototype, '_constructMesh').returns(1);
+
+		link = new Link(path, position, scene);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Link);
+	afterEach(() => {
+		Link.prototype._constructMesh.restore && Link.prototype._constructMesh.restore();
+	})
+
+	it('should be a class', () => {
+		assert.isFunction(Link);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Link.init);
-		assert.isFunction(Link._constructMesh);
-		assert.isFunction(Link.render);
-		assert.isFunction(Link.hover);
-		assert.isFunction(Link.navigate);
+		assert.isFunction(Link.prototype._constructMesh);
+		assert.isFunction(Link.prototype.render);
+		assert.isFunction(Link.prototype.hover);
+		assert.isFunction(Link.prototype.navigate);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(Link.defaultRingColor, new THREE.Color(1, 1, 1));
-		assert.deepEqual(Link.defaultRingHoverColor, new THREE.Color(2, 2, 2));
+		assert.deepEqual(Link.prototype.defaultRingColor, new THREE.Color(1, 1, 1));
+		assert.deepEqual(Link.prototype.defaultRingHoverColor, new THREE.Color(2, 2, 2));
 	});
 	
 	describe('#setterPosition', () => {
@@ -50,20 +61,7 @@ describe('Link', () => {
 		});
 	});
 
-	describe('#init', () => {
-
-		let path;
-		let position;
-		let scene;
-
-		beforeEach(() => {
-			path = 'mypath';
-			position = [1, 2, 3];
-			scene = {};
-			link._constructMesh = sinon.stub().returns(1);
-
-			link.init(path, position, scene);
-		});
+	describe('#constructor', () => {
 
 		it('should set properties', () => {
 			assert.equal(link.path, path);
@@ -82,6 +80,7 @@ describe('Link', () => {
 		let mesh;
 
 		beforeEach(() => {
+			Link.prototype._constructMesh.restore();
 			link._position = new THREE.Vector3(1, 2, 3);
 			mesh = link._constructMesh();
 		});
@@ -112,11 +111,11 @@ describe('Link', () => {
 		});
 	});
 		
-	describe('#hover', () => {
+	xdescribe('#hover', () => {
 
 	});
 	
-	describe('#navigate', () => {
+	xdescribe('#navigate', () => {
 		// Can't test this, would break all tests as it changes the location
 	});
 });

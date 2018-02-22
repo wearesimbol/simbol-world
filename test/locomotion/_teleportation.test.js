@@ -1,8 +1,8 @@
 'use strict';
 
 import * as THREE from 'three';
-import {Teleportation} from '../../../src/virtualpersona/locomotion/_teleportation';
-import {Physics} from '../../../src/physics/physics';
+import {Teleportation} from '../../src/locomotion/_teleportation';
+import {Physics} from '../../src/physics/physics';
 
 describe('Teleportation', () => {
 
@@ -10,6 +10,8 @@ describe('Teleportation', () => {
 	let scene;
 
 	beforeEach(() => {
+		sinon.stub(Teleportation.prototype, 'renderRayCurve').returns(1);
+		sinon.stub(Teleportation.prototype, 'renderHitCylinder').returns(2);
 		scene = {
 			addToScene: sinon.stub(),
 			scene: {
@@ -17,61 +19,54 @@ describe('Teleportation', () => {
 			}
 		};
 
-		teleportation = Object.create(Teleportation);
+		teleportation = new Teleportation(scene);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Teleportation);
+	afterEach(() => {
+		Teleportation.prototype.renderRayCurve.restore && Teleportation.prototype.renderRayCurve.restore();
+		Teleportation.prototype.renderHitCylinder.restore && Teleportation.prototype.renderHitCylinder.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(Teleportation);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Teleportation.init);
-		assert.isFunction(Teleportation.setRayCurveState);
-		assert.isFunction(Teleportation.activateTeleport);
-		assert.isFunction(Teleportation.resetTeleport);
-		assert.isFunction(Teleportation._parabolicCurveScalar);
-		assert.isFunction(Teleportation._parabolicCurve);
-		assert.isFunction(Teleportation._setRayCurvePoint);
-		assert.isFunction(Teleportation._isValidNormalsAngle);
-		assert.isFunction(Teleportation._setDirection);
-		assert.isFunction(Teleportation.renderRayCurve);
-		assert.isFunction(Teleportation.renderHitCylinder);
-		assert.isFunction(Teleportation.updateRayCurve);
+		assert.isFunction(Teleportation.prototype.setRayCurveState);
+		assert.isFunction(Teleportation.prototype.activateTeleport);
+		assert.isFunction(Teleportation.prototype.resetTeleport);
+		assert.isFunction(Teleportation.prototype._parabolicCurveScalar);
+		assert.isFunction(Teleportation.prototype._parabolicCurve);
+		assert.isFunction(Teleportation.prototype._setRayCurvePoint);
+		assert.isFunction(Teleportation.prototype._isValidNormalsAngle);
+		assert.isFunction(Teleportation.prototype._setDirection);
+		assert.isFunction(Teleportation.prototype.renderRayCurve);
+		assert.isFunction(Teleportation.prototype.renderHitCylinder);
+		assert.isFunction(Teleportation.prototype.updateRayCurve);
 	});
 
 	it('should have a set of properties', () => {
-		assert.equal(Teleportation.rayCurvePoints, 30);
-		assert.equal(Teleportation.rayCurveWidth, 0.025);
-		assert.equal(Teleportation.hitCylinderRadius, 0.25);
-		assert.equal(Teleportation.hitCylinderHeight, 0.3);
-		assert.equal(Teleportation.maxAngle, 45);
-		assert.deepEqual(Teleportation.hitColor, new THREE.Color('#99ff99'));
-		assert.deepEqual(Teleportation.missColor, new THREE.Color('#ff0000'));
-		assert.equal(Teleportation.velocity, 5);
-		assert.deepEqual(Teleportation._direction, new THREE.Vector3());
-		assert.equal(Teleportation.acceleration, -9.8);
-		assert.deepEqual(Teleportation._shootAxis, new THREE.Vector3().set(0, 0, -1));
-		assert.deepEqual(Teleportation._referenceNormal, new THREE.Vector3().set(0, 1, 0));
-		assert.equal(Teleportation._teleportActivationTimeout, 0.5);
-		assert.equal(Teleportation.isRayCurveActive, false);
-		assert.equal(Teleportation.isTeleportActive, false);
-		assert.equal(Teleportation.hitPoint, false);
+		assert.equal(Teleportation.prototype.rayCurvePoints, 30);
+		assert.equal(Teleportation.prototype.rayCurveWidth, 0.025);
+		assert.equal(Teleportation.prototype.hitCylinderRadius, 0.25);
+		assert.equal(Teleportation.prototype.hitCylinderHeight, 0.3);
+		assert.equal(Teleportation.prototype.maxAngle, 45);
+		assert.deepEqual(Teleportation.prototype.hitColor, new THREE.Color('#99ff99'));
+		assert.deepEqual(Teleportation.prototype.missColor, new THREE.Color('#ff0000'));
+		assert.equal(Teleportation.prototype.velocity, 5);
+		assert.equal(Teleportation.prototype.acceleration, -9.8);
+		assert.equal(Teleportation.prototype.isRayCurveActive, false);
+		assert.equal(Teleportation.prototype.isTeleportActive, false);
+		assert.equal(Teleportation.prototype.hitPoint, false);
 	});
 
-	describe('#init', () => {
-		
-		beforeEach(() => {
-			sinon.stub(teleportation, 'renderRayCurve').returns(1);
-			sinon.stub(teleportation, 'renderHitCylinder').returns(2);
-			teleportation.init(scene);
-		});
-
-		afterEach(() => {
-			teleportation.renderRayCurve.restore();
-			teleportation.renderHitCylinder.restore();
-		});
+	describe('#constructor', () => {
 
 		it('should set some properties', () => {
+			assert.deepEqual(teleportation._direction, new THREE.Vector3());
+			assert.deepEqual(teleportation._shootAxis, new THREE.Vector3().set(0, 0, -1));
+			assert.deepEqual(teleportation._referenceNormal, new THREE.Vector3().set(0, 1, 0));
+			assert.equal(teleportation._teleportActivationTimeout, 0.5);
 			assert.equal(teleportation.scene, scene);
 			assert.deepEqual(teleportation.rayCaster, new THREE.Raycaster());
 			assert.equal(teleportation.rayCurve, 1);
@@ -100,6 +95,8 @@ describe('Teleportation', () => {
 	describe('#activateTeleport', () => {
 
 		beforeEach(() => {
+			// Avoids debouncing
+			teleportation.activateTeleport = Teleportation.prototype.activateTeleport;
 			teleportation.activateTeleport();
 		});
 
@@ -263,6 +260,8 @@ describe('Teleportation', () => {
 		let mesh;
 
 		beforeEach(() => {
+			Teleportation.prototype.renderRayCurve.restore();
+
 			mesh = teleportation.renderRayCurve();
 		});
 
@@ -288,6 +287,8 @@ describe('Teleportation', () => {
 		let mesh;
 
 		beforeEach(() => {
+			Teleportation.prototype.renderHitCylinder.restore();
+
 			mesh = teleportation.renderHitCylinder();
 		});
 

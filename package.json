@@ -1,6 +1,6 @@
 {
   "name": "holonet",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.2",
   "description": "Easily create 3D WebXR compatible sites with a global self-sovereign identity system",
   "main": "build/holonet.umd.js",
   "module": "build/holonet.js",

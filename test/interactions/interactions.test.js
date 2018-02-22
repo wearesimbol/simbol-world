@@ -1,38 +1,37 @@
 'use strict';
 
 import EventEmitter from 'eventemitter3';
-import {Interactions} from '../../../src/virtualpersona/interactions/interactions';
-import {Selection} from '../../../src/virtualpersona/interactions/selection';
+import {Interactions} from '../../src/interactions/interactions';
+import {Selection} from '../../src/interactions/selection';
 
 describe('Interactions', () => {
 
 	let interactions;
 
 	beforeEach(() => {
-		interactions = Object.create(Interactions);
+		sinon.stub(Selection.prototype, '_createReticle');
+
+		interactions = new Interactions();
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Interactions);
+	afterEach(() => {
+		Selection.prototype._createReticle.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(Interactions);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Interactions.init);
-		assert.isFunction(Interactions.update);
-		assert.isFunction(Interactions.getMeshes);
+		assert.isFunction(Interactions.prototype.update);
+		assert.isFunction(Interactions.prototype.getMeshes);
 	});
 
-	describe('#init', () => {
-
-		beforeEach(() => {
-			sinon.stub(Selection, 'init');
-
-			interactions.init();
-		});
+	xdescribe('#constructor', () => {
 
 		it('should initialize EventEmitter and Selection', () => {
-			assert.deepEqual(interactions.selection, Object.create(Selection));
-			assert.isTrue(Selection.init.calledOnce);
+			assert.instanceOf(interactions.selection, Selection);
+			assert.isTrue(Selection.prototype._createReticle.calledOnce);
 			assert.instanceOf(interactions.__proto__, EventEmitter);
 		});
 	});
