@@ -22,6 +22,7 @@ const Controllers = {
 	init(locomotion) {
 		this.locomotion = locomotion;
 		this.updateControllers();
+		window.controllers = this;
 	},
 
 	/**

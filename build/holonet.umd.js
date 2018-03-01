@@ -48723,7 +48723,7 @@ var displayWrappers = {
 	VRDisplayPositionSensorDevice: VRDisplayPositionSensorDevice_1
 };
 
-var _args = [["webvr-polyfill@0.9.36","/mnt/c/Users/aelia/code/holonet"]];
+var _args = [["webvr-polyfill@0.9.36","C:\\Users\\aeliasnet\\code\\holonet"]];
 var _from = "webvr-polyfill@0.9.36";
 var _id = "webvr-polyfill@0.9.36";
 var _inBundle = false;
@@ -48734,7 +48734,7 @@ var _requested = {"type":"version","registry":true,"raw":"webvr-polyfill@0.9.36"
 var _requiredBy = ["/"];
 var _resolved = "https://registry.npmjs.org/webvr-polyfill/-/webvr-polyfill-0.9.36.tgz";
 var _spec = "0.9.36";
-var _where = "/mnt/c/Users/aelia/code/holonet";
+var _where = "C:\\Users\\aeliasnet\\code\\holonet";
 var authors = ["Boris Smus <boris@smus.com>","Brandon Jones <tojiro@gmail.com>","Jordan Santell <jordan@jsantell.com>"];
 var bugs = {"url":"https://github.com/googlevr/webvr-polyfill/issues"};
 var description = "Use WebVR today, on mobile or desktop, without requiring a special browser build.";
@@ -53884,11 +53884,6 @@ const PoseController = {
 			this.armModel = true;
 			this.offset = new Vector3();
 			break;
-		case 'OpenVR Gamepad':
-			this.model.material.map = textureLoader.load(`${modelRootPath}onepointfive_texture.png`);
-			this.model.material.specularMap = textureLoader.load(`${modelRootPath}onepointfive_spec.png`);
-			this.model.material.color = new Color(1, 1, 1);
-			break;
 		}
 	},
 
@@ -53984,6 +53979,32 @@ const PoseController = {
 			return;
 		}
 
+		if (this.locomotion.teleportation.hitPoint) {
+			// Compare both quaternions, and if the difference is big enough, activateTeleport
+			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
+			if (!areQuaternionsEqual) {
+				// Debounced function
+				this.locomotion.teleportation.activateTeleport();
+			}
+		}
+
+		for (const buttonName of Object.keys(ControllerButtons)) {
+			const buttonId = ControllerButtons[buttonName];
+			const button = gamepad.buttons[buttonId];
+			if (button) {
+				// As all functions follow the same naming pattern, we can avoid a switch clause
+				if (button.pressed && !this.pressedButtons[buttonId]) {
+					this[`handle${buttonName}Pressed`](button.pressed);
+				}
+
+				this.pressedButtons[buttonId] = button.pressed;
+
+				if (buttonName === 'Thumbpad') {
+					this[`handle${buttonName}Touched`](button.touched);
+				}
+			}
+		}
+
 		if (gamepad.pose.orientation) {
 			this.prevQuaternion.copy(this.quaternion);
 			this.quaternion.fromArray(gamepad.pose.orientation || [0, 0, 0, 1]);
@@ -54022,40 +54043,14 @@ const PoseController = {
 			this.model.position.copy(this.position);
 		} else if (this.model) {
 			this.model.quaternion.copy(this.quaternion);
-			this.model.position.copy(this.position);
-		}
+			this.model.position.copy(this.locomotion.scene.camera.position);
+			this.model.position.add(this.position);
 
-		const standingMatrix = this.locomotion.virtualPersona.vrControls.getStandingMatrix();
-		this.model.matrixAutoUpdate = false;
-		this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-		this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-		this.model.matrixWorldNeedsUpdate = true;
-		this.model.position.y += this.locomotion.virtualPersona.userHeight;
+			this.model.position.y = this.position.y +
+				this.locomotion.virtualPersona.floorHeight +
+				this.locomotion.virtualPersona.userHeight;
 
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
-			}
-		}
-
-		for (const buttonName of Object.keys(ControllerButtons)) {
-			const buttonId = ControllerButtons[buttonName];
-			const button = gamepad.buttons[buttonId];
-			if (button) {
-				// As all functions follow the same naming pattern, we can avoid a switch clause
-				if (button.pressed && !this.pressedButtons[buttonId]) {
-					this[`handle${buttonName}Pressed`](button.pressed);
-				}
-
-				this.pressedButtons[buttonId] = button.pressed;
-
-				if (buttonName === 'Thumbpad') {
-					this[`handle${buttonName}Touched`](button.touched);
-				}
-			}
+			console.log(this.position.y, this.model.position.y);
 		}
 	}
 };
@@ -54167,6 +54162,7 @@ const Controllers = {
 	init(locomotion) {
 		this.locomotion = locomotion;
 		this.updateControllers();
+		window.controllers = this;
 	},
 
 	/**
@@ -137522,6 +137518,7 @@ const VirtualPersona = {
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new Object3D();
+		fakeCamera.rotation.order = 'YXZ';
 		this.vrControls = new VRControls(fakeCamera, console.log);
 		this.vrControls.userHeight = 0;
 		this.fakeCamera = fakeCamera;
@@ -137677,7 +137674,6 @@ const VirtualPersona = {
 	 * @return {undefined}
 	*/
 	animate: (function() {
-		const rotatedPosition = new Quaternion();
 		const previousCameraPosition = new Vector3();
 		const translationDirection = new Vector3();
 		let previousTime = 0;
@@ -137727,21 +137723,21 @@ const VirtualPersona = {
 			}
 
 			camera.position.setY(this.floorHeight + this.userHeight);
-			previousCameraPosition.copy(camera.position);
-
-			// Handle rotation
-			camera.rotation.copy(this.locomotion.orientation.euler);
+			previousCameraPosition.copy(camera.position);	
 
 			if (this.scene.vrEffect.isPresenting) {
 				this.vrControls.update();
 
-				rotatedPosition.copy(this.fakeCamera.position.applyQuaternion(camera.quaternion));
-				camera.position.add(rotatedPosition);
-				camera.quaternion.multiply(this.fakeCamera.quaternion);
+				camera.rotation.order = 'YXZ';
+				camera.position.add(this.fakeCamera.position);
+				camera.quaternion.copy(this.fakeCamera.quaternion);
 
 				this.mesh.rotation.y = camera.rotation.y + Math.PI;
 			} else {
+				camera.rotation.order = 'XYZ';
 				this.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+				// Handle rotation
+				camera.rotation.copy(this.locomotion.orientation.euler);
 			}
 
 			// Adjust vertical position

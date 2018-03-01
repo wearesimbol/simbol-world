@@ -95,11 +95,6 @@ const PoseController = {
 			this.armModel = true;
 			this.offset = new THREE.Vector3();
 			break;
-		case 'OpenVR Gamepad':
-			this.model.material.map = textureLoader.load(`${modelRootPath}onepointfive_texture.png`);
-			this.model.material.specularMap = textureLoader.load(`${modelRootPath}onepointfive_spec.png`);
-			this.model.material.color = new THREE.Color(1, 1, 1);
-			break;
 		}
 	},
 
@@ -195,6 +190,32 @@ const PoseController = {
 			return;
 		}
 
+		if (this.locomotion.teleportation.hitPoint) {
+			// Compare both quaternions, and if the difference is big enough, activateTeleport
+			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
+			if (!areQuaternionsEqual) {
+				// Debounced function
+				this.locomotion.teleportation.activateTeleport();
+			}
+		}
+
+		for (const buttonName of Object.keys(ControllerButtons)) {
+			const buttonId = ControllerButtons[buttonName];
+			const button = gamepad.buttons[buttonId];
+			if (button) {
+				// As all functions follow the same naming pattern, we can avoid a switch clause
+				if (button.pressed && !this.pressedButtons[buttonId]) {
+					this[`handle${buttonName}Pressed`](button.pressed);
+				}
+
+				this.pressedButtons[buttonId] = button.pressed;
+
+				if (buttonName === 'Thumbpad') {
+					this[`handle${buttonName}Touched`](button.touched);
+				}
+			}
+		}
+
 		if (gamepad.pose.orientation) {
 			this.prevQuaternion.copy(this.quaternion);
 			this.quaternion.fromArray(gamepad.pose.orientation || [0, 0, 0, 1]);
@@ -233,40 +254,14 @@ const PoseController = {
 			this.model.position.copy(this.position);
 		} else if (this.model) {
 			this.model.quaternion.copy(this.quaternion);
-			this.model.position.copy(this.position);
-		}
+			this.model.position.copy(this.locomotion.scene.camera.position);
+			this.model.position.add(this.position);
 
-		const standingMatrix = this.locomotion.virtualPersona.vrControls.getStandingMatrix();
-		this.model.matrixAutoUpdate = false;
-		this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-		this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-		this.model.matrixWorldNeedsUpdate = true;
-		this.model.position.y += this.locomotion.virtualPersona.userHeight;
+			this.model.position.y = this.position.y +
+				this.locomotion.virtualPersona.floorHeight +
+				this.locomotion.virtualPersona.userHeight;
 
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
-			}
-		}
-
-		for (const buttonName of Object.keys(ControllerButtons)) {
-			const buttonId = ControllerButtons[buttonName];
-			const button = gamepad.buttons[buttonId];
-			if (button) {
-				// As all functions follow the same naming pattern, we can avoid a switch clause
-				if (button.pressed && !this.pressedButtons[buttonId]) {
-					this[`handle${buttonName}Pressed`](button.pressed);
-				}
-
-				this.pressedButtons[buttonId] = button.pressed;
-
-				if (buttonName === 'Thumbpad') {
-					this[`handle${buttonName}Touched`](button.touched);
-				}
-			}
+			console.log(this.position.y, this.model.position.y)
 		}
 	}
 };

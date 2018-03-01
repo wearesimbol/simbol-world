@@ -47,6 +47,7 @@ const VirtualPersona = {
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new THREE.Object3D();
+		fakeCamera.rotation.order = 'YXZ';
 		this.vrControls = new VRControls(fakeCamera, console.log);
 		this.vrControls.userHeight = 0;
 		this.fakeCamera = fakeCamera;
@@ -202,7 +203,6 @@ const VirtualPersona = {
 	 * @return {undefined}
 	*/
 	animate: (function() {
-		const rotatedPosition = new THREE.Quaternion();
 		const previousCameraPosition = new THREE.Vector3();
 		const translationDirection = new THREE.Vector3();
 		let previousTime = 0;
@@ -252,21 +252,21 @@ const VirtualPersona = {
 			}
 
 			camera.position.setY(this.floorHeight + this.userHeight);
-			previousCameraPosition.copy(camera.position);
-
-			// Handle rotation
-			camera.rotation.copy(this.locomotion.orientation.euler);
+			previousCameraPosition.copy(camera.position);	
 
 			if (this.scene.vrEffect.isPresenting) {
 				this.vrControls.update();
 
-				rotatedPosition.copy(this.fakeCamera.position.applyQuaternion(camera.quaternion));
-				camera.position.add(rotatedPosition);
-				camera.quaternion.multiply(this.fakeCamera.quaternion);
+				camera.rotation.order = 'YXZ';
+				camera.position.add(this.fakeCamera.position);
+				camera.quaternion.copy(this.fakeCamera.quaternion);
 
 				this.mesh.rotation.y = camera.rotation.y + Math.PI;
 			} else {
+				camera.rotation.order = 'XYZ';
 				this.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+				// Handle rotation
+				camera.rotation.copy(this.locomotion.orientation.euler);
 			}
 
 			// Adjust vertical position
