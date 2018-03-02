@@ -1,7 +1,5 @@
 import * as THREE from 'three';
-import {VirtualPersona} from '../virtualpersona/virtualpersona';
 import {Teleportation} from './_teleportation';
-import {Controllers} from '../controllers/controllers';
 
 /** Class for all general locomotion purposes */
 class Locomotion {
@@ -85,30 +83,21 @@ class Locomotion {
 		this._translatingX = translatingX;
 	}
 
-	/**
-	 * Initialises a Locomotion instance for a VirtualPersona
-	 *
-	 * @param {VirtualPersona} virtualPersona - The VirtualPersona this will add movement controls to
-	 */
-	constructor(virtualPersona) {
-		if (!virtualPersona || !VirtualPersona.prototype.isPrototypeOf(virtualPersona)) {
-			throw 'A VirtualPersona is required';
-		}
-
-		this._theta = 0;
+	/** Initialises a Locomotion instance and teleportation */
+	constructor() {
 		this._phi = 0;
+		this._theta = 0;
+	
+		this.teleportation = new Teleportation();
+	}
 
-		this._canvas = virtualPersona.scene.canvas;
-		this._moveHandler = this._moveHandler.bind(this);
-		this.scene = virtualPersona.scene;
-		this.virtualPersona = virtualPersona;
-
-		this.initKeyboardInput();
-		this.initMouseInput();
-		this.initTouchInput();
-		this.initGamepadInputs();
-
-		this.teleportation = new Teleportation(this.scene);
+	/**
+	 * Gets all the meshes that serve as guides for the locomotion system
+	 *
+	 * @returns {array} meshes
+	 */
+	getMeshes() {
+		return [this.teleportation.rayCurve, this.teleportation.hitCylinder];
 	}
 
 	/**
@@ -151,114 +140,10 @@ class Locomotion {
 		this.translatingX = false;
 	}
 
-	/**
-	 * Helper function that moves the first person camera along to a position in the scene
-	 *
-	 * @param {array} position - Vector array containing the new position for the camera
-	 *
-	 * @return {undefined}
-	*/
-	translateTo(position) {
-		this.scene.camera.position.set(...position);
-	}
-
-	/**
-	 * Handles direction keys to move the VirtualPersona
-	 *
-	 * @param {Event} event - Event object
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	 */
-	_handleKeyDownEvent(event) {
-		switch (event.keyCode) {
-		// Up or w
-		case 87:
-		case 38:
-			this.translateZ(-this.velocity);
-			break;
-		// Down or s
-		case 83:
-		case 40:
-			this.translateZ(this.velocity);
-			break;
-		// Left or a
-		case 65:
-		case 37:
-			this.translateX(-this.velocity);
-			break;
-		// Right or d
-		case 68:
-		case 39:
-			this.translateX(this.velocity);
-			break;
-		}
-	}
-
-	/**
-	 * Handles direction keys to move the VirtualPersona
-	 *
-	 * @param {Event} event - Event object
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	 */
-	_handleKeyUpEvent(event) {
-		switch (event.keyCode) {
-		// Up or w, down or s
-		case 87:
-		case 38:
-		case 83:
-		case 40:
-			this.stopTranslateZ();
-			break;
-		// Left or a, right or d
-		case 65:
-		case 37:
-		case 68:
-		case 39:
-			this.stopTranslateX();
-			break;
-		}
-	}
-
-	/**
-	 * Listens to keyboard presses and translates VirtualPersona accordingly
-	 *
-	 * @return {undefined}
-	*/
-	initKeyboardInput() {
-		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
-		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
-	}
-
-	/**
-	 * Handler to rotate VirtualPersona on mousemove and touchmove
-	 *
-	 * @param {Event} event - Event object
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	*/
-	_moveHandler(event) {
-		// Gets the new rotation vector
-		const rotation = new THREE.Vector2();
-		if (event.touches) {
-			if (event.touches.length > 1) {
-				return;
-			}
-
-			rotation.set(event.touches[0].pageX, event.touches[0].pageY);
-		} else {
-			rotation.set(this.currentRotation.x - event.movementX,
-				this.currentRotation.y - event.movementY);
-		}
-
+	orient(rotation) {
 		// Calculates the delta between the current move event and the previous one
 		const rotationDelta = new THREE.Vector2();
+		// TODO: What about when currentRotation isn't initialised?
 		rotationDelta.subVectors(rotation, this.currentRotation);
 
 		// Saves current rotation for next move event
@@ -278,36 +163,12 @@ class Locomotion {
 		}
 	}
 
-	/**
-	 * Handles pointer lock changes to enable/disable mousemouve event handlers
-	 *
-	 * @param {CanvasHTMLElement} canvas - Canvas that locks the pointer
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	*/
-	_handlePointerLockChange() {
-		if (document.pointerLockElement === this._canvas) {
-			document.addEventListener('mousemove', this._moveHandler);
-		} else {
+	teleport() {
+		if (this.teleportation.isRayCurveActive) {
 			this.teleportation.resetTeleport();
-			document.removeEventListener('mousemove', this._moveHandler);
+		} else {
+			this._handleTeleportation();
 		}
-	}
-
-	/**
-	 * Locks the pointer if not displaying to an HMD when canvas is clicked
-	 *
-	 * @param {Event} event - Event supplied
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	*/
-	_pointerLock(event) {
-		this.currentRotation.set(event.clientX, event.clientY);
-		this._canvas.requestPointerLock();
 	}
 
 	/**
@@ -320,116 +181,56 @@ class Locomotion {
 	_handleTeleportation() {
 		this.teleportation.setRayCurveState(true);
 	}
+	
+	setUpEventListeners(controllers, interactions) {
+		controllers.on('ztranslationstart', (event) => {
+			this.translateZ(event.direction * this.velocity);
+		});
 
-	/**
-	 * Handles click events. Either locks the pointer, or if it's already locked, shows the teleportation ray curve
-	 *
-	 * @param {Event} event - Event supplied
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	 */
-	_handleClick(event) {
-		if (!document.pointerLockElement) {
-			this._pointerLock(event);
-		} else {
-			if (this.virtualPersona.interactions.selection.isHovering) {
-				this.virtualPersona.interactions.selection.select();
-				return;
+		controllers.on('xtranslationstart', (event) => {
+			this.translateX(event.direction * this.velocity);
+		});
+
+		controllers.on('ztranslationend', this.stopTranslateZ.bind(this));
+
+		controllers.on('xtranslationend', this.stopTranslateX.bind(this));
+
+		controllers.on('orientation', (event) => {
+			this.orient(event.rotation);
+		});
+
+		controllers.on('trigger', (event) => {
+			if (!event.touch) {
+				this.teleport();
 			}
+		});
 
+		controllers.on('thumbpadpressed', (event) => {
+			this.teleport();
+			if (!this.teleportation.isRayCurveActive) {
+				clearTimeout(this._thumbpadTouchedTimeout);
+				this.stopTranslateZ();
+			}
+		});
+
+		controllers.on('thumbpadtouched', (event) => {
+			if (!this.teleportation.isRayCurveActive) {
+				this._thumbpadTouchedTimeout = setTimeout(() => {
+					this.translateZ(-this.velocity);
+				}, 500);
+			}
+		});
+
+		controllers.on('thumbpaduntouched', (event) => {
+			clearTimeout(this._thumbpadTouchedTimeout);
+			this.stopTranslateZ();
+		});
+
+		interactions.on('selected', () => {
 			if (this.teleportation.isRayCurveActive) {
 				this.teleportation.resetTeleport();
-			} else {
-				this._handleTeleportation();
 			}
-		}
-	}
-
-	/**
-	 * Listens to mouse click to lock the cursor to rotate the VirtualPersona
-	 *
-	 * @return {undefined}
-	 *
-	*/
-	initMouseInput() {
-		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
-		this._canvas.addEventListener('click', this._handleClick.bind(this));
-	}
-
-	/**
-	 * Handles touch inputs to listen to doueble taps
-	 *
-	 * @param {Event} event - Event object
-	 *
-	 *	@return {undefined}
-	 *
-	 * @private
-	 */
-	_handleTouchStart(event) {
-		if (event.touches.length > 1) {
-			return;
-		}
-
-		if (this.virtualPersona.interactions.selection.isHovering) {
-			this.virtualPersona.interactions.selection.select();
-			return;
-		}
-
-		this.currentRotation.set(event.touches[0].pageX, event.touches[0].pageY);
-
-		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
-		if (timeDelta < 250 || this.scene.vrEffect.isPresenting) {
-			this.translateZ(-this.velocity);
-		} else {
-			this._lastTouch = event.timeStamp;
-		}
-
-	}
-
-	/**
-	 * Listens to touch events to rotate and translate the VirtualPersona
-	 *
-	 * @return {undefined}
-	*/
-	initTouchInput() {
-		this._canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
-		this._canvas.addEventListener('touchend', this.stopTranslateZ.bind(this));
-		this._canvas.addEventListener('touchmove', this._moveHandler);
-	}
-
-	/**
-	 * Event handler for 'gamepadconnected' indicating the controllers that a controller has been added
-	 *
-	 * @param {Event} event - Event object with the gamepad information
-	 *
-	 * @returns {undefined}
-	 */
-	_handleGamepadConnected(event) {
-		this.controllers.updateControllers(event, true);
-	}
-
-	/**
-	 * Event handler for 'gamepaddisconnected' indicating the controllers that a controller has been removed
-	 *
-	 * @param {Event} event - Event object with the gamepad information
-	 *
-	 * @returns {undefined}
-	 */
-	_handleGamepadDisconnected(event) {
-		this.controllers.updateControllers(event, false);
-	}
-
-	/**
-	 * Looks for gamepads and initialises them
-	 *
-	 * @return {undefined}
-	 */
-	initGamepadInputs() {
-		this.controllers = new Controllers(this);
-		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
-		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
+		});
 	}
 }
 

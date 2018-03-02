@@ -14,6 +14,11 @@ xdescribe('Utils', () => {
 		assert.isFunction(Utils.areQuaternionsEqual);
 	});
 
+	it('should have a set of properties', () => {
+		assert.equal(Utils.eps, 0.00005);
+		assert.isFalse(Utils.isPresenting);
+	});
+
 	describe('#debounce', () => {
 
 		let clock;

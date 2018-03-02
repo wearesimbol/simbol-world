@@ -97,7 +97,7 @@ module.exports = function(config) {
 				})
 			],
 			output: {
-				sourcemap: 'inline',
+				sourcemap: true,
 				// will help to prevent conflicts between different tests entries
 				format: 'iife',
 				name: 'holonet'

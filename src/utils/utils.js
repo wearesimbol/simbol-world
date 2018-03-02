@@ -12,6 +12,19 @@ class Utils {
 		this._eps = eps;
 	}
 
+	/** @property {boolean} isPresenting - Whether the page is in an immersive exclusive session */
+	static get isPresenting() {
+		if (typeof this._isPresenting === 'undefined') {
+			this._isPresenting = false;
+		}
+
+		return this._isPresenting;
+	}
+
+	static set isPresenting(isPresenting) {
+		this._isPresenting = isPresenting;
+	}
+
 	/**
 	 *  Debounces function so it is only called after n milliseconds without it not being called
 	 *

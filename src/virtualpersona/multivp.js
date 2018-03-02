@@ -1,4 +1,5 @@
 import Peer from 'simple-peer';
+import EventEmitter from 'eventemitter3';
 
 const defaultConfig = {
 	socketURL: 'ws://127.0.0.1',
@@ -45,11 +46,15 @@ class MultiVP {
 	 * @returns {undefined}
 	 */
 	constructor(config, vp) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
-		this.scene = vp.scene;
 		this.socket = this.createSocket();
-		this.scene.addAnimateFunctions(this.animate.bind(this));
+		this.emit('addanimatefunctions', {
+			functions: [this.animate.bind(this)]
+		});
 	}
 
 	/**
@@ -213,7 +218,9 @@ class MultiVP {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
-					this.multiVP.scene.addToScene(mesh);
+					this.emit('add', {
+						mesh
+					});
 				})
 				.catch(console.log);
 		} else {
@@ -236,7 +243,9 @@ class MultiVP {
 		console.log(`peer ${this.id} closing`);
 		delete this.multiVP.remotePeers[this.id];
 		if (this.multiVP.meshes[this.id]) {
-			this.multiVP.scene.scene.remove(this.multiVP.meshes[this.id].mesh);
+			this.multiVP.emit('remove', {
+				mesh: this.multiVP.meshes[this.id].mesh
+			});
 			delete this.multiVP.meshes[this.id];
 		}
 	}

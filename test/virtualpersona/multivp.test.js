@@ -1,6 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
+import EventEmitter from 'eventemitter3';
 import Peer from 'simple-peer';
 import {VirtualPersona} from '../../src/virtualpersona/virtualpersona';
 import {MultiVP} from '../../src/virtualpersona/multivp';
@@ -9,18 +10,12 @@ describe('MultiVP', () => {
 
 	let multiVP;
 	let config;
-	let scene;
 	let vp;
 
 	beforeEach(() => {
+		sinon.stub(EventEmitter.prototype, 'emit');
 		config = {
 			test: false
-		};
-		scene = {
-			addAnimateFunctions: sinon.stub()
-		};
-		vp = {
-			scene: scene
 		};
 		sinon.stub(MultiVP.prototype, 'createSocket').returns(1);
 
@@ -28,6 +23,7 @@ describe('MultiVP', () => {
 	});
 
 	afterEach(() => {
+		EventEmitter.prototype.emit.restore();
 		MultiVP.prototype.createSocket.restore && MultiVP.prototype.createSocket.restore();
 	});
 
@@ -59,6 +55,10 @@ describe('MultiVP', () => {
 	
 	describe('#constructor', () => {
 
+		it('should initialize EventEmitter', () => {
+			assert.instanceOf(multiVP.__proto__, EventEmitter);
+		});
+
 		it('should set properties', () => {
 			assert.deepEqual(multiVP.config, {
 				socketURL: 'ws://127.0.0.1',
@@ -72,7 +72,13 @@ describe('MultiVP', () => {
 			});
 			assert.equal(multiVP.socket, 1);
 			assert.equal(multiVP.vp, vp);
-			assert.equal(multiVP.scene, scene);
+		});
+
+		it('should add animate functions', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledOnce);
+			assert.isTrue(EventEmitter.prototype.emit.calledWith('addanimatefunctions'));
+			assert.isArray(EventEmitter.prototype.emit.firstCall.args[1].functions);
+			assert.isFunction(EventEmitter.prototype.emit.firstCall.args[1].functions[0]);
 		});
 	});
 
@@ -374,9 +380,6 @@ describe('MultiVP', () => {
 				multiVP._decodeBuffer.returns(JSON.stringify(data));
 				mesh = {};
 				sinon.stub(multiVP, '_loadAvatar').resolves(mesh);
-				multiVP.scene = {
-					addToScene: sinon.stub()
-				};
 
 				multiVP._peerData(data);
 			});
@@ -418,11 +421,6 @@ describe('MultiVP', () => {
 					mesh: 1
 				}
 			};
-			multiVP.scene = {
-				scene: {
-					remove: sinon.stub()
-				}
-			};
 			multiVP.multiVP = multiVP;
 
 			multiVP._peerClose();
@@ -434,12 +432,14 @@ describe('MultiVP', () => {
 
 		it('should delete mesh', () => {
 			assert.isUndefined(multiVP.meshes[1]);
-			assert.isTrue(multiVP.scene.scene.remove.calledOnce);
-			assert.isTrue(multiVP.scene.scene.remove.calledWith(1));
-		});
-	})
 
-describe('#sendData', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('remove'));
+			assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {mesh: 1});
+		});
+	});
+
+	describe('#sendData', () => {
 
 		beforeEach(() => {
 			sinon.stub(multiVP, 'update');

@@ -25,9 +25,10 @@ describe('Interactions', () => {
 	it('should have a set of methods', () => {
 		assert.isFunction(Interactions.prototype.update);
 		assert.isFunction(Interactions.prototype.getMeshes);
+		assert.isFunction(Interactions.prototype.setUpEventListeners);
 	});
 
-	xdescribe('#constructor', () => {
+	describe('#constructor', () => {
 
 		it('should initialize EventEmitter and Selection', () => {
 			assert.instanceOf(interactions.selection, Selection);
@@ -70,6 +71,24 @@ describe('Interactions', () => {
 
 		it('should return all interaction meshes', () => {
 			assert.deepEqual(meshes, [1]);
+		});
+	});
+
+	describe('#setUpEventListeners', () => {
+
+		let emitter;
+
+		beforeEach(() => {
+			emitter = {
+				on: sinon.stub()
+			};
+
+			interactions.setUpEventListeners(emitter);
+		});
+
+		it('should add event listeners to ', () => {
+			assert.isTrue(emitter.on.calledOnce);
+			assert.isTrue(emitter.on.calledWith('trigger', interactions.selection.handleSelection));
 		});
 	});
 });

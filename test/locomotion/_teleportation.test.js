@@ -7,19 +7,12 @@ import {Physics} from '../../src/physics/physics';
 describe('Teleportation', () => {
 
 	let teleportation;
-	let scene;
 
 	beforeEach(() => {
 		sinon.stub(Teleportation.prototype, 'renderRayCurve').returns(1);
 		sinon.stub(Teleportation.prototype, 'renderHitCylinder').returns(2);
-		scene = {
-			addToScene: sinon.stub(),
-			scene: {
-				getObjectByName: sinon.stub().returns(1)
-			}
-		};
 
-		teleportation = new Teleportation(scene);
+		teleportation = new Teleportation();
 	});
 
 	afterEach(() => {
@@ -67,17 +60,11 @@ describe('Teleportation', () => {
 			assert.deepEqual(teleportation._shootAxis, new THREE.Vector3().set(0, 0, -1));
 			assert.deepEqual(teleportation._referenceNormal, new THREE.Vector3().set(0, 1, 0));
 			assert.equal(teleportation._teleportActivationTimeout, 0.5);
-			assert.equal(teleportation.scene, scene);
 			assert.deepEqual(teleportation.rayCaster, new THREE.Raycaster());
 			assert.equal(teleportation.rayCurve, 1);
 			assert.isTrue(teleportation.renderRayCurve.calledOnce);
 			assert.equal(teleportation.hitCylinder, 2);
 			assert.isTrue(teleportation.renderHitCylinder.calledOnce);
-		});
-
-		it('should add the ray curve and the hit cylinder to the scene', () => {
-			assert.isTrue(scene.addToScene.calledOnce);
-			assert.isTrue(scene.addToScene.calledWith([1, 2]));
 		});
 	});
 
@@ -318,6 +305,7 @@ describe('Teleportation', () => {
 		let hitCylinder;
 		let rayCaster;
 		let controller;
+		let scene;
 
 		beforeEach(() => {
 			sinon.stub(teleportation, '_setDirection');
@@ -344,10 +332,10 @@ describe('Teleportation', () => {
 				set: sinon.stub()
 			};
 			controller = new THREE.Object3D();
+			scene = 1;
 			sinon.stub(controller, 'getWorldQuaternion').returns(new THREE.Quaternion().set(1, 1, 1, 1));
 			sinon.stub(controller.position, 'clone').returns(new THREE.Vector3().set(1, 1, 1));
 
-			teleportation.scene = scene;
 			teleportation.rayCurve = rayCurve;
 			teleportation.rayCaster = rayCaster;
 			teleportation.hitCylinder = hitCylinder;
@@ -408,7 +396,7 @@ describe('Teleportation', () => {
 				teleportation.activateTeleport.id = 1;
 				teleportation.rayCurvePoints = 1;
 
-				teleportation.updateRayCurve(controller);
+				teleportation.updateRayCurve(controller, scene);
 			});
 
 			afterEach(() => {
@@ -466,7 +454,7 @@ describe('Teleportation', () => {
 				teleportation._isValidNormalsAngle.returns(true);
 				sinon.stub(teleportation, 'activateTeleport');
 
-				teleportation.updateRayCurve(controller);
+				teleportation.updateRayCurve(controller, scene);
 			});
 
 			afterEach(() => {

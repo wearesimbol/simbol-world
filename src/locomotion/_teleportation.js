@@ -152,23 +152,16 @@ class Teleportation {
 		this._hitPoint = hitPoint;
 	}
 
-	/**
-	 * Initialises a teleportation instance
-	 *
-	 * @param {Scene} scene - The scene to add teleporation controls to
-	 */
-	constructor(scene) {
+	/** Initialises a teleportation instance */
+	constructor() {
 		this._direction = new THREE.Vector3();
 		this._shootAxis = new THREE.Vector3(0, 0, -1);
 		this._referenceNormal = new THREE.Vector3(0, 1, 0);
 		this._teleportActivationTimeout = 0.5;
 
-		this.scene = scene;
 		this.rayCaster = new THREE.Raycaster();
 		this.rayCurve = this.renderRayCurve();
 		this.hitCylinder = this.renderHitCylinder();
-
-		this.scene.addToScene([this.rayCurve, this.hitCylinder], false, false);
 
 		this.activateTeleport = Utils.debounce(this.activateTeleport.bind(this), this._teleportActivationTimeout * 1000);
 	}
@@ -339,10 +332,11 @@ class Teleportation {
 	 * Updates the ray, when active, depending on the world position
 	 *
 	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
+	 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
 	 *
 	 * @return {undefined}
 	 */
-	updateRayCurve(controller) {
+	updateRayCurve(controller, scene) {
 		if (!controller || !(controller instanceof THREE.Object3D) && !(controller.model instanceof THREE.Object3D)) {
 			this.setRayCurveState(false);
 			return;
@@ -368,7 +362,6 @@ class Teleportation {
 
 		const lastSegment = position.clone();
 		const nextSegment = new THREE.Vector3();
-		const collisionMesh = this.scene.scene.getObjectByName('HolonetMainScene');
 		for (let i = 1; i <= this.rayCurvePoints; i++) {
 			const time = i / this.rayCurvePoints;
 			nextSegment.copy(this._parabolicCurve(position, velocity, time));
@@ -377,7 +370,7 @@ class Teleportation {
 			this.rayCaster.far = directionLastNextSegments.length();
 			this.rayCaster.set(lastSegment, directionLastNextSegments);
 
-			const intersection = Physics.checkRayCollision(this.rayCaster, collisionMesh);
+			const intersection = Physics.checkRayCollision(this.rayCaster, scene);
 			if (intersection) {
 				const point = intersection.point;
 

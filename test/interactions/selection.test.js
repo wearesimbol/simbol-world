@@ -27,6 +27,16 @@ describe('Selection', () => {
 	it('should have a set of methods', () => {
 		assert.isFunction(Selection.prototype.add);
 		assert.isFunction(Selection.prototype.remove);
+		assert.isFunction(Selection.prototype.setOrigin);
+		assert.isFunction(Selection.prototype.setDirection);
+		assert.isFunction(Selection.prototype.getHoveredMesh);
+		assert.isFunction(Selection.prototype.select);
+		assert.isFunction(Selection.prototype.unselect);
+		assert.isFunction(Selection.prototype.update);
+		assert.isFunction(Selection.prototype.handleSelection);
+		assert.isFunction(Selection.prototype._createReticle);
+		assert.isFunction(Selection.prototype._moveReticle);
+		assert.isFunction(Selection.prototype._updateReticle);
 	});
 
 	it('should have a set of properties', () => {
@@ -160,7 +170,8 @@ describe('Selection', () => {
 		it('should emit "selected" event with mesh', () => {
 			assert.isTrue(selection.getHoveredMesh.calledOnce);
 			assert.isTrue(selection.emit.calledOnce);
-			assert.isTrue(selection.emit.calledWith('selected', 1));
+			assert.deepEqual(selection.emit.firstCall.args[0], 'selected');
+			assert.deepEqual(selection.emit.firstCall.args[1], {mesh:1});
 		});
 	});
 
@@ -176,7 +187,8 @@ describe('Selection', () => {
 		it('should emit "unselected" event with mesh', () => {
 			assert.isTrue(selection.getHoveredMesh.calledOnce);
 			assert.isTrue(selection.emit.calledOnce);
-			assert.isTrue(selection.emit.calledWith('unselected', 1));
+			assert.deepEqual(selection.emit.firstCall.args[0], 'unselected');
+			assert.deepEqual(selection.emit.firstCall.args[1], {mesh:1});
 		});
 	});
 
@@ -244,7 +256,8 @@ describe('Selection', () => {
 				assert.isTrue(selection.reticle.children[0].material.color.setHex.calledOnce);
 				assert.isTrue(selection.reticle.children[0].material.color.setHex.calledWith(0x99ff99));
 				assert.isTrue(selection.emit.calledOnce);
-				assert.isTrue(selection.emit.calledWith('hover', object));
+				assert.deepEqual(selection.emit.firstCall.args[0], 'hover');
+				assert.deepEqual(selection.emit.firstCall.args[1], {mesh:object});
 				assert.isTrue(selection.isHovering);
 			});
 
@@ -266,7 +279,8 @@ describe('Selection', () => {
 				assert.isTrue(selection.reticle.children[0].material.color.setHex.calledOnce);
 				assert.isTrue(selection.reticle.children[0].material.color.setHex.calledWith(0xFFFFFF));
 				assert.isTrue(selection.emit.calledOnce);
-				assert.isTrue(selection.emit.calledWith('unhover', object));
+				assert.deepEqual(selection.emit.firstCall.args[0], 'unhover');
+				assert.deepEqual(selection.emit.firstCall.args[1], {mesh:object});
 				assert.isFalse(selection.isHovering);
 			});
 
@@ -345,6 +359,20 @@ describe('Selection', () => {
 				assert.equal(selection.reticleDistance, 3);
 				assert.isTrue(selection._updateReticle.calledOnce);
 			});
+		});
+	});
+
+	describe('#handleSelection', () => {
+
+		beforeEach(() => {
+			sinon.stub(selection, 'select');
+			selection.isHovering = true;
+
+			selection.handleSelection();
+		});
+
+		it('should select if hovering', () => {
+			assert.isTrue(selection.select.calledOnce);
 		});
 	});
 

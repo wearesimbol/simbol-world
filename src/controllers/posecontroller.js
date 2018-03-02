@@ -1,7 +1,10 @@
+import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
 import {Utils} from '../utils/utils';
 import {MTLLoader} from '../libs/MTLLoader';
 import {OBJLoader} from '../libs/OBJLoader';
+
+import {Controllers} from './controllers';
 
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 
@@ -38,16 +41,16 @@ class PoseController {
 	 * Initialises a PoseController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
-	 * @param {Locomotion} locomotion - Locomotion instance this controller is associated to
 	 */
-	constructor(gamepad, locomotion) {
-		this.locomotion = locomotion;
+	constructor(gamepad) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
 		this.gamepadId = gamepad.id;
 
 		this.quaternion = new THREE.Quaternion();
-		this.prevQuaternion = new THREE.Quaternion();
 		this.euler = new THREE.Euler();
 		// Some controllers don't return an orientation and position until further on
 		if (gamepad.pose.orientation) {
@@ -71,7 +74,9 @@ class PoseController {
 			objLoader.setMaterials(materials);
 			objLoader.load(`${modelPath}.obj`, (model) => {
 				this.model = model;
-				this.locomotion.scene.addToScene(this.model, false, false);
+				this.emit('add', {
+					mesh: model
+				});
 				this._configureControllerModel(gamepad.id, modelRootPath);
 			});
 		});
@@ -112,13 +117,7 @@ class PoseController {
 	 */
 	handleThumbpadPressed(state) {
 		if (state) {
-			if (this.locomotion.teleportation.isRayCurveActive) {
-				this.locomotion.teleportation.resetTeleport();
-			} else {
-				clearTimeout(this._thumbpadTouchedTimeout);
-				this.locomotion.stopTranslateZ();
-				this.locomotion.teleportation.setRayCurveState(true);
-			}
+			this.emit('thumbpadpressed');
 		}
 	}
 
@@ -130,13 +129,10 @@ class PoseController {
 	 * @return {undefined}
 	 */
 	handleThumbpadTouched(state) {
-		if (state && !this.locomotion.teleportation.isRayCurveActive) {
-			this._thumbpadTouchedTimeout = setTimeout(() => {
-				this.locomotion.translateZ(-this.locomotion.velocity);
-			}, 500);
+		if (state) {
+			this.emit('thumbpadtouched');
 		} else {
-			clearTimeout(this._thumbpadTouchedTimeout);
-			this.locomotion.stopTranslateZ();
+			this.emit('thumbpaduntouched');
 		}
 	}
 
@@ -149,10 +145,7 @@ class PoseController {
 	 */
 	handleTriggerPressed(state) {
 		if (state) {
-			// Hack until controllers are separated from locomotion
-			this.locomotion.virtualPersona.interactions.selection.select();
-		} else {
-			this.locomotion.virtualPersona.interactions.selection.unselect();
+			this.emit('trigger');
 		}
 	}
 
@@ -185,12 +178,12 @@ class PoseController {
 	 *
 	 * @return {undefined}
 	 */
-	update() {
-		const gamepad = this.locomotion.controllers.getGamepad(this.id);
+	update(camera, userHeight, standingMatrix) {
+		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
 			// Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
-			this.locomotion.controllers.removeController({
+			this.emit('controllerdisconnected', {
 				id: this.gamepadId,
 				hand: this.hand
 			});
@@ -198,7 +191,6 @@ class PoseController {
 		}
 
 		if (gamepad.pose.orientation) {
-			this.prevQuaternion.copy(this.quaternion);
 			this.quaternion.fromArray(gamepad.pose.orientation || [0, 0, 0, 1]);
 		}
 
@@ -208,23 +200,23 @@ class PoseController {
 
 		if (this.armModel) {
 			// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-			this.position.copy(this.locomotion.scene.camera.position);
+			this.position.copy(camera.position);
 			// Set offset for degenerate "arm model" to elbow
 			this.offset.set(
 				this.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // Hand is to your left, or right
 				eyesToElbow.y, // Lower than your eyes
 				eyesToElbow.z); // Slightly out in front
 			// Scale offset by user height
-			this.offset.multiplyScalar(this.locomotion.virtualPersona.userHeight);
+			this.offset.multiplyScalar(userHeight);
 			// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-			this.offset.applyAxisAngle(VERTICAL_VECTOR, this.locomotion.scene.camera.rotation.y);
+			this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
 			// Apply rotated offset to camera position
 			this.position.add(this.offset);
 
 			// Set offset for degenerate "arm model" forearm
 			this.offset.set(forearm.x, forearm.y, forearm.z); // Forearm sticking out from elbow
 			// Scale offset by user height
-			this.offset.multiplyScalar(this.locomotion.virtualPersona.userHeight);
+			this.offset.multiplyScalar(userHeight);
 			// Apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
 			this.euler.setFromQuaternion(this.quaternion);
 			this.euler.set(this.euler.x, this.euler.y, 0);
@@ -238,20 +230,12 @@ class PoseController {
 			this.model.position.copy(this.position);
 		}
 
-		const standingMatrix = this.locomotion.virtualPersona.vrControls.getStandingMatrix();
-		this.model.matrixAutoUpdate = false;
-		this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-		this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-		this.model.matrixWorldNeedsUpdate = true;
-		this.model.position.y += this.locomotion.virtualPersona.userHeight;
-
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
-			}
+		if (this.model) {
+			this.model.matrixAutoUpdate = false;
+			this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
+			this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
+			this.model.matrixWorldNeedsUpdate = true;
+			this.model.position.y += userHeight;
 		}
 
 		for (const buttonName of Object.keys(ControllerButtons)) {

@@ -151,7 +151,9 @@ class Selection {
 	 */
 	select() {
 		const mesh = this.getHoveredMesh();
-		this.emit('selected', mesh);
+		this.emit('selected', {
+			mesh
+		});
 	}
 
 	/**
@@ -161,7 +163,9 @@ class Selection {
 	*/
 	unselect() {
 		const mesh = this.getHoveredMesh();
-		this.emit('unselected', mesh);
+		this.emit('unselected', {
+			mesh
+		});
 	}
 
 	/**
@@ -184,14 +188,18 @@ class Selection {
 			if (intersection && !isHovering) {
 				this.hovering[id] = true;
 				this.reticle.children[0].material.color.setHex(0x99ff99);
-				this.emit('hover', object);
+				this.emit('hover', {
+					mesh: object
+				});
 				this.isHovering = true;
 			}
 
 			if (!intersection && isHovering) {
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
-				this.emit('unhover', object);
+				this.emit('unhover', {
+					mesh: object
+				});
 				this.isHovering = false;
 			}
 
@@ -200,6 +208,17 @@ class Selection {
 			} else {
 				this._moveReticle(null);
 			}
+		}
+	}
+
+	/**
+	 * If reticle is hovering over a selectable item, select it
+	 *
+	 * @returns {undefined}
+	 */
+	handleSelection() {
+		if (this.isHovering) {
+			this.select();
 		}
 	}
 

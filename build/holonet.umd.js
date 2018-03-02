@@ -4,6 +4,351 @@
 	(factory((global.holonet = {})));
 }(this, (function (exports) { 'use strict';
 
+function unwrapExports (x) {
+	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+}
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var eventemitter3 = createCommonjsModule(function (module) {
+var has = Object.prototype.hasOwnProperty
+  , prefix = '~';
+
+/**
+ * Constructor to create a storage for our `EE` objects.
+ * An `Events` instance is a plain object whose properties are event names.
+ *
+ * @constructor
+ * @private
+ */
+function Events() {}
+
+//
+// We try to not inherit from `Object.prototype`. In some engines creating an
+// instance in this way is faster than calling `Object.create(null)` directly.
+// If `Object.create(null)` is not supported we prefix the event names with a
+// character to make sure that the built-in object properties are not
+// overridden or used as an attack vector.
+//
+if (Object.create) {
+  Events.prototype = Object.create(null);
+
+  //
+  // This hack is needed because the `__proto__` property is still inherited in
+  // some old browsers like Android 4, iPhone 5.1, Opera 11 and Safari 5.
+  //
+  if (!new Events().__proto__) prefix = false;
+}
+
+/**
+ * Representation of a single event listener.
+ *
+ * @param {Function} fn The listener function.
+ * @param {*} context The context to invoke the listener with.
+ * @param {Boolean} [once=false] Specify if the listener is a one-time listener.
+ * @constructor
+ * @private
+ */
+function EE(fn, context, once) {
+  this.fn = fn;
+  this.context = context;
+  this.once = once || false;
+}
+
+/**
+ * Add a listener for a given event.
+ *
+ * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
+ * @param {(String|Symbol)} event The event name.
+ * @param {Function} fn The listener function.
+ * @param {*} context The context to invoke the listener with.
+ * @param {Boolean} once Specify if the listener is a one-time listener.
+ * @returns {EventEmitter}
+ * @private
+ */
+function addListener(emitter, event, fn, context, once) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('The listener must be a function');
+  }
+
+  var listener = new EE(fn, context || emitter, once)
+    , evt = prefix ? prefix + event : event;
+
+  if (!emitter._events[evt]) emitter._events[evt] = listener, emitter._eventsCount++;
+  else if (!emitter._events[evt].fn) emitter._events[evt].push(listener);
+  else emitter._events[evt] = [emitter._events[evt], listener];
+
+  return emitter;
+}
+
+/**
+ * Clear event by name.
+ *
+ * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
+ * @param {(String|Symbol)} evt The Event name.
+ * @private
+ */
+function clearEvent(emitter, evt) {
+  if (--emitter._eventsCount === 0) emitter._events = new Events();
+  else delete emitter._events[evt];
+}
+
+/**
+ * Minimal `EventEmitter` interface that is molded against the Node.js
+ * `EventEmitter` interface.
+ *
+ * @constructor
+ * @public
+ */
+function EventEmitter() {
+  this._events = new Events();
+  this._eventsCount = 0;
+}
+
+/**
+ * Return an array listing the events for which the emitter has registered
+ * listeners.
+ *
+ * @returns {Array}
+ * @public
+ */
+EventEmitter.prototype.eventNames = function eventNames() {
+  var names = []
+    , events
+    , name;
+
+  if (this._eventsCount === 0) return names;
+
+  for (name in (events = this._events)) {
+    if (has.call(events, name)) names.push(prefix ? name.slice(1) : name);
+  }
+
+  if (Object.getOwnPropertySymbols) {
+    return names.concat(Object.getOwnPropertySymbols(events));
+  }
+
+  return names;
+};
+
+/**
+ * Return the listeners registered for a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @returns {Array} The registered listeners.
+ * @public
+ */
+EventEmitter.prototype.listeners = function listeners(event) {
+  var evt = prefix ? prefix + event : event
+    , handlers = this._events[evt];
+
+  if (!handlers) return [];
+  if (handlers.fn) return [handlers.fn];
+
+  for (var i = 0, l = handlers.length, ee = new Array(l); i < l; i++) {
+    ee[i] = handlers[i].fn;
+  }
+
+  return ee;
+};
+
+/**
+ * Return the number of listeners listening to a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @returns {Number} The number of listeners.
+ * @public
+ */
+EventEmitter.prototype.listenerCount = function listenerCount(event) {
+  var evt = prefix ? prefix + event : event
+    , listeners = this._events[evt];
+
+  if (!listeners) return 0;
+  if (listeners.fn) return 1;
+  return listeners.length;
+};
+
+/**
+ * Calls each of the listeners registered for a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @returns {Boolean} `true` if the event had listeners, else `false`.
+ * @public
+ */
+EventEmitter.prototype.emit = function emit(event, a1, a2, a3, a4, a5) {
+  var evt = prefix ? prefix + event : event;
+
+  if (!this._events[evt]) return false;
+
+  var listeners = this._events[evt]
+    , len = arguments.length
+    , args
+    , i;
+
+  if (listeners.fn) {
+    if (listeners.once) this.removeListener(event, listeners.fn, undefined, true);
+
+    switch (len) {
+      case 1: return listeners.fn.call(listeners.context), true;
+      case 2: return listeners.fn.call(listeners.context, a1), true;
+      case 3: return listeners.fn.call(listeners.context, a1, a2), true;
+      case 4: return listeners.fn.call(listeners.context, a1, a2, a3), true;
+      case 5: return listeners.fn.call(listeners.context, a1, a2, a3, a4), true;
+      case 6: return listeners.fn.call(listeners.context, a1, a2, a3, a4, a5), true;
+    }
+
+    for (i = 1, args = new Array(len -1); i < len; i++) {
+      args[i - 1] = arguments[i];
+    }
+
+    listeners.fn.apply(listeners.context, args);
+  } else {
+    var length = listeners.length
+      , j;
+
+    for (i = 0; i < length; i++) {
+      if (listeners[i].once) this.removeListener(event, listeners[i].fn, undefined, true);
+
+      switch (len) {
+        case 1: listeners[i].fn.call(listeners[i].context); break;
+        case 2: listeners[i].fn.call(listeners[i].context, a1); break;
+        case 3: listeners[i].fn.call(listeners[i].context, a1, a2); break;
+        case 4: listeners[i].fn.call(listeners[i].context, a1, a2, a3); break;
+        default:
+          if (!args) for (j = 1, args = new Array(len -1); j < len; j++) {
+            args[j - 1] = arguments[j];
+          }
+
+          listeners[i].fn.apply(listeners[i].context, args);
+      }
+    }
+  }
+
+  return true;
+};
+
+/**
+ * Add a listener for a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @param {Function} fn The listener function.
+ * @param {*} [context=this] The context to invoke the listener with.
+ * @returns {EventEmitter} `this`.
+ * @public
+ */
+EventEmitter.prototype.on = function on(event, fn, context) {
+  return addListener(this, event, fn, context, false);
+};
+
+/**
+ * Add a one-time listener for a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @param {Function} fn The listener function.
+ * @param {*} [context=this] The context to invoke the listener with.
+ * @returns {EventEmitter} `this`.
+ * @public
+ */
+EventEmitter.prototype.once = function once(event, fn, context) {
+  return addListener(this, event, fn, context, true);
+};
+
+/**
+ * Remove the listeners of a given event.
+ *
+ * @param {(String|Symbol)} event The event name.
+ * @param {Function} fn Only remove the listeners that match this function.
+ * @param {*} context Only remove the listeners that have this context.
+ * @param {Boolean} once Only remove one-time listeners.
+ * @returns {EventEmitter} `this`.
+ * @public
+ */
+EventEmitter.prototype.removeListener = function removeListener(event, fn, context, once) {
+  var evt = prefix ? prefix + event : event;
+
+  if (!this._events[evt]) return this;
+  if (!fn) {
+    clearEvent(this, evt);
+    return this;
+  }
+
+  var listeners = this._events[evt];
+
+  if (listeners.fn) {
+    if (
+      listeners.fn === fn &&
+      (!once || listeners.once) &&
+      (!context || listeners.context === context)
+    ) {
+      clearEvent(this, evt);
+    }
+  } else {
+    for (var i = 0, events = [], length = listeners.length; i < length; i++) {
+      if (
+        listeners[i].fn !== fn ||
+        (once && !listeners[i].once) ||
+        (context && listeners[i].context !== context)
+      ) {
+        events.push(listeners[i]);
+      }
+    }
+
+    //
+    // Reset the array, or remove it completely if we have no more listeners.
+    //
+    if (events.length) this._events[evt] = events.length === 1 ? events[0] : events;
+    else clearEvent(this, evt);
+  }
+
+  return this;
+};
+
+/**
+ * Remove all listeners, or those of the specified event.
+ *
+ * @param {(String|Symbol)} [event] The event name.
+ * @returns {EventEmitter} `this`.
+ * @public
+ */
+EventEmitter.prototype.removeAllListeners = function removeAllListeners(event) {
+  var evt;
+
+  if (event) {
+    evt = prefix ? prefix + event : event;
+    if (this._events[evt]) clearEvent(this, evt);
+  } else {
+    this._events = new Events();
+    this._eventsCount = 0;
+  }
+
+  return this;
+};
+
+//
+// Alias methods names because people roll like that.
+//
+EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+
+//
+// Expose the prefix.
+//
+EventEmitter.prefixed = prefix;
+
+//
+// Allow `EventEmitter` to be imported as module namespace.
+//
+EventEmitter.EventEmitter = EventEmitter;
+
+//
+// Expose the module.
+//
+{
+  module.exports = EventEmitter;
+}
+});
+
 // Polyfills
 
 if ( Number.EPSILON === undefined ) {
@@ -51779,20 +52124,15 @@ const GLTFLoader = function () {
 
 } ();
 
-/**
- * Loader
- * @namespace
- */
-const Loader$1 = {
+/** Class for a Loader util */
+class Loader$1 {
 
 	/**
-	 * Initialises the Loader
+	 * Constructs a Loader instance
 	 *
-	 * @param {string|THREE.Mesh} meshToLoad - Either a THREE.Mesh to be added, or a path to the .gltf or .json file containing the mesh
-	 *
-	 * @returns {undefined};
+	 * @param {string|THREE.Mesh} meshToLoad - Either a THREE.Mesh to be added, or a path to the .gltf/.glb or .json file containing the mesh
 	 */
-	init(meshToLoad) {
+	constructor(meshToLoad) {
 		this.meshToLoad = meshToLoad;
 		if (typeof meshToLoad === 'string') {
 			if (meshToLoad.includes('gltf') || meshToLoad.includes('glb')) {
@@ -51803,7 +52143,7 @@ const Loader$1 = {
 		} else if (meshToLoad instanceof Object3D) {
 			this.type = 'Object3D';
 		}
-	},
+	}
 
 	/**
 	 * Loads a GLTF model
@@ -51820,7 +52160,7 @@ const Loader$1 = {
 				resolve(data.scene);
 			}, undefined, reject);
 		});
-	},
+	}
 
 	/**
 	 * Loads a JSON model
@@ -51835,12 +52175,12 @@ const Loader$1 = {
 			objWorldLoader.setCrossOrigin('');
 			objWorldLoader.load(this.meshToLoad, resolve, undefined, reject);
 		});
-	},
+	}
 
 	/**
 	 * Loads a model depending on its type
 	 *
-	 * @return {Promise} promise - Resolves to the loaded mesh
+	 * @returns {Promise} promise - Resolves to the loaded mesh
 	 */
 	load() {
 		return new Promise((resolve, reject) => {
@@ -51859,17 +52199,32 @@ const Loader$1 = {
 			}
 		});
 	}
+}
 
-};
-
-/**
- * Utils
- * @namespace
- */
-const Utils = {
+/** Class for all Utils */
+class Utils {
 
 	/** @property {number} eps - Floating point precision for quaternion rotation comparison */
-	eps: 0.00005,
+	static get eps() {
+		return this._eps || 0.00005;
+	}
+
+	static set eps(eps) {
+		this._eps = eps;
+	}
+
+	/** @property {boolean} isPresenting - Whether the page is in an immersive exclusive session */
+	static get isPresenting() {
+		if (typeof this._isPresenting === 'undefined') {
+			this._isPresenting = false;
+		}
+
+		return this._isPresenting;
+	}
+
+	static set isPresenting(isPresenting) {
+		this._isPresenting = isPresenting;
+	}
 
 	/**
 	 *  Debounces function so it is only called after n milliseconds without it not being called
@@ -51879,7 +52234,7 @@ const Utils = {
 	 *
 	 * @returns {Function} debouncedFunc - Debounced function
 	 */
-	debounce(func, delay) {
+	static debounce(func, delay) {
 		const debouncedFunc = function(...args) {
 			const later = () => {
 				debouncedFunc.id = null;
@@ -51889,7 +52244,7 @@ const Utils = {
 			debouncedFunc.id = setTimeout(later, delay);
 		};
 		return debouncedFunc;
-	},
+	}
 
 	/**
 	 * Compare both quaternions, and if the difference is big enough, activateTeleport
@@ -51899,212 +52254,17 @@ const Utils = {
 	 *
 	 * @returns {boolean} difference - Whether the difference is big enough
 	 */
-	areQuaternionsEqual(quaternion1, quaternion2) {
+	static areQuaternionsEqual(quaternion1, quaternion2) {
 		if (!Quaternion.prototype.isPrototypeOf(quaternion1) || !Quaternion.prototype.isPrototypeOf(quaternion2)) {
 			return false;
 		}
 		const difference = Math.abs(1 - quaternion1.dot(quaternion2));
 		return difference < this.eps;
-	},
-
-	isMobile() {
-
-	},
-
-	isIOS() {
-
 	}
-};
+}
 
-
-
-
-var utils = Object.freeze({
-	Utils: Utils,
-	Loader: Loader$1
-});
-
-/* eslint-disable */
-
-/**
- * @author dmarcos / https://github.com/dmarcos
- * @author mrdoob / http://mrdoob.com
- */
-
-const VRControls = function ( object, onError ) {
-
-	var scope = this;
-
-	var vrDisplay, vrDisplays;
-
-	var standingMatrix = new Matrix4();
-
-	var frameData = null;
-
-	if ( 'VRFrameData' in window ) {
-
-		frameData = new VRFrameData();
-
-	}
-
-	function gotVRDisplays( displays ) {
-
-		vrDisplays = displays;
-
-		if ( displays.length > 0 ) {
-
-			vrDisplay = displays[ 0 ];
-
-		} else {
-
-			if ( onError ) onError( 'VR input not available.' );
-
-		}
-
-	}
-
-	if ( navigator.getVRDisplays ) {
-
-		navigator.getVRDisplays().then( gotVRDisplays ).catch ( function () {
-
-			console.warn( 'THREE.VRControls: Unable to get VR Displays' );
-
-		} );
-
-	}
-
-	// the Rift SDK returns the position in meters
-	// this scale factor allows the user to define how meters
-	// are converted to scene units.
-
-	this.scale = 1;
-
-	// If true will use "standing space" coordinate system where y=0 is the
-	// floor and x=0, z=0 is the center of the room.
-	this.standing = false;
-
-	// Distance from the users eyes to the floor in meters. Used when
-	// standing=true but the VRDisplay doesn't provide stageParameters.
-	this.userHeight = 1.6;
-
-	this.getVRDisplay = function () {
-
-		return vrDisplay;
-
-	};
-
-	this.setVRDisplay = function ( value ) {
-
-		vrDisplay = value;
-
-	};
-
-	this.getVRDisplays = function () {
-
-		console.warn( 'THREE.VRControls: getVRDisplays() is being deprecated.' );
-		return vrDisplays;
-
-	};
-
-	this.getStandingMatrix = function () {
-
-		return standingMatrix;
-
-	};
-
-	this.update = function () {
-
-		if ( vrDisplay ) {
-
-			var pose;
-
-			if ( vrDisplay.getFrameData ) {
-
-				vrDisplay.getFrameData( frameData );
-				pose = frameData.pose;
-
-			} else if ( vrDisplay.getPose ) {
-
-				pose = vrDisplay.getPose();
-
-			}
-
-			if ( pose.orientation !== null ) {
-
-				object.quaternion.fromArray( pose.orientation );
-
-			}
-
-			if ( pose.position !== null ) {
-
-				object.position.fromArray( pose.position );
-
-			} else {
-
-				object.position.set( 0, 0, 0 );
-
-			}
-
-			if ( this.standing ) {
-
-				if ( vrDisplay.stageParameters ) {
-
-					object.updateMatrix();
-
-					standingMatrix.fromArray( vrDisplay.stageParameters.sittingToStandingTransform );
-					object.applyMatrix( standingMatrix );
-
-				} else {
-
-					object.position.setY( object.position.y + this.userHeight );
-
-				}
-
-			}
-
-			object.position.multiplyScalar( scope.scale );
-
-		}
-
-	};
-
-	this.resetPose = function () {
-
-		if ( vrDisplay ) {
-
-			vrDisplay.resetPose();
-
-		}
-
-	};
-
-	this.resetSensor = function () {
-
-		console.warn( 'THREE.VRControls: .resetSensor() is now .resetPose().' );
-		this.resetPose();
-
-	};
-
-	this.zeroSensor = function () {
-
-		console.warn( 'THREE.VRControls: .zeroSensor() is now .resetPose().' );
-		this.resetPose();
-
-	};
-
-	this.dispose = function () {
-
-		vrDisplay = null;
-
-	};
-
-};
-
-/**
- * Physics
- * @namespace
- */
-const Physics = {
+/** Utility class for the physics system*/
+class Physics {
 
 	/**
 	 * Checks if a mesh collides with a RayCaster
@@ -52112,9 +52272,9 @@ const Physics = {
 	 * @param {THREE.RayCaster} rayCaster - RayCaster that we want to see if it intersects
 	 * @param {THREE.Object3D} mesh - Mesh that we want to check if rayCaster intersects with
 	 *
-	 * @return {boolean|Object} If it intersects, it returns the intersection, if not, false
+	 * @returns {boolean|Object} If it intersects, it returns the intersection, if not, false
 	 */
-	checkRayCollision(rayCaster, mesh) {
+	static checkRayCollision(rayCaster, mesh) {
 		const isGroup = mesh instanceof Scene || mesh.children.length > 0;
 		const intersections = isGroup ? rayCaster.intersectObjects(mesh.children, true) : rayCaster.intersectObject(mesh, true);
 
@@ -52123,7 +52283,7 @@ const Physics = {
 		} else {
 			return false;
 		}
-	},
+	}
 
 	/**
 	 * Checks if two meshes intersect
@@ -52133,9 +52293,9 @@ const Physics = {
 	 * @param {number} height - Height up to which collisions are ignored
 	 * @param {THREE.Vector3} direction - Direction in which the mesh is currently moving
 	 *
-	 * @return {boolean}  Whether they intersect or not
+	 * @returns {boolean}  Whether they intersect or not
 	 */
-	checkMeshCollision(mesh, collisionArray, height, direction) {
+	static checkMeshCollision(mesh, collisionArray, height, direction) {
 		const box = new Box3();
 		box.setFromObject(mesh);
 		const boxMesh = new Box3Helper(box);
@@ -52174,334 +52334,7 @@ const Physics = {
 
 		return false;
 	}
-};
-
-/**
- * Teleportation
- * @namespace
- */
-const Teleportation = {
-
-	/** @property {number} rayCurvePoints - Number of points on the Ray Curve Mesh */
-	rayCurvePoints: 30,
-
-	/** @property {number} rayWidth - The Ray Curve's width (m) */
-	rayCurveWidth: 0.025,
-
-	/** @property {number} hitCylinderRadius - The HitCylinder's radius (m) */
-	hitCylinderRadius: 0.25,
-
-	/** @property {number} hitCylinderHeight - The HitCylinder's height (m) */
-	hitCylinderHeight: 0.3,
-
-	/** @property {number} maxAngle - Maximum angle a mesh can be in so you can teleport to it */
-	maxAngle: 45,
-
-	/** @property {THREE.Color} hitColor - Color applied to the Ray Curve and the Hit Cylinder when there's a valid intersection */
-	hitColor: new Color('#99ff99'),
-
-	/** @property {THREE.Color} missColor - Color applied to the Ray Curve and the Hit Cylinder */
-	missColor: new Color('#ff0000'),
-
-	/** @property {number} velocity - The ray's speed */
-	velocity: 5,
-
-	/** @property {number} _acceleration - Gravity */
-	acceleration: -9.8,
-
-	/**
-	 * @property {THREE.Vector3} _direction - The ray's direction
-	 *
-	 * @private
-	 */
-	_direction: new Vector3(),
-
-	/**
-	 * @property {THREE.Vector3} _shootAxis - Axis where the ray will be shooted at
-	 *
-	 * @private
-	 */
-	_shootAxis: new Vector3(0, 0, -1),
-
-	/**
-	 * @property {THREE.Vector3} _referenceNormal - The normal vector used to compare with the ray curve's landing angle and represents the y axis
-	 *
-	 * @private
-	 */
-	_referenceNormal: new Vector3(0, 1, 0),
-
-	/**
-	 * @property {number} _teleportActivationTimeout - Time (s) that needs to pass for the teleportation to activate
-	 *
-	 * @private
-	 */
-	_teleportActivationTimeout: 0.5,
-
-	/** @property {boolean} isRayCurveActive - Whether the ray is being displayed */
-	isRayCurveActive: false,
-
-	/**
-	 * @property {boolean} isTeleportActive - Whether the ray has been held at a specific position
-	 * for more than _teleportActivationTimeout
-	 */
-	isTeleportActive: false,
-
-	/** @property {boolean|THREE.Vector3} _hitPoint - Point where there was the last successful hit  */
-	hitPoint: false,
-
-	/**
-	 * Initialises teleportation component
-	 *
-	 * @param {Scene} scene - The scene to add teleporation controls to
-	 *
-	 * @return {undefined}
-	 */
-	init(scene) {
-		this.scene = scene;
-		this.rayCaster = new Raycaster();
-		this.rayCurve = this.renderRayCurve();
-		this.hitCylinder = this.renderHitCylinder();
-
-		this.scene.addToScene([this.rayCurve, this.hitCylinder], false, false);
-
-		this.activateTeleport = Utils.debounce(this.activateTeleport.bind(this), this._teleportActivationTimeout * 1000);
-	},
-
-	/**
-	 * Sets whether the Ray Curve is active or not
-	 *
-	 * @param {boolean} active - Whethere it's active
-	 *
-	 * @return {undefined}
-	 */
-	setRayCurveState(active) {
-		this.isRayCurveActive = active;
-	},
-
-	/**
-	 * Activates teleportation
-	 *
-	 * @return {undefined}
-	 */
-	activateTeleport() {
-		this.isTeleportActive = true;
-	},
-
-	/**
-	 * Resets teleportation
-	 *
-	 * @return {undefined}
-	 */
-	resetTeleport() {
-		this.setRayCurveState(false);
-		this.isTeleportActive = false;
-		clearTimeout(this.activateTeleport.id);
-		this.hitPoint = false;
-		this.rayCurve.visible = false;
-		this.hitCylinder.visible = false;
-	},
-
-	/**
-	 * Parabolic curve equation
-	 *
-	 * @param {number} point - Initial position
-	 * @param {number} velocity - Initial velocity
-	 * @param {number} acceleration - Acceleration, will normally be the value of gravity
-	 * @param {number} time - Time value
-	 *
-	 * @return {number} Position on the curve at {time}
-	 *
-	 * @private
-	 */
-	_parabolicCurveScalar(point, velocity, acceleration, time) {
-		return point + velocity * time + 0.5 * acceleration * time * time;
-	},
-
-	/**
-	 * Calculates a parabolic curve for a 3D Vector3
-	 *
-	 * @param {number} point - Initial position
-	 * @param {velocity} velocity - Initial velocity
-	 * @param {number} time - Time value
-	 *
-	 * @return {THREE.Vector3} Vector3 with the parabolic curve position for each axis
-	 *
-	 * @private
-	 */
-	_parabolicCurve(point, velocity, time) {
-		const returnedVector = new Vector3();
-		returnedVector.x = this._parabolicCurveScalar(point.x, velocity.x, 0, time);
-		returnedVector.y = this._parabolicCurveScalar(point.y, velocity.y, this.acceleration, time);
-		returnedVector.z = this._parabolicCurveScalar(point.z, velocity.z, 0, time);
-		return returnedVector;
-	},
-
-	/**
-	 * Sets each point of the ray
-	 *
-	 * @param {number} pointInCurve - Point in the ray
-	 * @param {THREE.Vector3} currentPoint - The current's point Vector3
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	 */
-	_setRayCurvePoint(pointInCurve, currentPoint) {
-		// As pointInCurve starts at 1, to set each vertex, it's more convenient for it to start at 0
-		pointInCurve--;
-		const posA = currentPoint.clone().add(this._direction);
-		const posB = currentPoint.clone().sub(this._direction);
-
-		let idx = 2 * 3 * pointInCurve;
-		this.rayCurve.vertices[idx++] = posA.x;
-		this.rayCurve.vertices[idx++] = posA.y;
-		this.rayCurve.vertices[idx++] = posA.z;
-
-		this.rayCurve.vertices[idx++] = posB.x;
-		this.rayCurve.vertices[idx++] = posB.y;
-		this.rayCurve.vertices[idx++] = posB.z;
-
-		this.rayCurve.geometry.attributes.position.needsUpdate = true;
-	},
-
-	_isValidNormalsAngle(collision) {
-		const collisionNormalMatrix = new Matrix3().getNormalMatrix(collision.object.matrixWorld);
-		const collisionNormal = collision.face.normal.clone().applyMatrix3(collisionNormalMatrix);
-		const angleNormal = this._referenceNormal.angleTo(collisionNormal);
-		return _Math.RAD2DEG * angleNormal <= this.maxAngle;
-	},
-
-	/**
-	 * Sets direction
-	 *
-	 * @param {THREE.Vector3} direction - Provided direction
-	 *
-	 * @return {undefined}
-	 */
-	_setDirection(direction) {
-		this._direction
-			.copy(direction)
-			.cross(this._referenceNormal)
-			.normalize()
-			.multiplyScalar(this.rayCurveWidth / 2);
-	},
-
-	/**
-	 * Renders the ray
-	 *
-	 * @return {THREE.Object3D} The ray's mesh
-	 */
-	renderRayCurve() {
-		const geometry = new BufferGeometry();
-		const vertices = new Float32Array(this.rayCurvePoints * 2 * 3);
-
-		geometry.addAttribute('position', new BufferAttribute(vertices, 3).setDynamic(true));
-		const material = new MeshBasicMaterial({
-			side: DoubleSide,
-			color: 0xff0000
-		});
-		const mesh = new Mesh(geometry, material);
-		mesh.drawMode = TriangleStripDrawMode;
-		mesh.frustumCulled = false;
-		mesh.vertices = vertices;
-		mesh.visible = false;
-
-		return mesh;
-	},
-
-	/**
-	 * Renders the hit cylinder
-	 *
-	 * @return {THREE.Object3D} The hit cylinder
-	 */
-	renderHitCylinder() {
-		const hitCylinder = new Group();
-		const geometry = new CylinderGeometry(this.hitCylinderRadius, this.hitCylinderRadius, this.hitCylinderHeight, 8, 1, true);
-		const material = new MeshBasicMaterial({
-			side: DoubleSide,
-			color: this.hitColor
-		});
-		const mesh = new Mesh(geometry, material);
-		mesh.position.set(0, this.hitCylinderHeight / 2, 0);
-		hitCylinder.add(mesh);
-		hitCylinder.visible = false;
-
-		return hitCylinder;
-	},
-
-	/**
-	 * Updates the ray, when active, depending on the world position
-	 *
-	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
-	 *
-	 * @return {undefined}
-	 */
-	updateRayCurve(controller) {
-		if (!controller || !(controller instanceof Object3D) && !(controller.model instanceof Object3D)) {
-			this.setRayCurveState(false);
-			return;
-		}
-
-		/**
-		 * Updated renders depend on movement/rotation and debounce activateTeleport there
-		 * but on initial render we also need to debounce activateTeleport or it won't do anything
-		 * as there is no movement necessarily on the first click
-		 */
-		const initialRender = !this.rayCurve.visible;
-		this.hitCylinder.visible = false;
-		this.hitPoint = false;
-		this.rayCurve.visible = true;
-		this.rayCurve.material.color.set(this.missColor);
-
-		controller = controller.model || controller;
-		const quaternion = controller.getWorldQuaternion();
-		const direction = this._shootAxis.clone().applyQuaternion(quaternion).normalize();
-		this._setDirection(direction);
-		const position = controller.position.clone();
-		const velocity = direction.clone().multiplyScalar(this.velocity);
-
-		const lastSegment = position.clone();
-		const nextSegment = new Vector3();
-		const collisionMesh = this.scene.scene.getObjectByName('HolonetMainScene');
-		for (let i = 1; i <= this.rayCurvePoints; i++) {
-			const time = i / this.rayCurvePoints;
-			nextSegment.copy(this._parabolicCurve(position, velocity, time));
-
-			const directionLastNextSegments = nextSegment.clone().sub(lastSegment).normalize();
-			this.rayCaster.far = directionLastNextSegments.length();
-			this.rayCaster.set(lastSegment, directionLastNextSegments);
-
-			const intersection = Physics.checkRayCollision(this.rayCaster, collisionMesh);
-			if (intersection) {
-				const point = intersection.point;
-
-				// If hit, just fill the rest of the points with the hit point and break the loop
-				for (let j = i; j <= this.rayCurvePoints; j++) {
-					this._setRayCurvePoint(j, point);
-				}
-
-				if (this._isValidNormalsAngle(intersection)) {
-					this.rayCurve.material.color.set(this.hitColor);
-					this.hitCylinder.position.copy(point);
-					this.hitCylinder.visible = true;
-					this.hitPoint = point;
-					if (initialRender) {
-						this.activateTeleport();
-					}
-				}
-
-				break;
-			} else {
-				this._setRayCurvePoint(i, nextSegment);
-				lastSegment.copy(nextSegment);
-			}
-		}
-
-		if (!this.hitPoint) {
-			clearTimeout(this.activateTeleport.id);
-		}
-	}
-};
+}
 
 /* eslint-disable */
 
@@ -53812,31 +53645,31 @@ const ControllerButtons = {
 const eyesToElbow = new Vector3(0.175, -0.3, -0.03);
 const forearm = new Vector3(0, 0, -0.175);
 
-/**
- * PoseController
- * @namespace
- */
-const PoseController = {
+/** Class wrapper for all controllers that have a pose */
+class PoseController {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
-	pressedButtons: {},
+	get pressedButtons() {
+		if (!this._pressedButtons) {
+			this._pressedButtons = {};
+		}
+		return this._pressedButtons;
+	}
 
 	/**
 	 * Initialises a PoseController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
-	 * @param {Locomotion} locomotion - Locomotion instance this controller is associated to
-	 *
-	 * @return {undefined}
 	 */
-	init(gamepad, locomotion) {
-		this.locomotion = locomotion;
+	constructor(gamepad) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
 		this.gamepadId = gamepad.id;
 
 		this.quaternion = new Quaternion();
-		this.prevQuaternion = new Quaternion();
 		this.euler = new Euler();
 		// Some controllers don't return an orientation and position until further on
 		if (gamepad.pose.orientation) {
@@ -53860,11 +53693,13 @@ const PoseController = {
 			objLoader.setMaterials(materials);
 			objLoader.load(`${modelPath}.obj`, (model) => {
 				this.model = model;
-				this.locomotion.scene.addToScene(this.model, false, false);
+				this.emit('add', {
+					mesh: model
+				});
 				this._configureControllerModel(gamepad.id, modelRootPath);
 			});
 		});
-	},
+	}
 
 	/**
 	 * Configures the controller model depending on the controller
@@ -53890,7 +53725,7 @@ const PoseController = {
 			this.model.material.color = new Color(1, 1, 1);
 			break;
 		}
-	},
+	}
 
 	/**
 	 * Activates transportation if thumbpad is pressed
@@ -53901,15 +53736,9 @@ const PoseController = {
 	 */
 	handleThumbpadPressed(state) {
 		if (state) {
-			if (this.locomotion.teleportation.isRayCurveActive) {
-				this.locomotion.teleportation.resetTeleport();
-			} else {
-				clearTimeout(this._thumbpadTouchedTimeout);
-				this.locomotion.stopTranslateZ();
-				this.locomotion.teleportation.setRayCurveState(true);
-			}
+			this.emit('thumbpadpressed');
 		}
-	},
+	}
 
 	/**
 	 * Activates z translation if thumbpad is touched
@@ -53919,15 +53748,12 @@ const PoseController = {
 	 * @return {undefined}
 	 */
 	handleThumbpadTouched(state) {
-		if (state && !this.locomotion.teleportation.isRayCurveActive) {
-			this._thumbpadTouchedTimeout = setTimeout(() => {
-				this.locomotion.translateZ(-this.locomotion.velocity);
-			}, 500);
+		if (state) {
+			this.emit('thumbpadtouched');
 		} else {
-			clearTimeout(this._thumbpadTouchedTimeout);
-			this.locomotion.stopTranslateZ();
+			this.emit('thumbpaduntouched');
 		}
-	},
+	}
 
 	/**
 	 * Handles trigger pressed
@@ -53938,12 +53764,9 @@ const PoseController = {
 	 */
 	handleTriggerPressed(state) {
 		if (state) {
-			// Hack until controllers are separated from locomotion
-			this.locomotion.virtualPersona.interactions.selection.select();
-		} else {
-			this.locomotion.virtualPersona.interactions.selection.unselect();
+			this.emit('trigger');
 		}
-	},
+	}
 
 	/**
 	 * Handles grip pressed
@@ -53954,7 +53777,7 @@ const PoseController = {
 	 */
 	handleGripPressed(state) {
 		
-	},
+	}
 
 	/**
 	 * Handles menu pressed
@@ -53965,19 +53788,21 @@ const PoseController = {
 	 */
 	handleAppMenuPressed(state) {
 		
-	},
+	}
 
 	/**
-	 * Gets latest information from gamepad
+	 * Gets latest information from gamepad and updates the model based on it
+	 * It applies an arm model if it's a 3DOF controller
+	 * It also applies the handlers for different buttons
 	 *
 	 * @return {undefined}
 	 */
-	update() {
-		const gamepad = this.locomotion.controllers.getGamepad(this.id);
+	update(camera, userHeight, standingMatrix) {
+		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
 			// Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
-			this.locomotion.controllers.removeController({
+			this.emit('controllerdisconnected', {
 				id: this.gamepadId,
 				hand: this.hand
 			});
@@ -53985,7 +53810,6 @@ const PoseController = {
 		}
 
 		if (gamepad.pose.orientation) {
-			this.prevQuaternion.copy(this.quaternion);
 			this.quaternion.fromArray(gamepad.pose.orientation || [0, 0, 0, 1]);
 		}
 
@@ -53995,23 +53819,23 @@ const PoseController = {
 
 		if (this.armModel) {
 			// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-			this.position.copy(this.locomotion.scene.camera.position);
+			this.position.copy(camera.position);
 			// Set offset for degenerate "arm model" to elbow
 			this.offset.set(
 				this.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // Hand is to your left, or right
 				eyesToElbow.y, // Lower than your eyes
 				eyesToElbow.z); // Slightly out in front
 			// Scale offset by user height
-			this.offset.multiplyScalar(this.locomotion.virtualPersona.userHeight);
+			this.offset.multiplyScalar(userHeight);
 			// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-			this.offset.applyAxisAngle(VERTICAL_VECTOR, this.locomotion.scene.camera.rotation.y);
+			this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
 			// Apply rotated offset to camera position
 			this.position.add(this.offset);
 
 			// Set offset for degenerate "arm model" forearm
 			this.offset.set(forearm.x, forearm.y, forearm.z); // Forearm sticking out from elbow
 			// Scale offset by user height
-			this.offset.multiplyScalar(this.locomotion.virtualPersona.userHeight);
+			this.offset.multiplyScalar(userHeight);
 			// Apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
 			this.euler.setFromQuaternion(this.quaternion);
 			this.euler.set(this.euler.x, this.euler.y, 0);
@@ -54025,20 +53849,12 @@ const PoseController = {
 			this.model.position.copy(this.position);
 		}
 
-		const standingMatrix = this.locomotion.virtualPersona.vrControls.getStandingMatrix();
-		this.model.matrixAutoUpdate = false;
-		this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-		this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-		this.model.matrixWorldNeedsUpdate = true;
-		this.model.position.y += this.locomotion.virtualPersona.userHeight;
-
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.prevQuaternion, this.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
-			}
+		if (this.model) {
+			this.model.matrixAutoUpdate = false;
+			this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
+			this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
+			this.model.matrixWorldNeedsUpdate = true;
+			this.model.position.y += userHeight;
 		}
 
 		for (const buttonName of Object.keys(ControllerButtons)) {
@@ -54058,78 +53874,62 @@ const PoseController = {
 			}
 		}
 	}
-};
+}
 
 const ControllerButtons$1 = {
 	'Trigger': 0
 };
 
-/**
- * GamepadController
- * @namespace
- */
-const GamepadController = {
+/** Class wrapped for gamepad-like controllers that don't have a pose */
+class GamepadController {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
-	pressedButtons: {},
+	get pressedButtons() {
+		if (!this._pressedButtons) {
+			this._pressedButtons = {};
+		}
+		return this._pressedButtons;
+	}
 
 	/**
 	 * Initialises a GamepadController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
-	 * @param {Locomotion} locomotion - Locomotion instance this controller is associated to
-	 *
-	 * @return {undefined}
 	 */
-	init(gamepad, locomotion) {
-		this.locomotion = locomotion;
+	constructor(gamepad) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
 		this.id = `${gamepad.id} (${gamepad.hand})`;
-		this.cameraQuaternion = new Quaternion().fromArray(this.locomotion.scene.camera.quaternion);
-	},
+	}
 
 	/**
-	 * Activates transportation if trigger is pressed
+	 * Activates teleportation if trigger is pressed
 	 *
 	 * @param {boolean} state - Whether trigger is pressed
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	handleTriggerPressed(state) {
 		if (state) {
-			if (this.locomotion.virtualPersona.interactions.selection.isHovering) {
-				this.locomotion.virtualPersona.interactions.selection.select();
-				return;
-			}
-
-			if (this.locomotion.teleportation.isRayCurveActive) {
-				this.locomotion.teleportation.resetTeleport();
-			} else {
-				this.locomotion.teleportation.setRayCurveState(true);
-			}
-		} else {
-			this.locomotion.virtualPersona.interactions.selection.unselect();
+			this.emit('trigger');
 		}
-	},
+	}
 
+	/**
+	 * Gets latest information from gamepad
+	 * It also applies the handlers for different buttons
+	 *
+	 * @returns {undefined}
+	 */
 	update() {
-		const gamepad = this.locomotion.controllers.getGamepad(this.id);
+		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
 			// Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
-			this.locomotion.controllers.removeController({id: this.id});
+			this.emit('controllerdisconnected', {id: this.id});
 			return;
 		}
-
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(this.cameraQuaternion, this.locomotion.scene.camera.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
-			}
-		}
-
-		this.cameraQuaternion.copy(this.locomotion.scene.camera.quaternion);
 
 		for (const buttonName of Object.keys(ControllerButtons$1)) {
 			const buttonId = ControllerButtons$1[buttonName];
@@ -54144,225 +53944,19 @@ const GamepadController = {
 			}
 		}
 	}
-};
+}
 
-/**
- * Controllers
- * @namespace
- */
-const Controllers = {
+/** Class for keyboard inputs */
+class KeyboardController {
 
-	/** @property {object} currentControllers - maps of controller ids to controller instances */
-	currentControllers: {},
-	/** @property {PoseController} mainHandController - Controller associated to your main hand */
-	mainHandController: null,
+	/** Listens to keyboard presses and emits accordingly */
+	constructor() {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
 
-	/**
-	 * Initialises a Controllers instance
-	 *
-	 * @param {Locomotion} locomotion - Locomotion instance ccontrollers will be associated to
-	 *
-	 * @return {undefined}
-	 */
-	init(locomotion) {
-		this.locomotion = locomotion;
-		this.updateControllers();
-	},
-
-	/**
-	 * Gets unique GamePad id
-	 *
-	 * @param {Gamepad} gamepad - Gamepad to generate id from
-	 *
-	 * @return {string} id
-	 */
-	getGamepadId(gamepad) {
-		const id = `${gamepad.id} (${gamepad.hand})`;
-		return id;
-	},
-
-	/**
-	 * Gets GamePad in its latest state
-	 *
-	 * @param {string} id - The gamepad's id that you want to receive
-	 *
-	 * @return {Gamepad} gamepad
-	 */
-	getGamepad(id) {
-		const gamepads = navigator.getGamepads();
-
-		for (const gamepad of gamepads) {
-			if (gamepad && this.getGamepadId(gamepad) === id) {
-				return gamepad;
-			}
-		}
-	},
-
-	/**
-	 * Adds a controller to the list
-	 *
-	 * @param {Gamepad} gamepad - Controller to add
-	 *
-	 * @return {undefined}
-	 */
-	addController(gamepad) {
-		if (!gamepad) {
-			return;
-		}
-
-		const gamepadId = this.getGamepadId(gamepad);
-		if (!this.currentControllers[gamepadId]) {
-			if (gamepad.pose) {
-				const poseController = Object.create(PoseController);
-				poseController.init(gamepad, this.locomotion);
-				this.currentControllers[gamepadId] = poseController;
-				this.mainHandController = poseController;
-			} else {
-				const gamepadController = Object.create(GamepadController);
-				gamepadController.init(gamepad, this.locomotion);
-				this.currentControllers[gamepadId] = gamepadController;
-			}
-		}
-	},
-
-	/**
-	 * Removes a controller from the list
-	 *
-	 * @param {Gamepad} gamepad - Controller to Adds
-	 *
-	 * @return {undefined}
-	 */
-	removeController(gamepad) {
-		const gamepadId = this.getGamepadId(gamepad);
-		if (this.mainHandController && this.mainHandController.id === gamepad.id) {
-			this.mainHandController = null;
-		}
-		if (this.currentControllers[gamepadId]) {
-			if (this.currentControllers[gamepadId].model) {
-				this.currentControllers[gamepadId].model.visible = false;
-			}
-			delete this.currentControllers[gamepadId];
-		}
-	},
-
-	/**
-	 * Updates controller list
-	 *
-	 * @param {Event} event - Gamepad connection event object
-	 * @param {boolean} connected - Whether a given gamepad is being connected or not
-	 *
-	 * @return {undefined}
-	 */
-	updateControllers(event, connected) {
-		if (event) {
-			if (connected) {
-				this.addController(event.gamepad);
-			} else {
-				this.removeController(event.gamepad);
-			}
-		} else {
-			const gamepads = navigator.getGamepads();
-			for (const gamepad of gamepads) {
-				this.addController(gamepad);
-			}
-		}
+		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
+		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
 	}
-};
-
-// Gamepads: Xbox, Oculus Remote, Touch, Vive Wands, button (gearvr and cardboard), Daydream remote
-// Keyboard / Mouse
-// Directional movement and teleportation
-
-/**
- * Locomotion
- * @namespace
- */
-const Locomotion = {
-
-	/** @property {number} velocity - translation velocity in m/s */
-	velocity: 1.5,
-	/** @property {number} angularVelocity - angular velocity */
-	angularVelocity: 1,
-	/**
-	 * @property {number} phi - current phi euler angle
-	 *
-	 * @private
-	 */
-	_phi: 0,
-	/**
-	 * @property {number} theta - current theta euler angle
-	 *
-	 * @private
-	 */
-	_theta: 0,
-	/**
-	 * @property {object} orientation - contains quaternion and euler angles
-	 * @property {THREE.Quaternion} orientation.quaternion - Quaternion representing the orientation set by phi and theta
-	 * @property {THREE.Euler} orientation.euler - Euler angles representing the orientation set by phi and theta
-	 */
-	orientation: {
-		quaternion: new Quaternion(),
-		euler: new Euler()
-	},
-	/** @property {THREE.Vector2} currentRotation - current rotation vector */
-	currentRotation: new Vector2(),
-	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
-	translatingZ: false,
-	/** @property {boolean|number} translatingX - is there translation in the X axis and by how much */
-	translatingX: false,
-
-	/**
-	 * Initialises a Locomotion instance for a VirtualPersona
-	 *
-	 * @param {VirtualPersona} virtualPersona - The VirtualPersona this will add movement controls to
- 	 *
-	 * @return {undefined}
-	 */
-	init(virtualPersona) {
-		if (!virtualPersona || !VirtualPersona.isPrototypeOf(virtualPersona)) {
-			throw 'A VirtualPersona is required';
-		}
-
-		this._canvas = virtualPersona.scene.renderer.domElement;
-		this._moveHandler = this._moveHandler.bind(this);
-		this.scene = virtualPersona.scene;
-		this.virtualPersona = virtualPersona;
-
-		this.initKeyboardInput();
-		this.initMouseInput();
-		this.initTouchInput();
-		this.initGamepadInputs();
-
-		this.teleportation = Object.create(Teleportation);
-		this.teleportation.init(this.scene);
-	},
-
-	translateZ(velocity) {
-		this.translatingZ = velocity;
-	},
-
-	translateX(velocity) {
-		this.translatingX = velocity;
-	},
-
-	stopTranslateZ() {
-		this.translatingZ = false;
-	},
-
-	stopTranslateX() {
-		this.translatingX = false;
-	},
-
-	/**
-	 * Helper function that moves the first person camera along to a position in the scene
-	 *
-	 * @param {array} position - Vector array containing the new position for the camera
-	 *
-	 * @return {undefined}
-	*/
-	translateTo(position) {
-		this.currentPosition.position.set(...position);
-	},
 
 	/**
 	 * Handles direction keys to move the VirtualPersona
@@ -54378,25 +53972,33 @@ const Locomotion = {
 		// Up or w
 		case 87:
 		case 38:
-			this.translateZ(-this.velocity);
+			this.emit('ztranslationstart', {
+				direction: -1
+			});
 			break;
 		// Down or s
 		case 83:
 		case 40:
-			this.translateZ(this.velocity);
+			this.emit('ztranslationstart', {
+				direction: 1
+			});
 			break;
 		// Left or a
 		case 65:
 		case 37:
-			this.translateX(-this.velocity);
+			this.emit('xtranslationstart', {
+				direction: -1
+			});
 			break;
 		// Right or d
 		case 68:
 		case 39:
-			this.translateX(this.velocity);
+			this.emit('xtranslationstart', {
+				direction: 1
+			});
 			break;
 		}
-	},
+	}
 
 	/**
 	 * Handles direction keys to move the VirtualPersona
@@ -54414,27 +54016,86 @@ const Locomotion = {
 		case 38:
 		case 83:
 		case 40:
-			this.stopTranslateZ();
+			this.emit('ztranslationend');
 			break;
 		// Left or a, right or d
 		case 65:
 		case 37:
 		case 68:
 		case 39:
-			this.stopTranslateX();
+			this.emit('xtranslationend');
 			break;
 		}
-	},
+	}
+}
+
+class PointerController {
+
+	/** @property {THREE.Vector2} rotation - rotation vector */
+	get rotation() {
+		if (!this._rotation) {
+			this._rotation = new Vector2();
+		}
+		return this._rotation;
+	}
+
+	set rotation(rotation) {
+		this._rotation = rotation;
+	}
 
 	/**
-	 * Listens to keyboard presses and translates VirtualPersona accordingly
+	 * Listens to touch events and mouse click and emits appropriate events
 	 *
 	 * @return {undefined}
 	*/
-	initKeyboardInput() {
-		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
-		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
-	},
+	constructor(canvas) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+	
+		this._canvas = canvas;
+		this._theta = 0;
+		this._phi = 0;
+
+		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
+		this._canvas.addEventListener('click', this._handleClick.bind(this));
+
+		this._canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
+		this._canvas.addEventListener('touchend', () => {
+			this.emit('ztranslationend');
+		});
+		this._canvas.addEventListener('touchmove', this._moveHandler);
+	}
+
+	/**
+	 * Handles touch inputs to listen to doueble taps
+	 *
+	 * @param {Event} event - Event object
+	 *
+	 * @return {undefined}
+	 *
+	 * @private
+	 */
+	_handleTouchStart(event) {
+		if (event.touches.length > 1) {
+			return;
+		}
+
+		this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
+
+		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
+		if (timeDelta < 250 || Utils.isPresenting) {
+			this.emit('ztranslationstart', {
+				direction: -1
+			});
+		} else {
+			this.emit('trigger', {
+				touch: true
+			});
+
+			this._lastTouch = event.timeStamp;
+		}
+
+	}
 
 	/**
 	 * Handler to rotate VirtualPersona on mousemove and touchmove
@@ -54447,81 +54108,21 @@ const Locomotion = {
 	*/
 	_moveHandler(event) {
 		// Gets the new rotation vector
-		const rotation = new Vector2();
 		if (event.touches) {
 			if (event.touches.length > 1) {
 				return;
 			}
 
-			rotation.set(event.touches[0].pageX, event.touches[0].pageY);
+			this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
 		} else {
-			rotation.set(this.currentRotation.x - event.movementX,
-				this.currentRotation.y - event.movementY);
+			this.rotation.set(this.rotation.x - event.movementX,
+				this.rotation.y - event.movementY);
 		}
 
-		// Calculates the delta between the current move event and the previous one
-		const rotationDelta = new Vector2();
-		rotationDelta.subVectors(rotation, this.currentRotation);
-
-		// Saves current rotation for next move event
-		this.currentRotation.copy(rotation);
-
-		// Calculates cumulative euler angles
-		const phi = this._phi + 2 * Math.PI * rotationDelta.y / screen.height * this.angularVelocity;
-		this._phi = Math.max(-Math.PI/2, Math.min(phi, Math.PI/2));
-		this._theta += 2 * Math.PI * rotationDelta.x / screen.width * this.angularVelocity;
-
-		this.orientation.euler.set(this._phi, this._theta, 0, 'YXZ');
-		this.orientation.quaternion.setFromEuler(this.orientation.euler);
-
-		if (this.teleportation.hitPoint) {
-			// Debounced function
-			this.teleportation.activateTeleport();
-		}
-	},
-
-	/**
-	 * Handles pointer lock changes to enable/disable mousemouve event handlers
-	 *
-	 * @param {CanvasHTMLElement} canvas - Canvas that locks the pointer
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	*/
-	_handlePointerLockChange() {
-		if (document.pointerLockElement === this._canvas) {
-			document.addEventListener('mousemove', this._moveHandler);
-		} else {
-			this.teleportation.resetTeleport();
-			document.removeEventListener('mousemove', this._moveHandler);
-		}
-	},
-
-	/**
-	 * Locks the pointer if not displaying to an HMD when canvas is clicked
-	 *
-	 * @param {Event} event - Event supplied
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	*/
-	_pointerLock(event) {
-		this.currentRotation.set(event.clientX, event.clientY);
-		this._canvas.requestPointerLock();
-	},
-
-	/**
-	 * Handles teleportation
-	 *
-	 * @return {undefined}
-	 *
-	 * @private
-	 */
-	_handleTeleportation() {
-		this.teleportation.setRayCurveState(true);
-	},
+		this.emit('orientation', {
+			rotation: this.rotation
+		});
+	}
 
 	/**
 	 * Handles click events. Either locks the pointer, or if it's already locked, shows the teleportation ray curve
@@ -54536,1183 +54137,372 @@ const Locomotion = {
 		if (!document.pointerLockElement) {
 			this._pointerLock(event);
 		} else {
-			if (this.virtualPersona.interactions.selection.isHovering) {
-				this.virtualPersona.interactions.selection.select();
-				return;
-			}
-
-			if (this.teleportation.isRayCurveActive) {
-				this.teleportation.resetTeleport();
-			} else {
-				this._handleTeleportation();
-			}
+			this.emit('trigger');
 		}
-	},
+	}
 
 	/**
-	 * Listens to mouse click to lock the cursor to rotate the VirtualPersona
+	 * Handles pointer lock changes to enable/disable mousemouve event handlers
+	 *
+	 * @param {CanvasHTMLElement} canvas - Canvas that locks the pointer
 	 *
 	 * @return {undefined}
-	 *
-	*/
-	initMouseInput() {
-		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
-		this._canvas.addEventListener('click', this._handleClick.bind(this));
-	},
-
-	/**
-	 * Handles touch inputs to listen to doueble taps
-	 *
-	 * @param {Event} event - Event object
-	 *
-	 *	@return {undefined}
 	 *
 	 * @private
-	 */
-	_handleTouchStart(event) {
-		if (event.touches.length > 1) {
-			return;
-		}
-
-		if (this.virtualPersona.interactions.selection.isHovering) {
-			this.virtualPersona.interactions.selection.select();
-			return;
-		}
-
-		this.currentRotation.set(event.touches[0].pageX, event.touches[0].pageY);
-
-		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
-		if (timeDelta < 250 || this.scene.vrEffect.isPresenting) {
-			this.translateZ(-this.velocity);
-		} else {
-			this._lastTouch = event.timeStamp;
-		}
-
-	},
-
-	/**
-	 * Listens to touch events to rotate and translate the VirtualPersona
-	 *
-	 * @return {undefined}
 	*/
-	initTouchInput() {
-		this._canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
-		this._canvas.addEventListener('touchend', this.stopTranslateZ.bind(this));
-		this._canvas.addEventListener('touchmove', this._moveHandler);
-	},
-
-	_handleGamepadConnected(event) {
-		this.controllers.updateControllers(event, true);
-	},
-
-	_handleGamepadDisconnected(event) {
-		this.controllers.updateControllers(event, false);
-	},
+	_handlePointerLockChange() {
+		if (document.pointerLockElement === this._canvas) {
+			document.addEventListener('mousemove', this._moveHandler);
+		} else {
+			document.removeEventListener('mousemove', this._moveHandler);
+		}
+	}
 
 	/**
-	 * Looks for gamepads and initialises them
+	 * Locks the pointer if not displaying to an HMD when canvas is clicked
+	 *
+	 * @param {Event} event - Event supplied
 	 *
 	 * @return {undefined}
-	 */
-	initGamepadInputs() {
-		this.controllers = Object.create(Controllers);
-		this.controllers.init(this);
+	 *
+	 * @private
+	*/
+	_pointerLock(event) {
+		this.rotation.set(event.clientX, event.clientY);
+		this._canvas.requestPointerLock();
+	}
+}
+
+/** Class to act as a wrapper for all controllers */
+class Controllers {
+
+	/** @property {object} currentControllers - maps of controller ids to controller instances */
+	get currentControllers() {
+		if (!this._currentControllers) {
+			this._currentControllers = {};
+		}
+		return this._currentControllers;
+	}
+
+	set currentControllers(currentControllers) {
+		this._currentControllers = currentControllers;
+	}
+
+	/** @property {PoseController} mainHandController - Controller associated to your main hand */
+	get mainHandController() {
+		if (typeof this._mainHandController === 'undefined') {
+			this._mainHandController = null;
+		}
+		return this._mainHandController;
+	}
+
+	set mainHandController(mainHandController) {
+		this._mainHandController = mainHandController;
+	}
+
+	/** Initialises a Controllers instance */
+	constructor(canvas) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+	
 		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
 		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
-	}
-};
 
-/* eslint-disable */
-
-/**
- * @author dmarcos / https://github.com/dmarcos
- * @author mrdoob / http://mrdoob.com
- *
- * WebVR Spec: http://mozvr.github.io/webvr-spec/webvr.html
- *
- * Firefox: http://mozvr.com/downloads/
- * Chromium: https://webvr.info/get-chrome
- *
- */
-
-const VREffect = function( renderer, onError ) {
-
-	var vrDisplay, vrDisplays;
-	var eyeTranslationL = new Vector3();
-	var eyeTranslationR = new Vector3();
-	var renderRectL, renderRectR;
-
-	var frameData = null;
-
-	if ( 'VRFrameData' in window ) {
-
-		frameData = new window.VRFrameData();
-
+		// TODO: Check if it's a mobile device or standalone
+		this.currentControllers['KeyboardController'] = new KeyboardController();
+		this.currentControllers['PointerController'] = new PointerController(canvas);
+		this._setUpEventListeners(this.currentControllers['KeyboardController']);
+		this._setUpEventListeners(this.currentControllers['PointerController']);
+		this.updateControllers();
 	}
 
-	function gotVRDisplays( displays ) {
+	/**
+	 * Helper that forwards events from controllers
+	 *
+	 * @param {EventEmitter} emitter - Controller that can emit events
+	 *
+	 * @returns {undefined}
+	 */
+	_setUpEventListeners(emitter) {
+		if (Object.getPrototypeOf(emitter) === KeyboardController.prototype) {
+			emitter.on('ztranslationstart', (event) => {
+				this.emit('ztranslationstart', event);
+			});
 
-		vrDisplays = displays;
+			emitter.on('xtranslationstart', (event) => {
+				this.emit('xtranslationstart', event);
+			});
 
-		if ( displays.length > 0 ) {
+			emitter.on('ztranslationend', (event) => {
+				this.emit('ztranslationend', event);
+			});
 
-			vrDisplay = displays[ 0 ];
-
-		} else {
-
-			if ( onError ) onError( 'HMD not available' );
-
+			emitter.on('xtranslationend', (event) => {
+				this.emit('xtranslationend', event);
+			});
 		}
 
+		if (Object.getPrototypeOf(emitter) === PointerController.prototype) {
+			emitter.on('ztranslationstart', (event) => {
+				this.emit('ztranslationstart', event);
+			});
+
+			emitter.on('ztranslationend', (event) => {
+				this.emit('ztranslationend', event);
+			});
+
+			emitter.on('orientation', (event) => {
+				this.emit('orientation', event);
+			});
+
+			emitter.on('trigger', (event) => {
+				this.emit('trigger', event);
+			});
+		}
+
+		if (Object.getPrototypeOf(emitter) === GamepadController.prototype) {
+			emitter.on('controllerdisconnected', (event) => {
+				this.removeController(event);
+			});
+
+			emitter.on('trigger', (event) => {
+				this.emit('trigger', event);
+			});
+		}
+
+		if (Object.getPrototypeOf(emitter) === PoseController.prototype) {
+			emitter.on('controllerdisconnected', (event) => {
+				this.removeController(event);
+			});
+
+			emitter.on('trigger', (event) => {
+				this.emit('trigger', event);
+			});
+
+			emitter.on('add', (event) => {
+				this.emit('add', event);
+			});
+
+			emitter.on('thumpadpressed', (event) => {
+				this.emit('thumpadpressed', event);
+			});
+		}
 	}
 
-	if ( navigator.getVRDisplays ) {
-
-		navigator.getVRDisplays().then( gotVRDisplays ).catch( function() {
-
-			console.warn( 'THREE.VREffect: Unable to get VR Displays' );
-
-		} );
-
+	/**
+	 * Helper function that removes all event handlers from an emitter
+	 *
+	 * @param {EventEmitter} emitter - Controller that has event handlers set up
+	 *
+	 * @returns {undefined}
+	 */
+	_removeEventListeners(emitter) {
+		emitter.removeAllListeners('ztranslationstart')
+			.removeAllListeners('xtranslationstart')
+			.removeAllListeners('ztranslationend')
+			.removeAllListeners('xtranslationend')
+			.removeAllListeners('orientation')
+			.removeAllListeners('controllerdisconnected')
+			.removeAllListeners('add')
+			.removeAllListeners('trigger')
+			.removeAllListeners('thumbpadpressed');
 	}
 
-	//
-
-	this.isPresenting = false;
-	this.scale = 1;
-
-	var scope = this;
-
-	var rendererSize = renderer.getSize();
-	var rendererUpdateStyle = false;
-	var rendererPixelRatio = renderer.getPixelRatio();
-
-	this.getVRDisplay = function() {
-
-		return vrDisplay;
-
-	};
-
-	this.setVRDisplay = function( value ) {
-
-		vrDisplay = value;
-
-	};
-
-	this.getVRDisplays = function() {
-
-		console.warn( 'THREE.VREffect: getVRDisplays() is being deprecated.' );
-		return vrDisplays;
-
-	};
-
-	this.setSize = function( width, height, updateStyle ) {
-
-		rendererSize = { width: width, height: height };
-		rendererUpdateStyle = updateStyle;
-
-		if ( scope.isPresenting ) {
-
-			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
-			renderer.setPixelRatio( 1 );
-			renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
-
-		} else {
-
-			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( width, height, updateStyle );
-
-		}
-
-	};
-
-	// VR presentation
-
-	var canvas = renderer.domElement;
-	var defaultLeftBounds = [ 0.0, 0.0, 0.5, 1.0 ];
-	var defaultRightBounds = [ 0.5, 0.0, 0.5, 1.0 ];
-
-	function onVRDisplayPresentChange() {
-
-		var wasPresenting = scope.isPresenting;
-		scope.isPresenting = vrDisplay !== undefined && vrDisplay.isPresenting;
-
-		if ( scope.isPresenting ) {
-
-			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
-			var eyeWidth = eyeParamsL.renderWidth;
-			var eyeHeight = eyeParamsL.renderHeight;
-
-			if ( ! wasPresenting ) {
-
-				rendererPixelRatio = renderer.getPixelRatio();
-				rendererSize = renderer.getSize();
-
-				renderer.setPixelRatio( 1 );
-				renderer.setSize( eyeWidth * 2, eyeHeight, false );
-
-			}
-
-		} else if ( wasPresenting ) {
-
-			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( rendererSize.width, rendererSize.height, rendererUpdateStyle );
-
-		}
-
+	/**
+	 * Event handler for 'gamepadconnected' indicating the controllers that a controller has been added
+	 *
+	 * @param {Event} event - Event object with the gamepad information
+	 *
+	 * @returns {undefined}
+	 *
+	 * @private
+	 */
+	_handleGamepadConnected(event) {
+		this.updateControllers(event, true);
 	}
 
-	window.addEventListener( 'vrdisplaypresentchange', onVRDisplayPresentChange, false );
-
-	this.setFullScreen = function( boolean ) {
-
-		return new Promise( function( resolve, reject ) {
-
-			if ( vrDisplay === undefined ) {
-
-				reject( new Error( 'No VR hardware found.' ) );
-				return;
-
-			}
-
-			if ( scope.isPresenting === boolean ) {
-
-				resolve();
-				return;
-
-			}
-
-			if ( boolean ) {
-
-				resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
-
-			} else {
-
-				resolve( vrDisplay.exitPresent() );
-
-			}
-
-		} );
-
-	};
-
-	this.requestPresent = function() {
-
-		return this.setFullScreen( true );
-
-	};
-
-	this.exitPresent = function() {
-
-		return this.setFullScreen( false );
-
-	};
-
-	this.requestAnimationFrame = function( f ) {
-
-		if ( vrDisplay !== undefined ) {
-
-			return vrDisplay.requestAnimationFrame( f );
-
-		} else {
-
-			return window.requestAnimationFrame( f );
-
-		}
-
-	};
-
-	this.cancelAnimationFrame = function( h ) {
-
-		if ( vrDisplay !== undefined ) {
-
-			vrDisplay.cancelAnimationFrame( h );
-
-		} else {
-
-			window.cancelAnimationFrame( h );
-
-		}
-
-	};
-
-	this.submitFrame = function() {
-
-		if ( vrDisplay !== undefined && scope.isPresenting ) {
-
-			vrDisplay.submitFrame();
-
-		}
-
-	};
-
-	this.autoSubmitFrame = true;
-
-	// render
-
-	var cameraL = new PerspectiveCamera();
-	cameraL.layers.enable( 1 );
-
-	var cameraR = new PerspectiveCamera();
-	cameraR.layers.enable( 2 );
-
-	this.render = function( scene, camera, renderTarget, forceClear ) {
-
-		if ( vrDisplay && scope.isPresenting ) {
-
-			var autoUpdate = scene.autoUpdate;
-
-			if ( autoUpdate ) {
-
-				scene.updateMatrixWorld();
-				scene.autoUpdate = false;
-
-			}
-
-			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
-			var eyeParamsR = vrDisplay.getEyeParameters( 'right' );
-
-			eyeTranslationL.fromArray( eyeParamsL.offset );
-			eyeTranslationR.fromArray( eyeParamsR.offset );
-
-			if ( Array.isArray( scene ) ) {
-
-				console.warn( 'THREE.VREffect.render() no longer supports arrays. Use object.layers instead.' );
-				scene = scene[ 0 ];
-
-			}
-
-			// When rendering we don't care what the recommended size is, only what the actual size
-			// of the backbuffer is.
-			var size = renderer.getSize();
-			var layers = vrDisplay.getLayers();
-			var leftBounds;
-			var rightBounds;
-
-			if ( layers.length ) {
-
-				var layer = layers[ 0 ];
-
-				leftBounds = layer.leftBounds !== null && layer.leftBounds.length === 4 ? layer.leftBounds : defaultLeftBounds;
-				rightBounds = layer.rightBounds !== null && layer.rightBounds.length === 4 ? layer.rightBounds : defaultRightBounds;
-
-			} else {
-
-				leftBounds = defaultLeftBounds;
-				rightBounds = defaultRightBounds;
-
-			}
-
-			renderRectL = {
-				x: Math.round( size.width * leftBounds[ 0 ] ),
-				y: Math.round( size.height * leftBounds[ 1 ] ),
-				width: Math.round( size.width * leftBounds[ 2 ] ),
-				height: Math.round( size.height * leftBounds[ 3 ] )
-			};
-			renderRectR = {
-				x: Math.round( size.width * rightBounds[ 0 ] ),
-				y: Math.round( size.height * rightBounds[ 1 ] ),
-				width: Math.round( size.width * rightBounds[ 2 ] ),
-				height: Math.round( size.height * rightBounds[ 3 ] )
-			};
-
-			if ( renderTarget ) {
-
-				renderer.setRenderTarget( renderTarget );
-				renderTarget.scissorTest = true;
-
-			} else {
-
-				renderer.setRenderTarget( null );
-				renderer.setScissorTest( true );
-
-			}
-
-			if ( renderer.autoClear || forceClear ) renderer.clear();
-
-			if ( camera.parent === null ) camera.updateMatrixWorld();
-
-			camera.matrixWorld.decompose( cameraL.position, cameraL.quaternion, cameraL.scale );
-			camera.matrixWorld.decompose( cameraR.position, cameraR.quaternion, cameraR.scale );
-
-			var scale = this.scale;
-			cameraL.translateOnAxis( eyeTranslationL, scale );
-			cameraR.translateOnAxis( eyeTranslationR, scale );
-
-			if ( vrDisplay.getFrameData ) {
-
-				vrDisplay.depthNear = camera.near;
-				vrDisplay.depthFar = camera.far;
-
-				vrDisplay.getFrameData( frameData );
-
-				cameraL.projectionMatrix.elements = frameData.leftProjectionMatrix;
-				cameraR.projectionMatrix.elements = frameData.rightProjectionMatrix;
-
-			} else {
-
-				cameraL.projectionMatrix = fovToProjection( eyeParamsL.fieldOfView, true, camera.near, camera.far );
-				cameraR.projectionMatrix = fovToProjection( eyeParamsR.fieldOfView, true, camera.near, camera.far );
-
-			}
-
-			// render left eye
-			if ( renderTarget ) {
-
-				renderTarget.viewport.set( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
-				renderTarget.scissor.set( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
-
-			} else {
-
-				renderer.setViewport( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
-				renderer.setScissor( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
-
-			}
-			renderer.render( scene, cameraL, renderTarget, forceClear );
-
-			// render right eye
-			if ( renderTarget ) {
-
-				renderTarget.viewport.set( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
-				renderTarget.scissor.set( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
-
-			} else {
-
-				renderer.setViewport( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
-				renderer.setScissor( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
-
-			}
-			renderer.render( scene, cameraR, renderTarget, forceClear );
-
-			if ( renderTarget ) {
-
-				renderTarget.viewport.set( 0, 0, size.width, size.height );
-				renderTarget.scissor.set( 0, 0, size.width, size.height );
-				renderTarget.scissorTest = false;
-				renderer.setRenderTarget( null );
-
-			} else {
-
-				renderer.setViewport( 0, 0, size.width, size.height );
-				renderer.setScissorTest( false );
-
-			}
-
-			if ( autoUpdate ) {
-
-				scene.autoUpdate = true;
-
-			}
-
-			if ( scope.autoSubmitFrame ) {
-
-				scope.submitFrame();
-
-			}
-
+	/**
+	 * Event handler for 'gamepaddisconnected' indicating the controllers that a controller has been removed
+	 *
+	 * @param {Event} event - Event object with the gamepad information
+	 *
+	 * @returns {undefined}
+	 *
+	 * @private
+	 */
+	_handleGamepadDisconnected(event) {
+		this.updateControllers(event, false);
+	}
+
+	/**
+	 * Adds a controller to the list
+	 *
+	 * @param {Gamepad} gamepad - Controller to add
+	 *
+	 * @returns {undefined}
+	 */
+	addController(gamepad) {
+		if (!gamepad) {
 			return;
-
 		}
 
-		// Regular render mode if not HMD
-
-		renderer.render( scene, camera, renderTarget, forceClear );
-
-	};
-
-	this.dispose = function() {
-
-		window.removeEventListener( 'vrdisplaypresentchange', onVRDisplayPresentChange, false );
-
-	};
-
-	//
-
-	function fovToNDCScaleOffset( fov ) {
-
-		var pxscale = 2.0 / ( fov.leftTan + fov.rightTan );
-		var pxoffset = ( fov.leftTan - fov.rightTan ) * pxscale * 0.5;
-		var pyscale = 2.0 / ( fov.upTan + fov.downTan );
-		var pyoffset = ( fov.upTan - fov.downTan ) * pyscale * 0.5;
-		return { scale: [ pxscale, pyscale ], offset: [ pxoffset, pyoffset ] };
-
+		const gamepadId = Controllers.getGamepadId(gamepad);
+		if (!this.currentControllers[gamepadId]) {
+			if (gamepad.pose) {
+				const poseController = new PoseController(gamepad);
+				this.currentControllers[gamepadId] = poseController;
+				this.mainHandController = poseController;
+			} else {
+				const gamepadController = new GamepadController(gamepad);
+				this.currentControllers[gamepadId] = gamepadController;
+			}
+			this._setUpEventListeners(this.currentControllers[gamepadId]);
+		}
 	}
 
-	function fovPortToProjection( fov, rightHanded, zNear, zFar ) {
+	/**
+	 * Removes a controller from the list
+	 *
+	 * @param {Gamepad} gamepad - Controller to remove
+	 *
+	 * @returns {undefined}
+	 */
+	removeController(gamepad) {
+		const gamepadId = Controllers.getGamepadId(gamepad);
+		if (this.mainHandController && this.mainHandController.id === gamepad.id) {
+			this.mainHandController = null;
+		}
+		if (this.currentControllers[gamepadId]) {
+			if (this.currentControllers[gamepadId].model) {
+				this.currentControllers[gamepadId].model.visible = false;
+			}
 
-		rightHanded = rightHanded === undefined ? true : rightHanded;
-		zNear = zNear === undefined ? 0.01 : zNear;
-		zFar = zFar === undefined ? 10000.0 : zFar;
-
-		var handednessScale = rightHanded ? - 1.0 : 1.0;
-
-		// start with an identity matrix
-		var mobj = new Matrix4();
-		var m = mobj.elements;
-
-		// and with scale/offset info for normalized device coords
-		var scaleAndOffset = fovToNDCScaleOffset( fov );
-
-		// X result, map clip edges to [-w,+w]
-		m[ 0 * 4 + 0 ] = scaleAndOffset.scale[ 0 ];
-		m[ 0 * 4 + 1 ] = 0.0;
-		m[ 0 * 4 + 2 ] = scaleAndOffset.offset[ 0 ] * handednessScale;
-		m[ 0 * 4 + 3 ] = 0.0;
-
-		// Y result, map clip edges to [-w,+w]
-		// Y offset is negated because this proj matrix transforms from world coords with Y=up,
-		// but the NDC scaling has Y=down (thanks D3D?)
-		m[ 1 * 4 + 0 ] = 0.0;
-		m[ 1 * 4 + 1 ] = scaleAndOffset.scale[ 1 ];
-		m[ 1 * 4 + 2 ] = - scaleAndOffset.offset[ 1 ] * handednessScale;
-		m[ 1 * 4 + 3 ] = 0.0;
-
-		// Z result (up to the app)
-		m[ 2 * 4 + 0 ] = 0.0;
-		m[ 2 * 4 + 1 ] = 0.0;
-		m[ 2 * 4 + 2 ] = zFar / ( zNear - zFar ) * - handednessScale;
-		m[ 2 * 4 + 3 ] = ( zFar * zNear ) / ( zNear - zFar );
-
-		// W result (= Z in)
-		m[ 3 * 4 + 0 ] = 0.0;
-		m[ 3 * 4 + 1 ] = 0.0;
-		m[ 3 * 4 + 2 ] = handednessScale;
-		m[ 3 * 4 + 3 ] = 0.0;
-
-		mobj.transpose();
-
-		return mobj;
-
+			delete this.currentControllers[gamepadId];
+		}
 	}
 
-	function fovToProjection( fov, rightHanded, zNear, zFar ) {
-
-		var DEG2RAD = Math.PI / 180.0;
-
-		var fovPort = {
-			upTan: Math.tan( fov.upDegrees * DEG2RAD ),
-			downTan: Math.tan( fov.downDegrees * DEG2RAD ),
-			leftTan: Math.tan( fov.leftDegrees * DEG2RAD ),
-			rightTan: Math.tan( fov.rightDegrees * DEG2RAD )
-		};
-
-		return fovPortToProjection( fovPort, rightHanded, zNear, zFar );
-
-	}
-
-};
-
-// https://github.com/aframevr/aframe/blob/v0.7.0/src/components/link.js
-const Link = {
-
-	defaultRingColor: new Color(1, 1, 1),
-	defaultRingHoverColor: new Color(2, 2, 2),
-
-	set position(position) {
-		if (!this._position) {
-			this._position = new Vector3(...position);
+	/**
+	 * Updates controller list
+	 *
+	 * @param {Event} event - Gamepad connection event object
+	 * @param {boolean} connected - Whether a given gamepad is being connected or not
+	 *
+	 * @returns {undefined}
+	 */
+	updateControllers(event, connected) {
+		if (event) {
+			if (connected) {
+				this.addController(event.gamepad);
+			} else {
+				this.removeController(event.gamepad);
+			}
 		} else {
-			this._position.set(...position);
+			const gamepads = navigator.getGamepads();
+			for (const gamepad of gamepads) {
+				this.addController(gamepad);
+			}
 		}
-
-		if (this.mesh) {
-			this.mesh.position.copy(this.position);
-		}
-	},
-
-	get position() {
-		return this._position;
-	},
-
-	init(path, position, scene) {
-		this.path = path;
-		this.position = position;
-		this.scene = scene;
-
-		this.mesh = this._constructMesh();
-	},
-
-	_constructMesh() {
-		const geometry = new CircleBufferGeometry(1, 64);
-		const material = new MeshBasicMaterial({
-			color: 0xfcca46,
-			side: DoubleSide
-		});
-		const mesh = new Mesh(geometry, material);
-		mesh.position.copy(this.position);
-		return mesh;
-	},
-
-	render() {
-		if (this.scene) {
-			this.scene.addToScene(this.mesh, false, false);
-		}
-	},
-
-	hover() {
-
-	},
-
-	navigate() {
-		window.location = this.path;
 	}
-};
-
-/**
- * Scene
- * @namespace
- */
-const Scene$1 = {
-
-	/** @property {array} animateFunctions - Array of functions that will be called every frame */
-	animateFunctions: [],
-
-	/** @property {array} collidableMeshes - Array of all meshes that are collidable */
-	collidableMeshes: [],
 
 	/**
-	 * @property {number} animationFrameID - ID returned when calling requestAnimationFrame
+	 * Gets unique GamePad id
 	 *
-	 * @private
+	 * @param {Gamepad} gamepad - Gamepad to generate id from
+	 *
+	 * @returns {string} id
 	 */
-	_animationFrameID: 0,
-
-	/**
-	 * Initialises and renders a scene provided
-	 *
-	 * @param {HTMLCanvasElement} canvas - Canvas element where the scene will be rendered
-	 * @param {string|THREE.Scene} sceneToLoad - Either a THREE.Scene to be added, or a path to the .gltf or .json file containing the scene
-	 *
-	 * @return {undefined}
-	 */
-	init(canvas, sceneToLoad) {
-		const scene = new Scene();
-		const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
-		const renderer = new WebGLRenderer({
-			canvas,
-			antialias: true
-		});
-		renderer.setPixelRatio(window.devicePixelRatio);
-		// Last parameter adds pixel units to canvas element
-		renderer.setSize(window.innerWidth, window.innerHeight, true);
-		renderer.shadowMap.enabled = true;
-
-		this.renderer = renderer;
-		this.scene = scene;
-		this.camera = camera;
-		this.vrEffect = new VREffect(this.renderer, console.warn);
-
-		const sceneLoader = Object.create(Loader$1);
-		sceneLoader.init(sceneToLoad);
-		sceneLoader.load()
-			.then((loadedScene) => {
-				loadedScene.name = 'HolonetMainScene';
-				loadedScene.scale.set(1, 1, 1);
-				loadedScene.position.set(0, 0, 0);
-				this._setupMeshes(loadedScene);
-				scene.add(loadedScene);
-			}, console.warn);
-
-		window.addEventListener('resize', this.onResize.bind(this), false);
-		window.addEventListener('vrdisplayactivate', () => {
-			this.vrEffect.requestPresent();
-		}, false);
-
-		this._render = this._render.bind(this);
-		this.animate();
-	},
-
-	/**
-	 * Helper function that adds a list of meshes to the scene
-	 *
-	 * @param {array|Three.Object3D} meshes - List of meshes to be added to the scene
-	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
-	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
-	 *
-	 * @return {undefined}
-	*/
-	addToScene(meshes, collidable = true, shadow = true) {
-		if (!(meshes instanceof Array)) {
-			meshes = [meshes];
-		}
-		for (const mesh of meshes) {
-			if (mesh.isObject3D && !mesh.isLight) {
-				this._setupMeshes(mesh, collidable, shadow);
-			}
-			this.scene.add(mesh);
-		}
-	},
-
-	/**
-	 * Computes normals for all children of a group
-	 *
-	 * @param {THREE.Object3D} mesh - A Group of meshes to normalize
-	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
-	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
-	 *
-	 * @returns {undefined}
-	 *
-	 * @private
-	 */
-	_setupMeshes(mesh, collidable = true, shadow = true) {
-		if (mesh.children.length) {
-			for (const child of mesh.children) {
-				this._setupMeshes(child, collidable, shadow);
-			}
-		} else if (mesh.isObject3D) {
-			mesh.geometry && mesh.geometry.computeFaceNormals();
-			if (shadow) {
-				mesh.castShadow = true;
-				mesh.receiveShadow = true;
-			}
-			if (collidable) {
-				this.collidableMeshes.push(mesh);
-			}
-		}
-	},
-
-	/**
-	 * Resize event handler that sets the correct camera size and its projection matrix
-	 * Also sets the size of the renderer
-	 *
-	 * @return {undefined}
-	 */
-	onResize() {
-		const windowWidth = window.innerWidth;
-		const windowHeight = window.innerHeight;
-
-		this.camera.aspect = windowWidth / windowHeight;
-		this.camera.updateProjectionMatrix();
-
-		// Last parameter adds pixel units to canvas element
-		this.vrEffect.setSize(windowWidth, windowHeight, true);
-	},
-
-	/**
-	 * Sets the requestAnimationFrame on the VRDisplay that updates the scene each frame
-	 *
-	 * @param {DOMHighResTimeStamp} timestamp - Timestamp supplied by requestAnimationFrame
-	 *
-	 * @return {undefined}
-	*/
-	_render(timestamp) {
-		for (const func of this.animateFunctions) {
-			func(timestamp);
-		}
-
-		this.vrEffect.render(this.scene, this.camera);
-
-		this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
-	},
-
-	/**
-	 * Starts the animation frame and saves the rAF ID
-	 *
-	 * @returns {undefined}
-	 */
-	animate() {
-		this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
-	},
-
-	/**
-	 * Cancels the animation. Useful when the canvas is not visible for performance reasons
-	 *
-	 * @return {undefined}
-	 */
-	cancelAnimate() {
-		this.vrEffect.cancelAnimationFrame(this._animationFrameID);
-	},
-
-	/**
-	 * Adds functions to animateFunctions so they will be executed in #render
-	 *
-	 * @param {array} functions - List of functions that will be executed every frame
-	 *
-	 * @return {undefined}
-	*/
-	addAnimateFunctions(functions) {
-		// In case functions is not an array
-		const functionsToAdd = !Array.isArray(functions) ? [functions] : functions;
-		this.animateFunctions.push(...functionsToAdd);
+	static getGamepadId(gamepad) {
+		const id = `${gamepad.id} (${gamepad.hand})`;
+		return id;
 	}
-};
 
-Scene$1.Link = Link;
+	/**
+	 * Gets GamePad in its latest state
+	 *
+	 * @param {string} id - The gamepad's id that you want to receive
+	 *
+	 * @returns {Gamepad} gamepad
+	 */
+	static getGamepad(id) {
+		const gamepads = navigator.getGamepads();
 
-function unwrapExports (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+		for (const gamepad of gamepads) {
+			if (gamepad && Controllers.getGamepadId(gamepad) === id) {
+				return gamepad;
+			}
+		}
+	}
 }
-
-function createCommonjsModule(fn, module) {
-	return module = { exports: {} }, fn(module, module.exports), module.exports;
-}
-
-var eventemitter3 = createCommonjsModule(function (module) {
-var has = Object.prototype.hasOwnProperty
-  , prefix = '~';
-
-/**
- * Constructor to create a storage for our `EE` objects.
- * An `Events` instance is a plain object whose properties are event names.
- *
- * @constructor
- * @private
- */
-function Events() {}
-
-//
-// We try to not inherit from `Object.prototype`. In some engines creating an
-// instance in this way is faster than calling `Object.create(null)` directly.
-// If `Object.create(null)` is not supported we prefix the event names with a
-// character to make sure that the built-in object properties are not
-// overridden or used as an attack vector.
-//
-if (Object.create) {
-  Events.prototype = Object.create(null);
-
-  //
-  // This hack is needed because the `__proto__` property is still inherited in
-  // some old browsers like Android 4, iPhone 5.1, Opera 11 and Safari 5.
-  //
-  if (!new Events().__proto__) prefix = false;
-}
-
-/**
- * Representation of a single event listener.
- *
- * @param {Function} fn The listener function.
- * @param {*} context The context to invoke the listener with.
- * @param {Boolean} [once=false] Specify if the listener is a one-time listener.
- * @constructor
- * @private
- */
-function EE(fn, context, once) {
-  this.fn = fn;
-  this.context = context;
-  this.once = once || false;
-}
-
-/**
- * Add a listener for a given event.
- *
- * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
- * @param {(String|Symbol)} event The event name.
- * @param {Function} fn The listener function.
- * @param {*} context The context to invoke the listener with.
- * @param {Boolean} once Specify if the listener is a one-time listener.
- * @returns {EventEmitter}
- * @private
- */
-function addListener(emitter, event, fn, context, once) {
-  if (typeof fn !== 'function') {
-    throw new TypeError('The listener must be a function');
-  }
-
-  var listener = new EE(fn, context || emitter, once)
-    , evt = prefix ? prefix + event : event;
-
-  if (!emitter._events[evt]) emitter._events[evt] = listener, emitter._eventsCount++;
-  else if (!emitter._events[evt].fn) emitter._events[evt].push(listener);
-  else emitter._events[evt] = [emitter._events[evt], listener];
-
-  return emitter;
-}
-
-/**
- * Clear event by name.
- *
- * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
- * @param {(String|Symbol)} evt The Event name.
- * @private
- */
-function clearEvent(emitter, evt) {
-  if (--emitter._eventsCount === 0) emitter._events = new Events();
-  else delete emitter._events[evt];
-}
-
-/**
- * Minimal `EventEmitter` interface that is molded against the Node.js
- * `EventEmitter` interface.
- *
- * @constructor
- * @public
- */
-function EventEmitter() {
-  this._events = new Events();
-  this._eventsCount = 0;
-}
-
-/**
- * Return an array listing the events for which the emitter has registered
- * listeners.
- *
- * @returns {Array}
- * @public
- */
-EventEmitter.prototype.eventNames = function eventNames() {
-  var names = []
-    , events
-    , name;
-
-  if (this._eventsCount === 0) return names;
-
-  for (name in (events = this._events)) {
-    if (has.call(events, name)) names.push(prefix ? name.slice(1) : name);
-  }
-
-  if (Object.getOwnPropertySymbols) {
-    return names.concat(Object.getOwnPropertySymbols(events));
-  }
-
-  return names;
-};
-
-/**
- * Return the listeners registered for a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @returns {Array} The registered listeners.
- * @public
- */
-EventEmitter.prototype.listeners = function listeners(event) {
-  var evt = prefix ? prefix + event : event
-    , handlers = this._events[evt];
-
-  if (!handlers) return [];
-  if (handlers.fn) return [handlers.fn];
-
-  for (var i = 0, l = handlers.length, ee = new Array(l); i < l; i++) {
-    ee[i] = handlers[i].fn;
-  }
-
-  return ee;
-};
-
-/**
- * Return the number of listeners listening to a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @returns {Number} The number of listeners.
- * @public
- */
-EventEmitter.prototype.listenerCount = function listenerCount(event) {
-  var evt = prefix ? prefix + event : event
-    , listeners = this._events[evt];
-
-  if (!listeners) return 0;
-  if (listeners.fn) return 1;
-  return listeners.length;
-};
-
-/**
- * Calls each of the listeners registered for a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @returns {Boolean} `true` if the event had listeners, else `false`.
- * @public
- */
-EventEmitter.prototype.emit = function emit(event, a1, a2, a3, a4, a5) {
-  var evt = prefix ? prefix + event : event;
-
-  if (!this._events[evt]) return false;
-
-  var listeners = this._events[evt]
-    , len = arguments.length
-    , args
-    , i;
-
-  if (listeners.fn) {
-    if (listeners.once) this.removeListener(event, listeners.fn, undefined, true);
-
-    switch (len) {
-      case 1: return listeners.fn.call(listeners.context), true;
-      case 2: return listeners.fn.call(listeners.context, a1), true;
-      case 3: return listeners.fn.call(listeners.context, a1, a2), true;
-      case 4: return listeners.fn.call(listeners.context, a1, a2, a3), true;
-      case 5: return listeners.fn.call(listeners.context, a1, a2, a3, a4), true;
-      case 6: return listeners.fn.call(listeners.context, a1, a2, a3, a4, a5), true;
-    }
-
-    for (i = 1, args = new Array(len -1); i < len; i++) {
-      args[i - 1] = arguments[i];
-    }
-
-    listeners.fn.apply(listeners.context, args);
-  } else {
-    var length = listeners.length
-      , j;
-
-    for (i = 0; i < length; i++) {
-      if (listeners[i].once) this.removeListener(event, listeners[i].fn, undefined, true);
-
-      switch (len) {
-        case 1: listeners[i].fn.call(listeners[i].context); break;
-        case 2: listeners[i].fn.call(listeners[i].context, a1); break;
-        case 3: listeners[i].fn.call(listeners[i].context, a1, a2); break;
-        case 4: listeners[i].fn.call(listeners[i].context, a1, a2, a3); break;
-        default:
-          if (!args) for (j = 1, args = new Array(len -1); j < len; j++) {
-            args[j - 1] = arguments[j];
-          }
-
-          listeners[i].fn.apply(listeners[i].context, args);
-      }
-    }
-  }
-
-  return true;
-};
-
-/**
- * Add a listener for a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @param {Function} fn The listener function.
- * @param {*} [context=this] The context to invoke the listener with.
- * @returns {EventEmitter} `this`.
- * @public
- */
-EventEmitter.prototype.on = function on(event, fn, context) {
-  return addListener(this, event, fn, context, false);
-};
-
-/**
- * Add a one-time listener for a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @param {Function} fn The listener function.
- * @param {*} [context=this] The context to invoke the listener with.
- * @returns {EventEmitter} `this`.
- * @public
- */
-EventEmitter.prototype.once = function once(event, fn, context) {
-  return addListener(this, event, fn, context, true);
-};
-
-/**
- * Remove the listeners of a given event.
- *
- * @param {(String|Symbol)} event The event name.
- * @param {Function} fn Only remove the listeners that match this function.
- * @param {*} context Only remove the listeners that have this context.
- * @param {Boolean} once Only remove one-time listeners.
- * @returns {EventEmitter} `this`.
- * @public
- */
-EventEmitter.prototype.removeListener = function removeListener(event, fn, context, once) {
-  var evt = prefix ? prefix + event : event;
-
-  if (!this._events[evt]) return this;
-  if (!fn) {
-    clearEvent(this, evt);
-    return this;
-  }
-
-  var listeners = this._events[evt];
-
-  if (listeners.fn) {
-    if (
-      listeners.fn === fn &&
-      (!once || listeners.once) &&
-      (!context || listeners.context === context)
-    ) {
-      clearEvent(this, evt);
-    }
-  } else {
-    for (var i = 0, events = [], length = listeners.length; i < length; i++) {
-      if (
-        listeners[i].fn !== fn ||
-        (once && !listeners[i].once) ||
-        (context && listeners[i].context !== context)
-      ) {
-        events.push(listeners[i]);
-      }
-    }
-
-    //
-    // Reset the array, or remove it completely if we have no more listeners.
-    //
-    if (events.length) this._events[evt] = events.length === 1 ? events[0] : events;
-    else clearEvent(this, evt);
-  }
-
-  return this;
-};
-
-/**
- * Remove all listeners, or those of the specified event.
- *
- * @param {(String|Symbol)} [event] The event name.
- * @returns {EventEmitter} `this`.
- * @public
- */
-EventEmitter.prototype.removeAllListeners = function removeAllListeners(event) {
-  var evt;
-
-  if (event) {
-    evt = prefix ? prefix + event : event;
-    if (this._events[evt]) clearEvent(this, evt);
-  } else {
-    this._events = new Events();
-    this._eventsCount = 0;
-  }
-
-  return this;
-};
-
-//
-// Alias methods names because people roll like that.
-//
-EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
-EventEmitter.prototype.addListener = EventEmitter.prototype.on;
-
-//
-// Expose the prefix.
-//
-EventEmitter.prefixed = prefix;
-
-//
-// Allow `EventEmitter` to be imported as module namespace.
-//
-EventEmitter.EventEmitter = EventEmitter;
-
-//
-// Expose the module.
-//
-{
-  module.exports = EventEmitter;
-}
-});
 
 const RETICLE_DISTANCE = 3;
 
-/**
- * Selection
- * @namespace
- */
-const Selection = {
+/** Class for the Selection intraction */
+class Selection {
 
 	/** @property {object} objects - map of objects with ids that are selectable */
-	objects: {},
+	get objects() {
+		if (!this._objects) {
+			this._objects = {};
+		}
+		return this._objects;
+	}
+
+	set objects(objects) {
+		this._objects = objects;
+	}
 
 	/** @property {object} hovering - map of object ids that are being hovered */
-	hovering: {},
+	get hovering() {
+		if (!this._hovering) {
+			this._hovering = {};
+		}
+		return this._hovering;
+	}
+
+	set hovering(hovering) {
+		this._hovering = hovering;
+	}
 
 	/** @property {number} innerRadius - The inner sphere's radisu */
-	innerRadius: 0.02,
+	get innerRadius() {
+		if (!this._innerRadius) {
+			this._innerRadius = 0.02;
+		}
+		return this._innerRadius;
+	}
+
+	set innerRadius(innerRadius) {
+		this._innerRadius = innerRadius;
+	}
 
 	/** @property {number} outerRadius - The outer sphere's radius */
-	outerRadius: 0.04,
+	get outerRadius() {
+		if (!this._outerRadius) {
+			this._outerRadius = 0.04;
+		}
+		return this._outerRadius;
+	}
+
+	set outerRadius(outerRadius) {
+		this._outerRadius = outerRadius;
+	}
 
 	/** @property {number} reticleDistance - Default distance where the reticle will be located */
-	reticleDistance: RETICLE_DISTANCE,
+	get reticleDistance() {
+		if (!this._reticleDistance) {
+			this._reticleDistance = RETICLE_DISTANCE;
+		}
+		return this._reticleDistance;
+	}
+
+	set reticleDistance(reticleDistance) {
+		this._reticleDistance = reticleDistance;
+	}
 
 	/**
 	 * Initializes a Selection instance
-	 *
-	 * @return {undefined}
 	 */
-	init() {
+	constructor() {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new eventemitter3());
 
@@ -55720,62 +54510,62 @@ const Selection = {
 		this.rayCaster.far = 10;
 
 		this.reticle = this._createReticle();
-	},
+	}
 
 	/**
 	 * Add an object that can be selectable
 	 *
 	 * @param {THREE.Object3D} object - Object to add
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	add(object) {
 		const id = object.id;
 		if (!this.objects[id]) {
 			this.objects[id] = object;
 		}
-	},
+	}
 
 	/**
 	 * Removes an object so that it is no longer selectable
 	 *
 	 * @param {THREE.Object3D} object - Objects to be removed
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	remove(object) {
 		delete this.objects[object.id];
-	},
+	}
 
 	/**
 	 * Sets the position that will act as the RayCaster's origin
 	 *
 	 * @param {THREE.Vector3} position - Origin position
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	setOrigin(position) {
 		this.rayCaster.ray.origin.copy(position);
 		this._updateReticle();
-	},
+	}
 
 	/**
 	 * Sets the orientation that represents the direction that the RayCaster should follow
 	 *
 	 * @param {THREE.Quaternion} orientation - The direction
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	setDirection(orientation) {
 		const pointAt = new Vector3(0, 0, -1).applyQuaternion(orientation);
 		this.rayCaster.ray.direction.copy(pointAt);
 		this._updateReticle();
-	},
+	}
 
 	/**
 	 * Returns the currently hovered mesh
 	 *
-	 * @return {THREE.Mesh} mesh
+	 * @returns {THREE.Mesh} mesh
 	 */
 	getHoveredMesh() {
 		let mesh;
@@ -55784,27 +54574,31 @@ const Selection = {
 		}
 
 		return mesh;
-	},
+	}
 
 	/**
 	 * Selects the currently hovered mesh and emits a 'selected' event
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	select() {
 		const mesh = this.getHoveredMesh();
-		this.emit('selected', mesh);
-	},
+		this.emit('selected', {
+			mesh
+		});
+	}
 
 	/**
 	 * Unselects the currently hovered mesh and emits a 'unselected' evemt
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	*/
 	unselect() {
 		const mesh = this.getHoveredMesh();
-		this.emit('unselected', mesh);
-	},
+		this.emit('unselected', {
+			mesh
+		});
+	}
 
 	/**
 	 * Updates the reticle, and checks for intersections, emitting the appropriate events
@@ -55826,14 +54620,18 @@ const Selection = {
 			if (intersection && !isHovering) {
 				this.hovering[id] = true;
 				this.reticle.children[0].material.color.setHex(0x99ff99);
-				this.emit('hover', object);
+				this.emit('hover', {
+					mesh: object
+				});
 				this.isHovering = true;
 			}
 
 			if (!intersection && isHovering) {
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
-				this.emit('unhover', object);
+				this.emit('unhover', {
+					mesh: object
+				});
 				this.isHovering = false;
 			}
 
@@ -55843,12 +54641,23 @@ const Selection = {
 				this._moveReticle(null);
 			}
 		}
-	},
+	}
+
+	/**
+	 * If reticle is hovering over a selectable item, select it
+	 *
+	 * @returns {undefined}
+	 */
+	handleSelection() {
+		if (this.isHovering) {
+			this.select();
+		}
+	}
 
 	/**
 	 * Creates a spherical reticle
 	 *
-	 * @return {THREE.Group} reticle
+	 * @returns {THREE.Group} reticle
 	 *
 	 * @private
 	 */
@@ -55874,14 +54683,14 @@ const Selection = {
 		reticle.add(outer);
 
 		return reticle;
-	},
+	}
 
 	/**
      * Moves the reticle to a position so that it's just in front of the mesh that it intersected with.
 	 *
 	 * @param {object} intersection - An intersection
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
      */
@@ -55893,12 +54702,12 @@ const Selection = {
 		}
 
 		this._updateReticle();
-	},
+	}
 
 	/**
 	 * Updates the reticle's position
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -55909,26 +54718,20 @@ const Selection = {
 		this.reticle.position.multiplyScalar(this.reticleDistance);
 		this.reticle.position.add(ray.origin);
 	}
-};
+}
 
-/**
- * Interactions
- * @namespace
- */
-const Interactions = {
+/** Class utility for all interactions*/
+class Interactions {
 
 	/**
-	 * Initializes all interactions
-	 *
-	 * @return {undefined}
+	 * Constructs an Interactions instance by initialising all interactions
 	 */
-	init() {
+	constructor() {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new eventemitter3());
 
-		this.selection = Object.create(Selection);
-		this.selection.init();
-	},
+		this.selection = new Selection();
+	}
 
 	/**
 	 * Updates the different interaction elements
@@ -55940,16 +54743,834 @@ const Interactions = {
 	 */
 	update(position, orientation) {
 		this.selection.update(position, orientation);
-	},
+	}
 
 	/**
 	 * Gets all the meshes that serve as guides in all interactions
 	 *
-	 * @return {array} meshes
+	 * @returns {array} meshes
 	 */
 	getMeshes() {
 		return [this.selection.reticle];
 	}
+
+	/**
+	 * Adds Interaction handlers to an emitter
+	 *
+	 * @param {Object} emitter - Object that emits events that Interactions needs to handle
+	 */
+	setUpEventListeners(emitter) {
+		emitter.on('trigger', this.selection.handleSelection);
+	}
+}
+
+/** Class for the teleportation system */
+class Teleportation {
+
+	/** @property {number} rayCurvePoints - Number of points on the Ray Curve Mesh */
+	get rayCurvePoints() {
+		if (!this._rayCurvePoints) {
+			this._rayCurvePoints = 30;
+		}
+		return this._rayCurvePoints;
+	}
+
+	set rayCurvePoints(rayCurvePoints) {
+		this._rayCurvePoints = rayCurvePoints;
+	}
+
+	/** @property {number} rayWidth - The Ray Curve's width (m) */
+	get rayCurveWidth() {
+		if (!this._rayCurveWidth) {
+			this._rayCurveWidth = 0.025;
+		}
+		return this._rayCurveWidth;
+	}
+
+	set rayCurveWidth(rayCurveWidth) {
+		this._rayCurveWidth = rayCurveWidth;
+	}
+
+	/** @property {number} hitCylinderRadius - The HitCylinder's radius (m) */
+	get hitCylinderRadius() {
+		if (!this._hitCylinderRadius) {
+			this._hitCylinderRadius = 0.25;
+		}
+		return this._hitCylinderRadius;
+	}
+
+	set hitCylinderRadius(hitCylinderRadius) {
+		this._hitCylinderRadius = hitCylinderRadius;
+	}
+
+	/** @property {number} hitCylinderHeight - The HitCylinder's height (m) */
+	get hitCylinderHeight() {
+		if (!this._hitCylinderHeight) {
+			this._hitCylinderHeight = 0.3;
+		}
+		return this._hitCylinderHeight;
+	}
+
+	set hitCylinderHeight(hitCylinderHeight) {
+		this._hitCylinderHeight = hitCylinderHeight;
+	}
+
+	/** @property {number} maxAngle - Maximum angle a mesh can be in so you can teleport to it */
+	get maxAngle() {
+		if (!this._maxAngle) {
+			this._maxAngle = 45;
+		}
+		return this._maxAngle;
+	}
+
+	set maxAngle(maxAngle) {
+		this._maxAngle = maxAngle;
+	}
+
+	/** @property {THREE.Color} hitColor - Color applied to the Ray Curve and the Hit Cylinder when there's a valid intersection */
+	get hitColor() {
+		if (!this._hitColor) {
+			this._hitColor = new Color('#99ff99');
+		}
+		return this._hitColor;
+	}
+
+	set hitColor(hitColor) {
+		this._hitColor = hitColor;
+	}
+
+	/** @property {THREE.Color} missColor - Color applied to the Ray Curve and the Hit Cylinder */
+	get missColor() {
+		if (!this._missColor) {
+			this._missColor = new Color('#ff0000');
+		}
+		return this._missColor;
+	}
+
+	set missColor(missColor) {
+		this._missColor = missColor;
+	}
+
+	/** @property {number} velocity - The ray's speed */
+	get velocity() {
+		if (!this._velocity) {
+			this._velocity = 5;
+		}
+		return this._velocity;
+	}
+
+	set velocity(velocity) {
+		this._velocity = velocity;
+	}
+
+	/** @property {number} _acceleration - Gravity */
+	get acceleration() {
+		if (!this._acceleration) {
+			this._acceleration = -9.8;
+		}
+		return this._acceleration;
+	}
+
+	set acceleration(acceleration) {
+		this._acceleration = acceleration;
+	}
+
+	/** @property {boolean} isRayCurveActive - Whether the ray is being displayed */
+	get isRayCurveActive() {
+		if (typeof this._isRayCurveActive === 'undefined') {
+			this._isRayCurveActive = false;
+		}
+		return this._isRayCurveActive;
+	}
+
+	set isRayCurveActive(isRayCurveActive) {
+		this._isRayCurveActive = isRayCurveActive;
+	}
+
+	/**
+	 * @property {boolean} isTeleportActive - Whether the ray has been held at a specific position
+	 * for more than _teleportActivationTimeout
+	 */
+	get isTeleportActive() {
+		if (typeof this._isTeleportActive === 'undefined') {
+			this._isTeleportActive = false;
+		}
+		return this._isTeleportActive;
+	}
+
+	set isTeleportActive(isTeleportActive) {
+		this._isTeleportActive = isTeleportActive;
+	}
+
+	/** @property {boolean|THREE.Vector3} _hitPoint - Point where there was the last successful hit  */
+	get hitPoint() {
+		if (typeof this._hitPoint === 'undefined') {
+			this._hitPoint = false;
+		}
+		return this._hitPoint;
+	}
+
+	set hitPoint(hitPoint) {
+		this._hitPoint = hitPoint;
+	}
+
+	/** Initialises a teleportation instance */
+	constructor() {
+		this._direction = new Vector3();
+		this._shootAxis = new Vector3(0, 0, -1);
+		this._referenceNormal = new Vector3(0, 1, 0);
+		this._teleportActivationTimeout = 0.5;
+
+		this.rayCaster = new Raycaster();
+		this.rayCurve = this.renderRayCurve();
+		this.hitCylinder = this.renderHitCylinder();
+
+		this.activateTeleport = Utils.debounce(this.activateTeleport.bind(this), this._teleportActivationTimeout * 1000);
+	}
+
+	/**
+	 * Sets whether the Ray Curve is active or not
+	 *
+	 * @param {boolean} active - Whethere it's active
+	 *
+	 * @return {undefined}
+	 */
+	setRayCurveState(active) {
+		this.isRayCurveActive = active;
+	}
+
+	/**
+	 * Activates teleportation
+	 *
+	 * @return {undefined}
+	 */
+	activateTeleport() {
+		this.isTeleportActive = true;
+	}
+
+	/**
+	 * Resets teleportation
+	 *
+	 * @return {undefined}
+	 */
+	resetTeleport() {
+		this.setRayCurveState(false);
+		this.isTeleportActive = false;
+		clearTimeout(this.activateTeleport.id);
+		this.hitPoint = false;
+		this.rayCurve.visible = false;
+		this.hitCylinder.visible = false;
+	}
+
+	/**
+	 * Parabolic curve equation
+	 *
+	 * @param {number} point - Initial position
+	 * @param {number} velocity - Initial velocity
+	 * @param {number} acceleration - Acceleration, will normally be the value of gravity
+	 * @param {number} time - Time value
+	 *
+	 * @return {number} Position on the curve at {time}
+	 *
+	 * @private
+	 */
+	_parabolicCurveScalar(point, velocity, acceleration, time) {
+		return point + velocity * time + 0.5 * acceleration * time * time;
+	}
+
+	/**
+	 * Calculates a parabolic curve for a 3D Vector3
+	 *
+	 * @param {number} point - Initial position
+	 * @param {velocity} velocity - Initial velocity
+	 * @param {number} time - Time value
+	 *
+	 * @return {THREE.Vector3} Vector3 with the parabolic curve position for each axis
+	 *
+	 * @private
+	 */
+	_parabolicCurve(point, velocity, time) {
+		const returnedVector = new Vector3();
+		returnedVector.x = this._parabolicCurveScalar(point.x, velocity.x, 0, time);
+		returnedVector.y = this._parabolicCurveScalar(point.y, velocity.y, this.acceleration, time);
+		returnedVector.z = this._parabolicCurveScalar(point.z, velocity.z, 0, time);
+		return returnedVector;
+	}
+
+	/**
+	 * Sets each point of the ray
+	 *
+	 * @param {number} pointInCurve - Point in the ray
+	 * @param {THREE.Vector3} currentPoint - The current's point Vector3
+	 *
+	 * @return {undefined}
+	 *
+	 * @private
+	 */
+	_setRayCurvePoint(pointInCurve, currentPoint) {
+		// As pointInCurve starts at 1, to set each vertex, it's more convenient for it to start at 0
+		pointInCurve--;
+		const posA = currentPoint.clone().add(this._direction);
+		const posB = currentPoint.clone().sub(this._direction);
+
+		let idx = 2 * 3 * pointInCurve;
+		this.rayCurve.vertices[idx++] = posA.x;
+		this.rayCurve.vertices[idx++] = posA.y;
+		this.rayCurve.vertices[idx++] = posA.z;
+
+		this.rayCurve.vertices[idx++] = posB.x;
+		this.rayCurve.vertices[idx++] = posB.y;
+		this.rayCurve.vertices[idx++] = posB.z;
+
+		this.rayCurve.geometry.attributes.position.needsUpdate = true;
+	}
+
+	_isValidNormalsAngle(collision) {
+		const collisionNormalMatrix = new Matrix3().getNormalMatrix(collision.object.matrixWorld);
+		const collisionNormal = collision.face.normal.clone().applyMatrix3(collisionNormalMatrix);
+		const angleNormal = this._referenceNormal.angleTo(collisionNormal);
+		return _Math.RAD2DEG * angleNormal <= this.maxAngle;
+	}
+
+	/**
+	 * Sets direction
+	 *
+	 * @param {THREE.Vector3} direction - Provided direction
+	 *
+	 * @return {undefined}
+	 */
+	_setDirection(direction) {
+		this._direction
+			.copy(direction)
+			.cross(this._referenceNormal)
+			.normalize()
+			.multiplyScalar(this.rayCurveWidth / 2);
+	}
+
+	/**
+	 * Renders the ray
+	 *
+	 * @return {THREE.Object3D} The ray's mesh
+	 */
+	renderRayCurve() {
+		const geometry = new BufferGeometry();
+		const vertices = new Float32Array(this.rayCurvePoints * 2 * 3);
+
+		geometry.addAttribute('position', new BufferAttribute(vertices, 3).setDynamic(true));
+		const material = new MeshBasicMaterial({
+			side: DoubleSide,
+			color: 0xff0000
+		});
+		const mesh = new Mesh(geometry, material);
+		mesh.drawMode = TriangleStripDrawMode;
+		mesh.frustumCulled = false;
+		mesh.vertices = vertices;
+		mesh.visible = false;
+
+		return mesh;
+	}
+
+	/**
+	 * Renders the hit cylinder
+	 *
+	 * @return {THREE.Object3D} The hit cylinder
+	 */
+	renderHitCylinder() {
+		const hitCylinder = new Group();
+		const geometry = new CylinderGeometry(this.hitCylinderRadius, this.hitCylinderRadius, this.hitCylinderHeight, 8, 1, true);
+		const material = new MeshBasicMaterial({
+			side: DoubleSide,
+			color: this.hitColor
+		});
+		const mesh = new Mesh(geometry, material);
+		mesh.position.set(0, this.hitCylinderHeight / 2, 0);
+		hitCylinder.add(mesh);
+		hitCylinder.visible = false;
+
+		return hitCylinder;
+	}
+
+	/**
+	 * Updates the ray, when active, depending on the world position
+	 *
+	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
+	 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
+	 *
+	 * @return {undefined}
+	 */
+	updateRayCurve(controller, scene) {
+		if (!controller || !(controller instanceof Object3D) && !(controller.model instanceof Object3D)) {
+			this.setRayCurveState(false);
+			return;
+		}
+
+		/**
+		 * Updated renders depend on movement/rotation and debounce activateTeleport there
+		 * but on initial render we also need to debounce activateTeleport or it won't do anything
+		 * as there is no movement necessarily on the first click
+		 */
+		const initialRender = !this.rayCurve.visible;
+		this.hitCylinder.visible = false;
+		this.hitPoint = false;
+		this.rayCurve.visible = true;
+		this.rayCurve.material.color.set(this.missColor);
+
+		controller = controller.model || controller;
+		const quaternion = controller.getWorldQuaternion();
+		const direction = this._shootAxis.clone().applyQuaternion(quaternion).normalize();
+		this._setDirection(direction);
+		const position = controller.position.clone();
+		const velocity = direction.clone().multiplyScalar(this.velocity);
+
+		const lastSegment = position.clone();
+		const nextSegment = new Vector3();
+		for (let i = 1; i <= this.rayCurvePoints; i++) {
+			const time = i / this.rayCurvePoints;
+			nextSegment.copy(this._parabolicCurve(position, velocity, time));
+
+			const directionLastNextSegments = nextSegment.clone().sub(lastSegment).normalize();
+			this.rayCaster.far = directionLastNextSegments.length();
+			this.rayCaster.set(lastSegment, directionLastNextSegments);
+
+			const intersection = Physics.checkRayCollision(this.rayCaster, scene);
+			if (intersection) {
+				const point = intersection.point;
+
+				// If hit, just fill the rest of the points with the hit point and break the loop
+				for (let j = i; j <= this.rayCurvePoints; j++) {
+					this._setRayCurvePoint(j, point);
+				}
+
+				if (this._isValidNormalsAngle(intersection)) {
+					this.rayCurve.material.color.set(this.hitColor);
+					this.hitCylinder.position.copy(point);
+					this.hitCylinder.visible = true;
+					this.hitPoint = point;
+					if (initialRender) {
+						this.activateTeleport();
+					}
+				}
+
+				break;
+			} else {
+				this._setRayCurvePoint(i, nextSegment);
+				lastSegment.copy(nextSegment);
+			}
+		}
+
+		if (!this.hitPoint) {
+			clearTimeout(this.activateTeleport.id);
+		}
+	}
+}
+
+/** Class for all general locomotion purposes */
+class Locomotion {
+
+	/** @property {number} velocity - translation velocity in m/s */
+	get velocity() {
+		if (!this._velocity) {
+			this._velocity = 1.5;
+		}
+		return this._velocity;
+	}
+
+	set velocity(velocity) {
+		this._velocity = velocity;
+	}
+
+	/** @property {number} angularVelocity - angular velocity */
+	get angularVelocity() {
+		if (!this._angularVelocity) {
+			this._angularVelocity = 1;
+		}
+		return this._angularVelocity;
+	}
+
+	set angularVelocity(angularVelocity) {
+		this._angularVelocity = angularVelocity;
+	}
+
+	/**
+	 * @property {object} orientation - contains quaternion and euler angles
+	 * @property {THREE.Quaternion} orientation.quaternion - Quaternion representing the orientation set by phi and theta
+	 * @property {THREE.Euler} orientation.euler - Euler angles representing the orientation set by phi and theta
+	 */
+	get orientation() {
+		if (!this._orientation) {
+			this._orientation = {
+				quaternion: new Quaternion(),
+				euler: new Euler()
+			};
+		}
+		return this._orientation;
+	}
+
+	set orientation(orientation) {
+		this._orientation = orientation;
+	}
+
+	/** @property {THREE.Vector2} currentRotation - current rotation vector */
+	get currentRotation() {
+		if (!this._currentRotation) {
+			this._currentRotation = new Vector2();
+		}
+		return this._currentRotation;
+	}
+
+	set currentRotation(currentRotation) {
+		this._currentRotation = currentRotation;
+	}
+
+	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
+	get translatingZ() {
+		if (typeof this._translatingZ === 'undefined') {
+			this._translatingZ = false;
+		}
+		return this._translatingZ;
+	}
+
+	set translatingZ(translatingZ) {
+		this._translatingZ = translatingZ;
+	}
+
+	/** @property {boolean|number} translatingX - is there translation in the X axis and by how much */
+	get translatingX() {
+		if (typeof this._translatingX === 'undefined') {
+			this._translatingX = false;
+		}
+		return this._translatingX;
+	}
+
+	set translatingX(translatingX) {
+		this._translatingX = translatingX;
+	}
+
+	/** Initialises a Locomotion instance and teleportation */
+	constructor() {
+		this._phi = 0;
+		this._theta = 0;
+	
+		this.teleportation = new Teleportation();
+	}
+
+	/**
+	 * Gets all the meshes that serve as guides for the locomotion system
+	 *
+	 * @returns {array} meshes
+	 */
+	getMeshes() {
+		return [this.teleportation.rayCurve, this.teleportation.hitCylinder];
+	}
+
+	/**
+	 * Starts translating across the Z axis at the stated velocity
+	 *
+	 * @param {number} velocity - Value to translate by
+	 *
+	 * @returns {undefined}
+	 */
+	translateZ(velocity) {
+		this.translatingZ = velocity;
+	}
+
+	/**
+	 * Starts translating across the X axis at the stated velocity
+	 *
+	 * @param {number} velocity - Value to translate by
+	 *
+	 * @returns {undefined}
+	 */
+	translateX(velocity) {
+		this.translatingX = velocity;
+	}
+
+	/**
+	 * Stops translating across the Z axis
+	 *
+	 * @returns {undefined}
+	 */
+	stopTranslateZ() {
+		this.translatingZ = false;
+	}
+
+	/**
+	 * Stops translating across the X axis
+	 *
+	 * @returns {undefined}
+	 */
+	stopTranslateX() {
+		this.translatingX = false;
+	}
+
+	orient(rotation) {
+		// Calculates the delta between the current move event and the previous one
+		const rotationDelta = new Vector2();
+		// TODO: What about when currentRotation isn't initialised?
+		rotationDelta.subVectors(rotation, this.currentRotation);
+
+		// Saves current rotation for next move event
+		this.currentRotation.copy(rotation);
+
+		// Calculates cumulative euler angles
+		const phi = this._phi + 2 * Math.PI * rotationDelta.y / screen.height * this.angularVelocity;
+		this._phi = Math.max(-Math.PI/2, Math.min(phi, Math.PI/2));
+		this._theta += 2 * Math.PI * rotationDelta.x / screen.width * this.angularVelocity;
+
+		this.orientation.euler.set(this._phi, this._theta, 0, 'YXZ');
+		this.orientation.quaternion.setFromEuler(this.orientation.euler);
+
+		if (this.teleportation.hitPoint) {
+			// Debounced function
+			this.teleportation.activateTeleport();
+		}
+	}
+
+	teleport() {
+		if (this.teleportation.isRayCurveActive) {
+			this.teleportation.resetTeleport();
+		} else {
+			this._handleTeleportation();
+		}
+	}
+
+	/**
+	 * Handles teleportation
+	 *
+	 * @return {undefined}
+	 *
+	 * @private
+	 */
+	_handleTeleportation() {
+		this.teleportation.setRayCurveState(true);
+	}
+	
+	setUpEventListeners(controllers, interactions) {
+		controllers.on('ztranslationstart', (event) => {
+			this.translateZ(event.direction * this.velocity);
+		});
+
+		controllers.on('xtranslationstart', (event) => {
+			this.translateX(event.direction * this.velocity);
+		});
+
+		controllers.on('ztranslationend', this.stopTranslateZ.bind(this));
+
+		controllers.on('xtranslationend', this.stopTranslateX.bind(this));
+
+		controllers.on('orientation', (event) => {
+			this.orient(event.rotation);
+		});
+
+		controllers.on('trigger', (event) => {
+			if (!event.touch) {
+				this.teleport();
+			}
+		});
+
+		controllers.on('thumbpadpressed', (event) => {
+			this.teleport();
+			if (!this.teleportation.isRayCurveActive) {
+				clearTimeout(this._thumbpadTouchedTimeout);
+				this.stopTranslateZ();
+			}
+		});
+
+		controllers.on('thumbpadtouched', (event) => {
+			if (!this.teleportation.isRayCurveActive) {
+				this._thumbpadTouchedTimeout = setTimeout(() => {
+					this.translateZ(-this.velocity);
+				}, 500);
+			}
+		});
+
+		controllers.on('thumbpaduntouched', (event) => {
+			clearTimeout(this._thumbpadTouchedTimeout);
+			this.stopTranslateZ();
+		});
+
+		interactions.on('selected', () => {
+			if (this.teleportation.isRayCurveActive) {
+				this.teleportation.resetTeleport();
+			}
+		});
+	}
+}
+
+/* eslint-disable */
+
+/**
+ * @author dmarcos / https://github.com/dmarcos
+ * @author mrdoob / http://mrdoob.com
+ */
+
+const VRControls = function ( object, onError ) {
+
+	var scope = this;
+
+	var vrDisplay, vrDisplays;
+
+	var standingMatrix = new Matrix4();
+
+	var frameData = null;
+
+	if ( 'VRFrameData' in window ) {
+
+		frameData = new VRFrameData();
+
+	}
+
+	function gotVRDisplays( displays ) {
+
+		vrDisplays = displays;
+
+		if ( displays.length > 0 ) {
+
+			vrDisplay = displays[ 0 ];
+
+		} else {
+
+			if ( onError ) onError( 'VR input not available.' );
+
+		}
+
+	}
+
+	if ( navigator.getVRDisplays ) {
+
+		navigator.getVRDisplays().then( gotVRDisplays ).catch ( function () {
+
+			console.warn( 'THREE.VRControls: Unable to get VR Displays' );
+
+		} );
+
+	}
+
+	// the Rift SDK returns the position in meters
+	// this scale factor allows the user to define how meters
+	// are converted to scene units.
+
+	this.scale = 1;
+
+	// If true will use "standing space" coordinate system where y=0 is the
+	// floor and x=0, z=0 is the center of the room.
+	this.standing = false;
+
+	// Distance from the users eyes to the floor in meters. Used when
+	// standing=true but the VRDisplay doesn't provide stageParameters.
+	this.userHeight = 1.6;
+
+	this.getVRDisplay = function () {
+
+		return vrDisplay;
+
+	};
+
+	this.setVRDisplay = function ( value ) {
+
+		vrDisplay = value;
+
+	};
+
+	this.getVRDisplays = function () {
+
+		console.warn( 'THREE.VRControls: getVRDisplays() is being deprecated.' );
+		return vrDisplays;
+
+	};
+
+	this.getStandingMatrix = function () {
+
+		return standingMatrix;
+
+	};
+
+	this.update = function () {
+
+		if ( vrDisplay ) {
+
+			var pose;
+
+			if ( vrDisplay.getFrameData ) {
+
+				vrDisplay.getFrameData( frameData );
+				pose = frameData.pose;
+
+			} else if ( vrDisplay.getPose ) {
+
+				pose = vrDisplay.getPose();
+
+			}
+
+			if ( pose.orientation !== null ) {
+
+				object.quaternion.fromArray( pose.orientation );
+
+			}
+
+			if ( pose.position !== null ) {
+
+				object.position.fromArray( pose.position );
+
+			} else {
+
+				object.position.set( 0, 0, 0 );
+
+			}
+
+			if ( this.standing ) {
+
+				if ( vrDisplay.stageParameters ) {
+
+					object.updateMatrix();
+
+					standingMatrix.fromArray( vrDisplay.stageParameters.sittingToStandingTransform );
+					object.applyMatrix( standingMatrix );
+
+				} else {
+
+					object.position.setY( object.position.y + this.userHeight );
+
+				}
+
+			}
+
+			object.position.multiplyScalar( scope.scale );
+
+		}
+
+	};
+
+	this.resetPose = function () {
+
+		if ( vrDisplay ) {
+
+			vrDisplay.resetPose();
+
+		}
+
+	};
+
+	this.resetSensor = function () {
+
+		console.warn( 'THREE.VRControls: .resetSensor() is now .resetPose().' );
+		this.resetPose();
+
+	};
+
+	this.zeroSensor = function () {
+
+		console.warn( 'THREE.VRControls: .zeroSensor() is now .resetPose().' );
+		this.resetPose();
+
+	};
+
+	this.dispose = function () {
+
+		vrDisplay = null;
+
+	};
+
 };
 
 var uportConnect = createCommonjsModule(function (module, exports) {
@@ -130325,23 +129946,40 @@ module.exports = transfer;
 
 var uport = unwrapExports(uportConnect);
 
-// 0x04698541ee0770a5774a94364172322d6b3191de8e8c560cb470a30a4bad2ab913c02f1978d0b7a085dcaad648e63b6c7ee95eaa82d6be9dd3a069aac29a399c5a
-const ANONYMOUS_AVATAR_PATH = 'assets/models/AnonymousVP.gltf';
+const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
 
-const Identity = {
+class Identity {
 
 	/** @property {boolean} signedIn - Whether the human is signed in */
-	signedIn: false,
+	get signedIn() {
+		if (typeof this._signedIn === 'undefined') {
+			this._signedIn = false;
+		}
+		return this._signedIn;
+	}
+
+	set signedIn(signedIn) {
+		this._signedIn = signedIn;
+	}
 
 	/** @property {string} avatarPath = Path to the current human's avatar, defaults to the anonymous avatar path */
-	avatarPath: ANONYMOUS_AVATAR_PATH,
+	get avatarPath() {
+		if (!this._avatarPath) {
+			this._avatarPath = ANONYMOUS_AVATAR_PATH;
+		}
+		return this._avatarPath;
+	}
+
+	set avatarPath(avatarPath) {
+		this._avatarPath = avatarPath;
+	}
 
 	/**
 	 * Initializes an identity by instantiating uPort and fethcing the current identity
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
-	init() {
+	constructor() {
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
 			network: 'rinkeby',
@@ -130350,14 +129988,14 @@ const Identity = {
 
 		const identity = this.getIdentity();
 		this.signedIn = !!identity;
-	},
+	}
 
 	/**
 	 * Signs the human in by showing a uPort QR code, and then saving the data
 	 *
 	 * @param {string} information - Pieces of information to be requested to the human
 	 *
-	 * @return {Promise} promise
+	 * @returns {Promise} promise
 	 */
 	signIn(...information) {
 		return this.uPort.requestCredentials({
@@ -130369,26 +130007,26 @@ const Identity = {
 			this.signedIn = true;
 			return Promise.resolve();
 		}, (error) => Promise.reject(error));
-	},
+	}
 
 	/**
 	 * Signs the human out, removes saved data and resets avatar path
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	signOut() {
 		localStorage.removeItem('currentIdentity');
 		this.avatarPath = ANONYMOUS_AVATAR_PATH;
 		delete this.uPortData;
 		this.signedIn = false;
-	},
+	}
 
 	/**
 	 * Fetches the identity trying the following options in this order:
 	 * 1. Saved in this instance
 	 * 2. Saved in LocalStorage
 	 *
-	 * @return {object} identity
+	 * @returns {object} identity
 	 */
 	getIdentity() {
 		if (this.uPortData) {
@@ -130408,7 +130046,7 @@ const Identity = {
 		} catch (error) {
 			console.log(error);
 		}
-	},
+	}
 
 	/**
 	 * Saves the received credentials to this instance and optionally saves them to LocalStorage
@@ -130416,7 +130054,7 @@ const Identity = {
 	 * @param {object} credentials - The human's credentials from uPort
 	 * @param {boolean} save - Whether to save the credentials to LocalStorage
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	setUPortData(credentials, save) {
 		this.uPortData = credentials;
@@ -130430,7 +130068,7 @@ const Identity = {
 			localStorage.setItem('currentIdentity', JSON.stringify(this.uPortData));
 		}
 	}
-};
+}
 
 var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
@@ -137178,13 +136816,31 @@ const defaultConfig = {
 	}
 };
 
-const MultiVP = {
+class MultiVP {
 
 	/** @property {Object} meshes - Map of all meshes to their ids */
-	meshes: {},
+	get meshes() {
+		if (!this._meshes) {
+			this._meshes = {};
+		}
+		return this._meshes;
+	}
+
+	set meshes(meshes) {
+		this._meshes = meshes;
+	}
 
 	/** @property {Object} remotePeer - Map of all peers to their ids */
-	remotePeers: {},
+	get remotePeers() {
+		if (!this._remotePeers) {
+			this._remotePeers = {};
+		}
+		return this._remotePeers;
+	}
+
+	set remotePeers(remotePeers) {
+		this._remotePeers = remotePeers;
+	}
 
 	/**
 	 * Initializes a MultiVP instance
@@ -137192,21 +136848,25 @@ const MultiVP = {
 	 * @param {Object} config - Configuration parameters
 	 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
-	init(config, vp) {
+	constructor(config, vp) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
-		this.scene = vp.scene;
 		this.socket = this.createSocket();
-		this.scene.addAnimateFunctions(this.animate.bind(this));
-	},
+		this.emit('addanimatefunctions', {
+			functions: [this.animate.bind(this)]
+		});
+	}
 
 	/**
 	 * Updates all peer meshes with their current position and rotation
 	 * Executed on every animation frame
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	animate() {
 		for (const peerId of Object.keys(this.meshes)) {
@@ -137214,12 +136874,12 @@ const MultiVP = {
 			peerMesh.mesh.position.set(...peerMesh.position);
 			peerMesh.mesh.rotation.y = peerMesh.rotation;
 		}
-	},
+	}
 
 	/**
 	 * Creates a new WebSocket with the set configuration
 	 *
-	 * @return {WebSocket} socket - Created WebSocket
+	 * @returns {WebSocket} socket - Created WebSocket
 	 */
 	createSocket() {
 		const socket = new WebSocket(`${this.config.socketURL}:${this.config.socketPort}`);
@@ -137228,27 +136888,27 @@ const MultiVP = {
 		socket.addEventListener('message', this._socketMessage.bind(this));
 
 		return socket;
-	},
+	}
 
 	/**
 	 * Error handler for a WebSocket
 	 *
 	 * @param {Object} error - Error event Object
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
 	_socketError(error) {
 		console.log('socket error', error);
-	},
+	}
 
 	/**
 	 * Message handler for a WebSocket
 	 *
 	 * @param {Object} event - Event object for a socket message
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -137273,7 +136933,7 @@ const MultiVP = {
 		} else if (message.type === 'disconnected') {
 			delete this.remotePeers[message.from];
 		}
-	},
+	}
 
 	/**
 	 * Creates a new SimplePeer with the default configuration
@@ -137281,7 +136941,7 @@ const MultiVP = {
 	 * @param {boolean} initiator - Whether this peer is the initiator of the communication
 	 * @param {number} id - This peer's id, sent by the signalling server
 	 *
-	 * @return {Peer} peer - Created SimplePeer
+	 * @returns {Peer} peer - Created SimplePeer
 	 */
 	createPeer(initiator, id) {
 		this.config.peer.initiator = initiator;
@@ -137298,14 +136958,14 @@ const MultiVP = {
 		peer.on('close', this._peerClose.bind(peer));
 
 		return peer;
-	},
+	}
 
 	/**
 	 * Signal handler for a Peer instance
 	 *
 	 * @param {Object} data - Event object for a signal handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -137316,25 +136976,25 @@ const MultiVP = {
 			from: this.multiVP.id,
 			to: this.id
 		}));
-	},
+	}
 
 	/**
 	 * Error handler for a Peer instance
 	 *
 	 * @param {Object} error - Event object for an error handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
 	_peerError(error) {
 		console.log('peer error', error);
-	},
+	}
 
 	/**
 	 * Connect handler for a Peer instance
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -137345,14 +137005,14 @@ const MultiVP = {
 			type: 'connected',
 			avatar: this.multiVP.vp.identity.avatarPath
 		}));
-	},
+	}
 
 	/**
 	 * Data handler for a Peer instance
 	 *
 	 * @param {Object} data - Event object for a data handler
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -137363,7 +137023,9 @@ const MultiVP = {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
-					this.multiVP.scene.addToScene(mesh);
+					this.emit('add', {
+						mesh
+					});
 				})
 				.catch(console.log);
 		} else {
@@ -137373,12 +137035,12 @@ const MultiVP = {
 				mesh.rotation = data.rotation;
 			}
 		}
-	},
+	}
 
 	/**
 	 * Close handler for a Peer instance
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
@@ -137386,17 +137048,19 @@ const MultiVP = {
 		console.log(`peer ${this.id} closing`);
 		delete this.multiVP.remotePeers[this.id];
 		if (this.multiVP.meshes[this.id]) {
-			this.multiVP.scene.scene.remove(this.multiVP.meshes[this.id].mesh);
+			this.multiVP.emit('remove', {
+				mesh: this.multiVP.meshes[this.id].mesh
+			});
 			delete this.multiVP.meshes[this.id];
 		}
-	},
+	}
 
 	/**
 	 * Sends data from a VirtualPersona to all peers
 	 *
 	 * @param {THREE.Mesh} vp - VirtualPersona from where to get the data
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	sendData(vp) {
 		const payload = {
@@ -137411,14 +137075,14 @@ const MultiVP = {
 		positionBuffer[3] = vp.rotation.y;
 
 		this.update(JSON.stringify(payload));
-	},
+	}
 
 	/**
 	 * Sends a piece of data to all peers
 	 *
 	 * @param {ArrayBuffer} data - Data to be shared to other peers
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	update(data) {
 		for (const peerId of Object.keys(this.remotePeers)) {
@@ -137427,14 +137091,14 @@ const MultiVP = {
 				peer.send(data);
 			}
 		}
-	},
+	}
 
 	/**
 	 * Helper function to convert an ArrayBuffer to a String
 	 *
 	 * @param {ArrayBuffer|TypedArray} buffer - ArrayBuffer to be converted
 	 *
-	 * @return {string} string
+	 * @returns {string} string
 	*/
 	_decodeBuffer(buffer) {
 		buffer = buffer.buffer || buffer;
@@ -137456,7 +137120,7 @@ const MultiVP = {
 		}
 
 		return string;
-	},
+	}
 
 	/**
 	 * Helper function to load an avatar from a path
@@ -137464,7 +137128,7 @@ const MultiVP = {
 	 * @param {string} path - Path from where to load an avatar
 	 * @param {string} id - This avatar's id
 	 *
-	 * @return {Promise} promise - Resolves to a loaded avatar
+	 * @returns {Promise} promise - Resolves to a loaded avatar
 	 *
 	 * @private
 	 */
@@ -137481,44 +137145,59 @@ const MultiVP = {
 			})
 			.catch(console.log);
 	}
-};
+}
 
 const VERTICAL_VECTOR$1 = new Vector3(0, -1, 0);
 
-/**
- * VirtualPersona
- * @namespace
- */
-const VirtualPersona = {
+/** Class for a VirtualPersona */
+class VirtualPersona {
 
 	/** @property {number} floorHeight - Current height of the floor where the user is */
-	floorHeight: 0,
+	get floorHeight() {
+		if (typeof this._floorHeight === 'undefined') {
+			this._floorHeight = 0;
+		}
+		return this._floorHeight;
+	}
+
+	set floorHeight(floorHeight) {
+		this._floorHeight = floorHeight;
+	}
 
 	/** @property {number} userHeight - The user's height */
-	userHeight: 1.7,
+	get userHeight() {
+		if (typeof this._userHeight === 'undefined') {
+			this._userHeight = 1.7;
+		}
+		return this._userHeight;
+	}
+
+	set userHeight(userHeight) {
+		this._userHeight = userHeight;
+	}
 
 	/** @property {number} climbableHeight - The height up to which objects are climbable */
-	climbableHeight: 0.4,
-
-	/**
-	 * @property {THREE.Vector3} _feetPosition - The current feet position
-	 *
-	 * @private
-	 */
-	_feetPosition: new Vector3(),
-
-	/**
-	 * Initialises a VP by rendering supplied mesh into the scene, and initialising inputs
-	 *
-	 * @param {Scene} scene - Scene that the VP will appear in
-	 * @param {object} config - Configuration parameters for different elements
-	 *
-	 * @return {Promise} promise - Promise that resolves when the mesh loads
-	*/
-	init(scene, config = {}) {
-		if (!scene || !Scene$1.isPrototypeOf(scene)) {
-			return Promise.reject('A Holonet.Scene is required to set up a VirtualPersona');
+	get climbableHeight() {
+		if (typeof this._climbableHeight === 'undefined') {
+			this._climbableHeight = 0.4;
 		}
+		return this._climbableHeight;
+	}
+
+	set climbableHeight(climbableHeight) {
+		this._climbableHeight = climbableHeight;
+	}
+
+	/**
+	 * Constructs a VP instance and sets its properties
+	 *
+	 * @param {object} config - Configuration parameters for different elements
+	*/
+	constructor(config = {}) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
+		this._feetPosition = new Vector3();
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new Object3D();
@@ -137530,20 +137209,27 @@ const VirtualPersona = {
 		// TODO: Avoid the user from floating. Probably not necessary?
 		this._floorRayCaster.far = this.userHeight + 10;
 
-		this.scene = scene;
-		this.locomotion = Object.create(Locomotion);
-		this.interactions = Object.create(Interactions);
-		this.interactions.init();
+		this.identity = new Identity();
+		this.multiVP = new MultiVP(config.multiVP || {}, this);
+		this.multiVP.on('add', (event) => {
+			this.emit('add', event);
+		});
+		this.multiVP.on('remove', (event) => {
+			this.emit('remove', event);
+		});
+		this.multiVP.on('addanimatefunctions', (event) => {
+			this.emit('addanimatefunctions', event);
+		});
+	}
 
-		this.identity = Object.create(Identity);
-		this.identity.init();
-
-		this.multiVP = Object.create(MultiVP);
-		this.multiVP.init(config.multiVP || {}, this);
-
-		return this.loadMesh(this.identity.avatarPath, true)
-			.then(() => this._setUpVP());
-	},
+	/**
+	 * Initialises the VP instance by adding it to the scene
+	 *
+	 * @returns {Promise} promise - Promise that resolves when the mesh loads
+	*/
+	init() {
+		return this.loadMesh(this.identity.avatarPath, true);
+	}
 
 	/**
 	 * Loads a Virtual Persona mesh
@@ -137551,11 +137237,10 @@ const VirtualPersona = {
 	 * @param {string} path - Path to the mesh that will be loaded
 	 * @param {boolean} render - Whether to also render the loaded mesh as this identity's mesh
 	 *
-	 * @return {Promise<THREE.Mesh>} mesh
+	 * @returns {Promise<THREE.Mesh>} mesh
 	*/
 	loadMesh(path, render) {
-		const vpLoader = Object.create(Loader$1);
-		vpLoader.init(path);
+		const vpLoader = new Loader$1(path);
 		return vpLoader.load()
 			.then((mesh) => {
 				mesh = this._setUpMesh(mesh);
@@ -137569,14 +137254,14 @@ const VirtualPersona = {
 			.catch((error) => {
 				throw error;
 			});
-	},
+	}
 
 	/**
 	 * Sets up the loaded mesh properly
 	 *
 	 * @param {THREE.Mesh} mesh - Loaded VP mesh
 	 *
-	 * @return {THREE.Mesh} mesh
+	 * @returns {THREE.Mesh} mesh
 	 */
 	_setUpMesh(mesh) {
 		mesh.name = 'HolonetVirtualPersona';
@@ -137593,30 +137278,20 @@ const VirtualPersona = {
 		}
 
 		return mesh;
-	},
-
-	/**
-	 * Sets up how the VP will interact with the scene
-	 *
-	 * @return {undefined}
-	 */
-	_setUpVP() {
-		this.locomotion.init(this);
-		this.scene.addToScene([...this.interactions.getMeshes()], false, false);
-		this.scene.addAnimateFunctions(this.animate.bind(this));
-		return Promise.resolve();
-	},
+	}
 
 	/**
 	 * Properly renders the loaded mesh
 	 *
 	 * @param {THREE.Mesh} mesh - Loaded VP mesh
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 */
 	render(mesh) {
 		if (this.mesh) {
-			this.scene.scene.remove(this.mesh);
+			this.emit('remove', {
+				mesh: this.mesh
+			});
 		}
 
 		this.mesh = mesh;
@@ -137625,168 +137300,992 @@ const VirtualPersona = {
 		const boundingBox = new Box3().setFromObject(this.mesh);
 		this._meshHeight = boundingBox.max.y - boundingBox.min.y;
 
-		this.scene.addToScene(this.mesh, false);
-	},
+		this.emit('add', {
+			mesh: this.mesh
+		});
+	}
 
 	/**
 	 * Signs in and loads mesh afterwards
 	 *
-	 * @return {Promise} promise
+	 * @returns {Promise} promise
 	 */
 	signIn() {
 		return this.identity.signIn()
 			.then(() => this.loadMesh(this.identity.avatarPath, true))
 			.catch(console.log);
-	},
+	}
 
 	/**
 	 * Signs out and loads mesh afterwards
 	 *
-	 * @return {Promise} promise
+	 * @returns {Promise} promise
 	 */
 	signOut() {
 		this.identity.signOut();
-		return this.loadMesh(this.identity.avatarPath, true);
-	},
+		return this.loadMesh(this.identity.avatarPath, true)
+			.catch(console.log);
+	}
 
 	/**
 	 * Adjusts the floor height depending on the position
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
 	 *
 	 * @private
 	 */
-	_setFloorHeight() {
-		this._feetPosition.copy(this.scene.camera.position);
+	setFloorHeight(scene) {
+		this._feetPosition.copy(scene.camera.position);
 		// Make it so you only climb objects that are 0.4m above the ground
 		this._feetPosition.setY(this._feetPosition.y - this.userHeight + this.climbableHeight);
 
 		this._floorRayCaster.set(this._feetPosition, VERTICAL_VECTOR$1);
-		const collisionMesh = this.scene.scene;
+		const collisionMesh = scene.scene;
 		const intersection = Physics.checkRayCollision(this._floorRayCaster, collisionMesh);
 		if (intersection) {
 			this.floorHeight = intersection.point.y;
 		}
-	},
+	}
+}
+
+/* eslint-disable */
+
+/**
+ * @author dmarcos / https://github.com/dmarcos
+ * @author mrdoob / http://mrdoob.com
+ *
+ * WebVR Spec: http://mozvr.github.io/webvr-spec/webvr.html
+ *
+ * Firefox: http://mozvr.com/downloads/
+ * Chromium: https://webvr.info/get-chrome
+ *
+ */
+
+const VREffect = function( renderer, onError ) {
+
+	var vrDisplay, vrDisplays;
+	var eyeTranslationL = new Vector3();
+	var eyeTranslationR = new Vector3();
+	var renderRectL, renderRectR;
+
+	var frameData = null;
+
+	if ( 'VRFrameData' in window ) {
+
+		frameData = new window.VRFrameData();
+
+	}
+
+	function gotVRDisplays( displays ) {
+
+		vrDisplays = displays;
+
+		if ( displays.length > 0 ) {
+
+			vrDisplay = displays[ 0 ];
+
+		} else {
+
+			if ( onError ) onError( 'HMD not available' );
+
+		}
+
+	}
+
+	if ( navigator.getVRDisplays ) {
+
+		navigator.getVRDisplays().then( gotVRDisplays ).catch( function() {
+
+			console.warn( 'THREE.VREffect: Unable to get VR Displays' );
+
+		} );
+
+	}
+
+	//
+
+	this.isPresenting = false;
+	this.scale = 1;
+
+	var scope = this;
+
+	var rendererSize = renderer.getSize();
+	var rendererUpdateStyle = false;
+	var rendererPixelRatio = renderer.getPixelRatio();
+
+	this.getVRDisplay = function() {
+
+		return vrDisplay;
+
+	};
+
+	this.setVRDisplay = function( value ) {
+
+		vrDisplay = value;
+
+	};
+
+	this.getVRDisplays = function() {
+
+		console.warn( 'THREE.VREffect: getVRDisplays() is being deprecated.' );
+		return vrDisplays;
+
+	};
+
+	this.setSize = function( width, height, updateStyle ) {
+
+		rendererSize = { width: width, height: height };
+		rendererUpdateStyle = updateStyle;
+
+		if ( scope.isPresenting ) {
+
+			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
+			renderer.setPixelRatio( 1 );
+			renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
+
+		} else {
+
+			renderer.setPixelRatio( rendererPixelRatio );
+			renderer.setSize( width, height, updateStyle );
+
+		}
+
+	};
+
+	// VR presentation
+
+	var canvas = renderer.domElement;
+	var defaultLeftBounds = [ 0.0, 0.0, 0.5, 1.0 ];
+	var defaultRightBounds = [ 0.5, 0.0, 0.5, 1.0 ];
+
+	function onVRDisplayPresentChange() {
+
+		var wasPresenting = scope.isPresenting;
+		scope.isPresenting = vrDisplay !== undefined && vrDisplay.isPresenting;
+
+		if ( scope.isPresenting ) {
+
+			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
+			var eyeWidth = eyeParamsL.renderWidth;
+			var eyeHeight = eyeParamsL.renderHeight;
+
+			if ( ! wasPresenting ) {
+
+				rendererPixelRatio = renderer.getPixelRatio();
+				rendererSize = renderer.getSize();
+
+				renderer.setPixelRatio( 1 );
+				renderer.setSize( eyeWidth * 2, eyeHeight, false );
+
+			}
+
+		} else if ( wasPresenting ) {
+
+			renderer.setPixelRatio( rendererPixelRatio );
+			renderer.setSize( rendererSize.width, rendererSize.height, rendererUpdateStyle );
+
+		}
+
+	}
+
+	window.addEventListener( 'vrdisplaypresentchange', onVRDisplayPresentChange, false );
+
+	this.setFullScreen = function( boolean ) {
+
+		return new Promise( function( resolve, reject ) {
+
+			if ( vrDisplay === undefined ) {
+
+				reject( new Error( 'No VR hardware found.' ) );
+				return;
+
+			}
+
+			if ( scope.isPresenting === boolean ) {
+
+				resolve();
+				return;
+
+			}
+
+			if ( boolean ) {
+
+				resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
+
+			} else {
+
+				resolve( vrDisplay.exitPresent() );
+
+			}
+
+		} );
+
+	};
+
+	this.requestPresent = function() {
+
+		return this.setFullScreen( true );
+
+	};
+
+	this.exitPresent = function() {
+
+		return this.setFullScreen( false );
+
+	};
+
+	this.requestAnimationFrame = function( f ) {
+
+		if ( vrDisplay !== undefined ) {
+
+			return vrDisplay.requestAnimationFrame( f );
+
+		} else {
+
+			return window.requestAnimationFrame( f );
+
+		}
+
+	};
+
+	this.cancelAnimationFrame = function( h ) {
+
+		if ( vrDisplay !== undefined ) {
+
+			vrDisplay.cancelAnimationFrame( h );
+
+		} else {
+
+			window.cancelAnimationFrame( h );
+
+		}
+
+	};
+
+	this.submitFrame = function() {
+
+		if ( vrDisplay !== undefined && scope.isPresenting ) {
+
+			vrDisplay.submitFrame();
+
+		}
+
+	};
+
+	this.autoSubmitFrame = true;
+
+	// render
+
+	var cameraL = new PerspectiveCamera();
+	cameraL.layers.enable( 1 );
+
+	var cameraR = new PerspectiveCamera();
+	cameraR.layers.enable( 2 );
+
+	this.render = function( scene, camera, renderTarget, forceClear ) {
+
+		if ( vrDisplay && scope.isPresenting ) {
+
+			var autoUpdate = scene.autoUpdate;
+
+			if ( autoUpdate ) {
+
+				scene.updateMatrixWorld();
+				scene.autoUpdate = false;
+
+			}
+
+			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
+			var eyeParamsR = vrDisplay.getEyeParameters( 'right' );
+
+			eyeTranslationL.fromArray( eyeParamsL.offset );
+			eyeTranslationR.fromArray( eyeParamsR.offset );
+
+			if ( Array.isArray( scene ) ) {
+
+				console.warn( 'THREE.VREffect.render() no longer supports arrays. Use object.layers instead.' );
+				scene = scene[ 0 ];
+
+			}
+
+			// When rendering we don't care what the recommended size is, only what the actual size
+			// of the backbuffer is.
+			var size = renderer.getSize();
+			var layers = vrDisplay.getLayers();
+			var leftBounds;
+			var rightBounds;
+
+			if ( layers.length ) {
+
+				var layer = layers[ 0 ];
+
+				leftBounds = layer.leftBounds !== null && layer.leftBounds.length === 4 ? layer.leftBounds : defaultLeftBounds;
+				rightBounds = layer.rightBounds !== null && layer.rightBounds.length === 4 ? layer.rightBounds : defaultRightBounds;
+
+			} else {
+
+				leftBounds = defaultLeftBounds;
+				rightBounds = defaultRightBounds;
+
+			}
+
+			renderRectL = {
+				x: Math.round( size.width * leftBounds[ 0 ] ),
+				y: Math.round( size.height * leftBounds[ 1 ] ),
+				width: Math.round( size.width * leftBounds[ 2 ] ),
+				height: Math.round( size.height * leftBounds[ 3 ] )
+			};
+			renderRectR = {
+				x: Math.round( size.width * rightBounds[ 0 ] ),
+				y: Math.round( size.height * rightBounds[ 1 ] ),
+				width: Math.round( size.width * rightBounds[ 2 ] ),
+				height: Math.round( size.height * rightBounds[ 3 ] )
+			};
+
+			if ( renderTarget ) {
+
+				renderer.setRenderTarget( renderTarget );
+				renderTarget.scissorTest = true;
+
+			} else {
+
+				renderer.setRenderTarget( null );
+				renderer.setScissorTest( true );
+
+			}
+
+			if ( renderer.autoClear || forceClear ) renderer.clear();
+
+			if ( camera.parent === null ) camera.updateMatrixWorld();
+
+			camera.matrixWorld.decompose( cameraL.position, cameraL.quaternion, cameraL.scale );
+			camera.matrixWorld.decompose( cameraR.position, cameraR.quaternion, cameraR.scale );
+
+			var scale = this.scale;
+			cameraL.translateOnAxis( eyeTranslationL, scale );
+			cameraR.translateOnAxis( eyeTranslationR, scale );
+
+			if ( vrDisplay.getFrameData ) {
+
+				vrDisplay.depthNear = camera.near;
+				vrDisplay.depthFar = camera.far;
+
+				vrDisplay.getFrameData( frameData );
+
+				cameraL.projectionMatrix.elements = frameData.leftProjectionMatrix;
+				cameraR.projectionMatrix.elements = frameData.rightProjectionMatrix;
+
+			} else {
+
+				cameraL.projectionMatrix = fovToProjection( eyeParamsL.fieldOfView, true, camera.near, camera.far );
+				cameraR.projectionMatrix = fovToProjection( eyeParamsR.fieldOfView, true, camera.near, camera.far );
+
+			}
+
+			// render left eye
+			if ( renderTarget ) {
+
+				renderTarget.viewport.set( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
+				renderTarget.scissor.set( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
+
+			} else {
+
+				renderer.setViewport( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
+				renderer.setScissor( renderRectL.x, renderRectL.y, renderRectL.width, renderRectL.height );
+
+			}
+			renderer.render( scene, cameraL, renderTarget, forceClear );
+
+			// render right eye
+			if ( renderTarget ) {
+
+				renderTarget.viewport.set( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
+				renderTarget.scissor.set( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
+
+			} else {
+
+				renderer.setViewport( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
+				renderer.setScissor( renderRectR.x, renderRectR.y, renderRectR.width, renderRectR.height );
+
+			}
+			renderer.render( scene, cameraR, renderTarget, forceClear );
+
+			if ( renderTarget ) {
+
+				renderTarget.viewport.set( 0, 0, size.width, size.height );
+				renderTarget.scissor.set( 0, 0, size.width, size.height );
+				renderTarget.scissorTest = false;
+				renderer.setRenderTarget( null );
+
+			} else {
+
+				renderer.setViewport( 0, 0, size.width, size.height );
+				renderer.setScissorTest( false );
+
+			}
+
+			if ( autoUpdate ) {
+
+				scene.autoUpdate = true;
+
+			}
+
+			if ( scope.autoSubmitFrame ) {
+
+				scope.submitFrame();
+
+			}
+
+			return;
+
+		}
+
+		// Regular render mode if not HMD
+
+		renderer.render( scene, camera, renderTarget, forceClear );
+
+	};
+
+	this.dispose = function() {
+
+		window.removeEventListener( 'vrdisplaypresentchange', onVRDisplayPresentChange, false );
+
+	};
+
+	//
+
+	function fovToNDCScaleOffset( fov ) {
+
+		var pxscale = 2.0 / ( fov.leftTan + fov.rightTan );
+		var pxoffset = ( fov.leftTan - fov.rightTan ) * pxscale * 0.5;
+		var pyscale = 2.0 / ( fov.upTan + fov.downTan );
+		var pyoffset = ( fov.upTan - fov.downTan ) * pyscale * 0.5;
+		return { scale: [ pxscale, pyscale ], offset: [ pxoffset, pyoffset ] };
+
+	}
+
+	function fovPortToProjection( fov, rightHanded, zNear, zFar ) {
+
+		rightHanded = rightHanded === undefined ? true : rightHanded;
+		zNear = zNear === undefined ? 0.01 : zNear;
+		zFar = zFar === undefined ? 10000.0 : zFar;
+
+		var handednessScale = rightHanded ? - 1.0 : 1.0;
+
+		// start with an identity matrix
+		var mobj = new Matrix4();
+		var m = mobj.elements;
+
+		// and with scale/offset info for normalized device coords
+		var scaleAndOffset = fovToNDCScaleOffset( fov );
+
+		// X result, map clip edges to [-w,+w]
+		m[ 0 * 4 + 0 ] = scaleAndOffset.scale[ 0 ];
+		m[ 0 * 4 + 1 ] = 0.0;
+		m[ 0 * 4 + 2 ] = scaleAndOffset.offset[ 0 ] * handednessScale;
+		m[ 0 * 4 + 3 ] = 0.0;
+
+		// Y result, map clip edges to [-w,+w]
+		// Y offset is negated because this proj matrix transforms from world coords with Y=up,
+		// but the NDC scaling has Y=down (thanks D3D?)
+		m[ 1 * 4 + 0 ] = 0.0;
+		m[ 1 * 4 + 1 ] = scaleAndOffset.scale[ 1 ];
+		m[ 1 * 4 + 2 ] = - scaleAndOffset.offset[ 1 ] * handednessScale;
+		m[ 1 * 4 + 3 ] = 0.0;
+
+		// Z result (up to the app)
+		m[ 2 * 4 + 0 ] = 0.0;
+		m[ 2 * 4 + 1 ] = 0.0;
+		m[ 2 * 4 + 2 ] = zFar / ( zNear - zFar ) * - handednessScale;
+		m[ 2 * 4 + 3 ] = ( zFar * zNear ) / ( zNear - zFar );
+
+		// W result (= Z in)
+		m[ 3 * 4 + 0 ] = 0.0;
+		m[ 3 * 4 + 1 ] = 0.0;
+		m[ 3 * 4 + 2 ] = handednessScale;
+		m[ 3 * 4 + 3 ] = 0.0;
+
+		mobj.transpose();
+
+		return mobj;
+
+	}
+
+	function fovToProjection( fov, rightHanded, zNear, zFar ) {
+
+		var DEG2RAD = Math.PI / 180.0;
+
+		var fovPort = {
+			upTan: Math.tan( fov.upDegrees * DEG2RAD ),
+			downTan: Math.tan( fov.downDegrees * DEG2RAD ),
+			leftTan: Math.tan( fov.leftDegrees * DEG2RAD ),
+			rightTan: Math.tan( fov.rightDegrees * DEG2RAD )
+		};
+
+		return fovPortToProjection( fovPort, rightHanded, zNear, zFar );
+
+	}
+
+};
+
+/** Class for the scene that will */
+class Scene$1 {
+
+	/** @property {array} animateFunctions - Array of functions that will be called every frame */
+	get animateFunctions() {
+		if (!this._animateFunctions) {
+			this._animateFunctions = [];
+		}
+		return this._animateFunctions;
+	}
+
+	set animateFunctions(animateFunctions) {
+		this._animateFunctions = animateFunctions;
+	}
+
+	/** @property {array} collidableMeshes - Array of all meshes that are collidable */
+	get collidableMeshes() {
+		if (!this._collidableMeshes) {
+			this._collidableMeshes = [];
+		}
+		return this._collidableMeshes;
+	}
+
+	set collidableMeshes(collidableMeshes) {
+		this._collidableMeshes = collidableMeshes;
+	}
 
 	/**
-	 * Positions VirtualPersona correctly on each frame
+	 * Initialises and renders a provided scene.
+	 * You can either uses Holonet to create a three.js Renderer and camera and load the scene
+	 * or provide it with a previously created renderer and camera to work with
 	 *
-	 * @param {number} time - Current time (ms) to make smooth animations
+	 * @param {object} config - Configuration object
+	 * @param {boolean} config.render - Whether it needs to render to the canvas
+	 * @param {string|THREE.Scene} config.sceneToLoad - Either a THREE.Scene to be added, or a path to the .gltf or .json file containing the scene
+	 * @param {HTMLCanvasElement} config.canvas - Canvas element where the scene will be rendered
+	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Holonet needs access to your renderer
+	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Holonet needs access to your camera
 	 *
-	 * @return {undefined}
+	 * @returns {Scene}
+	 */
+	constructor(config) {
+		if (config.render) {
+			const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
+			const renderer = new WebGLRenderer({
+				canvas: config.canvas,
+				antialias: true
+			});
+			renderer.setPixelRatio(window.devicePixelRatio);
+			// Last parameter adds pixel units to canvas element
+			renderer.setSize(window.innerWidth, window.innerHeight, true);
+			renderer.shadowMap.enabled = true;
+
+			this.camera = camera;
+			this.renderer = renderer;
+
+			window.addEventListener('resize', this.onResize.bind(this), false);
+		} else {
+			this.camera = config.camera;
+			this.renderer = config.renderer;
+		}
+
+		this.canvas = config.canvas;
+		this.vrEffect = new VREffect(this.renderer, console.warn);
+
+		const sceneLoader = new Loader$1(config.sceneToLoad);
+		this._sceneLoader = sceneLoader;
+
+		window.addEventListener('vrdisplayactivate', () => {
+			this.vrEffect.requestPresent();
+		}, false);
+
+		this._render = this._render.bind(this);
+	}
+
+	/**
+	 * Initialises this instance by loading the scene and starting the animation loop
+	 *
+	 * @returns {Promise} promise - Promise that the scene has been loaded
+	 */
+	init() {
+		return this._sceneLoader.load()
+			.then((loadedScene) => {
+				loadedScene.name = 'HolonetMainScene';
+
+				this._setupMeshes(loadedScene);
+				this.scene = loadedScene;
+				this.animate();
+
+				return Promise.resolve();
+			}, console.warn);
+	}
+
+	/**
+	 * Helper function that adds a list of meshes to the scene
+	 *
+	 * @param {array|Three.Object3D} meshes - List of meshes to be added to the scene
+	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
+	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
+	 *
+	 * @returns {undefined}
 	*/
-	animate: (function() {
-		const rotatedPosition = new Quaternion();
-		const previousCameraPosition = new Vector3();
-		const translationDirection = new Vector3();
-		let previousTime = 0;
-		let delta = 0;
+	addToScene(meshes, collidable = true, shadow = true) {
+		if (!(meshes instanceof Array)) {
+			meshes = [meshes];
+		}
 
-		return function(time) {
-			// Convert from milliseconds to seconds
-			time = time / 1000;
-			delta = time - previousTime;
-			previousTime = time;
-
-			// Gets the correct controller
-			const camera = this.scene.camera;
-			const controller = this.locomotion.controllers.mainHandController || camera;
-
-			// Handle position
-			camera.position.copy(previousCameraPosition);
-
-			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
-				translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
-				translationDirection.applyQuaternion(camera.quaternion);
-				const collision = Physics.checkMeshCollision(this.mesh, this.scene.collidableMeshes, this.climbableHeight, translationDirection);
-				if (!collision) {
-					if (this.locomotion.translatingZ) {
-						camera.translateZ(this.locomotion.translatingZ * delta);
-					}
-
-					if (this.locomotion.translatingX) {
-						camera.translateX(this.locomotion.translatingX * delta);
-					}
-				}
+		for (const mesh of meshes) {
+			if (mesh.isObject3D && !mesh.isLight) {
+				this._setupMeshes(mesh, collidable, shadow);
 			}
+			this.scene.add(mesh);
+		}
+	}
 
-			if (this.locomotion.teleportation.isRayCurveActive) {
-				this.locomotion.teleportation.updateRayCurve(controller);
+	/**
+	 * Computes normals for all children of a group
+	 *
+	 * @param {THREE.Object3D} mesh - A Group of meshes to normalize
+	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
+	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
+	 *
+	 * @returns {undefined}
+	 *
+	 * @private
+	 */
+	_setupMeshes(mesh, collidable = true, shadow = true) {
+		if (mesh.children.length) {
+			for (const child of mesh.children) {
+				this._setupMeshes(child, collidable, shadow);
 			}
-
-			if (this.locomotion.teleportation.isTeleportActive) {
-				camera.position.setX(this.locomotion.teleportation.hitPoint.x);
-				camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.userHeight);
-				camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
-				this.locomotion.teleportation.resetTeleport();
+		} else if (mesh.isObject3D) {
+			mesh.geometry && mesh.geometry.computeFaceNormals();
+			if (shadow) {
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
 			}
-
-			if (!camera.position.equals(previousCameraPosition)) {
-				this._setFloorHeight();
+			if (collidable) {
+				this.collidableMeshes.push(mesh);
 			}
+		}
+	}
 
-			camera.position.setY(this.floorHeight + this.userHeight);
-			previousCameraPosition.copy(camera.position);
+	/**
+	 * Resize event handler that sets the correct camera size and its projection matrix
+	 * Also sets the size of the renderer
+	 *
+	 * @returns {undefined}
+	 */
+	onResize() {
+		const windowWidth = window.innerWidth;
+		const windowHeight = window.innerHeight;
 
-			// Handle rotation
-			camera.rotation.copy(this.locomotion.orientation.euler);
+		this.camera.aspect = windowWidth / windowHeight;
+		this.camera.updateProjectionMatrix();
 
-			if (this.scene.vrEffect.isPresenting) {
-				this.vrControls.update();
+		// Last parameter adds pixel units to canvas element
+		this.vrEffect.setSize(windowWidth, windowHeight, true);
+	}
 
-				rotatedPosition.copy(this.fakeCamera.position.applyQuaternion(camera.quaternion));
-				camera.position.add(rotatedPosition);
-				camera.quaternion.multiply(this.fakeCamera.quaternion);
+	/**
+	 * Sets the requestAnimationFrame on the VRDisplay that updates the scene each frame
+	 *
+	 * @param {DOMHighResTimeStamp} timestamp - Timestamp supplied by requestAnimationFrame
+	 *
+	 * @returns {undefined}
+	 *
+	 * @private
+	*/
+	_render(timestamp) {
+		for (const func of this.animateFunctions) {
+			func(timestamp);
+		}
 
-				this.mesh.rotation.y = camera.rotation.y + Math.PI;
-			} else {
-				this.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
-			}
+		this.vrEffect.render(this.scene, this.camera);
 
-			// Adjust vertical position
-			this.mesh.position.copy(camera.position);
-			if (this.headMesh) {
-				const meshYPosition = camera.position.y - this.headMesh.position.y;
-				this.mesh.position.setY(meshYPosition);
-			} else {
-				this.mesh.position.setY(this.floorHeight);
-			}
+		this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
+	}
 
-			// MultiVP
-			this.multiVP.sendData(this.mesh);
+	/**
+	 * Starts the animation frame and saves the rAF ID
+	 *
+	 * @returns {undefined}
+	 */
+	animate() {
+		this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
+	}
 
-			// Interactions
-			this.interactions.update(controller.position, controller.quaternion);
+	/**
+	 * Cancels the animation. Useful when the canvas is not visible for performance reasons
+	 *
+	 * @returns {undefined}
+	 */
+	cancelAnimate() {
+		this.vrEffect.cancelAnimationFrame(this._animationFrameID);
+	}
 
-			// Controllers
-			const controllerIds = Object.keys(this.locomotion.controllers.currentControllers);
-			for (const controllerId of controllerIds) {
-				// Gets the controller from the list with this id and updates it
-				const controller = this.locomotion.controllers.currentControllers[controllerId];
-				controller.update();
-			}
-		};
-	}())
-};
+	/**
+	 * Adds functions to animateFunctions so they will be executed in #render
+	 *
+	 * @param {array} functions - List of functions that will be executed every frame
+	 *
+	 * @returns {undefined}
+	*/
+	addAnimateFunctions(functions) {
+		// In case functions is not an array
+		const functionsToAdd = !Array.isArray(functions) ? [functions] : functions;
+		this.animateFunctions.push(...functionsToAdd);
+	}
+}
 
 Object.assign(window.THREE = {}, THREE);
 if (!navigator.getVRDisplays) {
 	InitializeWebVRPolyfill(); // eslint-disable-line
 }
 
-/**
- * Holonet
- * @namespace
- */
-const Holonet = {
+/**  Main class for Holonet */
+class Holonet {
 
-};
+	/**
+	 * Creates a Holonet instance
+	 *
+	 * @param {object} config - Config object
+	 * @param {object} config.scene - Configuration object for a Holonet scene
+	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
+	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
+	 */
+	constructor(config) {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
+		this._scene = new Scene$1(config.scene);
+
+		this.virtualPersona = new VirtualPersona(config.virtualPersona);
+	
+		this.controllers = new Controllers(this._scene.canvas);
+
+		this.locomotion = new Locomotion();
+		this.interactions = new Interactions();
+
+		this.interactions.setUpEventListeners(this.controllers);
+		this.locomotion.setUpEventListeners(this.controllers, this.interactions);
+		this.addListeners(this.virtualPersona, this.controllers, this.interactions);
+		this.addAnimateFunctions(this.animate.bind(this));
+	}
+
+	/**
+	 * Initialises Holonet by initialising its different components
+	 * and adding all necessary meshes into the scene
+	 *
+	 * @returns {undefined}
+	 */
+	init() {
+		return this._scene.init()
+			.then(() => this.virtualPersona.init())
+			.then(() => {
+				this.addToScene([
+					...this.interactions.getMeshes(),
+					...this.locomotion.getMeshes()
+				]);
+
+				return Promise.resolve();
+			})
+			.catch(Promise.reject)
+	}
+
+	/**
+	 * Listens to a set of common events from different Holonet components
+	 *
+	 * @param {Object} components - List of Holonet components that fire common events
+	 *
+	 * @returns {undefined}
+	 */
+	addListeners(...components) {
+		for (const component of components) {
+			component.on('add', (event) => {
+				this.addToScene(event.mesh);
+			});
+
+			component.on('remove', (event) => {
+				this.removeFromScene(event.mesh);
+			});
+			
+			component.on('addanimatefunctions', (event) => {
+				this.addAnimateFunctions(event.functions);
+			});
+		}
+	}
+
+	/**
+	 * Helper function that wraps Holonet.Scene.prototype.addToScene
+	 *
+	 * @param {array} meshes - Meshes to add to the scene
+	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
+	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
+	 *
+	 * @returns {undefined}
+	 */
+	addToScene(meshes, collidable = false, shadow = false) {
+		this._scene.addToScene([...meshes], collidable, shadow);
+	}
+
+	/**
+	 * Helper function that removes a mesh from the scene
+	 *
+	 * @param {THREE.Mesh} mesh - Mesh to be removed from scene
+	 *
+	 * @returns {undefined}
+	 */
+	removeFromScene(mesh) {
+		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	/**
+	 * Helper function that wraps Holonet.Scene.prototype.addAnimateFunctions
+	 *
+	 * @param {array} functions - Array of functions to add to the animation loop
+	 *
+	 * @returns {undefined}
+	 */
+	addAnimateFunctions(functions) {
+		this._scene.addAnimateFunctions(...functions);
+	}
+
+	startPresenting() {
+		this._scene.vrEffect.requestPresent();
+		Utils.isPresenting = true;
+	}
+
+	stopPresenting() {
+		this._scene.vrEffect.exitPresent();
+		Utils.isPresenting = false;
+	}
+}
+
+/**
+* Main animation function that takes care of positioning the Virtual Persona
+* and controllers correctly on each frame
+*
+* @param {number} time - Current time (ms) to make smooth animations
+*
+* @returns {undefined}
+*/
+Holonet.prototype.animate = (function() {
+	const rotatedPosition = new Quaternion();
+	const previousCameraPosition = new Vector3();
+	const previousControllerQuaternion = new Quaternion();
+	previousControllerQuaternion.initialised = false;
+	const translationDirection = new Vector3();
+	let previousTime = 0;
+	let delta = 0;
+
+	return function(time) {
+		// Convert from milliseconds to seconds
+		time = time / 1000;
+		delta = time - previousTime;
+		previousTime = time;
+
+		// Gets the correct controller
+		const camera = this._scene.camera;
+		const controller = this.controllers.mainHandController || camera;
+
+		if (!previousControllerQuaternion.initialised) {
+			previousControllerQuaternion.copy(controller.quaternion);
+			previousControllerQuaternion.initialised = true;
+		}
+
+		// Handle position
+		camera.position.copy(previousCameraPosition);
+
+		if (this.locomotion.translatingZ || this.locomotion.translatingX) {
+			translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
+			translationDirection.applyQuaternion(camera.quaternion);
+			const collision = Physics.checkMeshCollision(this.virtualPersona.mesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
+			if (!collision) {
+				if (this.locomotion.translatingZ) {
+					camera.translateZ(this.locomotion.translatingZ * delta);
+				}
+
+				if (this.locomotion.translatingX) {
+					camera.translateX(this.locomotion.translatingX * delta);
+				}
+			}
+		}
+
+		if (this.locomotion.teleportation.isRayCurveActive) {
+			this.locomotion.teleportation.updateRayCurve(controller, this._scene.scene);
+		}
+
+		if (this.locomotion.teleportation.isTeleportActive) {
+			camera.position.setX(this.locomotion.teleportation.hitPoint.x);
+			camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.virtualPersona.userHeight);
+			camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
+			this.locomotion.teleportation.resetTeleport();
+		}
+
+		if (this.locomotion.teleportation.hitPoint) {
+			// Compare both quaternions, and if the difference is big enough, activateTeleport
+			const areQuaternionsEqual = Utils.areQuaternionsEqual(previousControllerQuaternion, controller.quaternion);
+			if (!areQuaternionsEqual) {
+				// Debounced function
+				this.locomotion.teleportation.activateTeleport();
+			}
+		}
+
+		if (!camera.position.equals(previousCameraPosition)) {
+			this.virtualPersona.setFloorHeight(this._scene);
+		}
+
+		camera.position.setY(this.virtualPersona.floorHeight + this.virtualPersona.userHeight);
+
+		previousCameraPosition.copy(camera.position);
+		previousControllerQuaternion.copy(controller.quaternion);
+
+		// Handle rotation
+		camera.rotation.copy(this.locomotion.orientation.euler);
+
+		if (Utils.isPresenting) {
+			this.virtualPersona.vrControls.update();
+
+			rotatedPosition.copy(this.virtualPersona.fakeCamera.position.applyQuaternion(camera.quaternion));
+			camera.position.add(rotatedPosition);
+			camera.quaternion.multiply(this.virtualPersona.fakeCamera.quaternion);
+
+			this.virtualPersona.mesh.rotation.y = camera.rotation.y + Math.PI;
+		} else {
+			this.virtualPersona.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+		}
+
+		// Adjust vertical position
+		this.virtualPersona.mesh.position.copy(camera.position);
+		if (this.headMesh) {
+			const meshYPosition = camera.position.y - this.virtualPersona.headMesh.position.y;
+			this.virtualPersona.mesh.position.setY(meshYPosition);
+		} else {
+			this.virtualPersona.mesh.position.setY(this.virtualPersona.floorHeight);
+		}
+
+		// MultiVP
+		this.virtualPersona.multiVP.sendData(this.virtualPersona.mesh);
+
+		// Interactions
+		this.interactions.update(controller.position, controller.quaternion);
+
+		// Controllers
+		const controllerIds = Object.keys(this.controllers.currentControllers);
+		for (const controllerId of controllerIds) {
+			// Gets the controller from the list with this id and updates it
+			const controller = this.controllers.currentControllers[controllerId];
+			controller.update(camera,
+				this.virtualPersona.userHeight,
+				this.virtualPersona.vrControls.getStandingMatrix());
+		}
+	};
+}());
 
 exports['default'] = Holonet;
-exports.Utils = utils;
-exports.VirtualPersona = VirtualPersona;
-exports.Scene = Scene$1;
+exports.Utils = Utils;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

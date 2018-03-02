@@ -1,8 +1,9 @@
 'use strict';
 
 import * as THREE from 'three';
-import {Utils} from '../../src/utils/utils';
+import EventEmitter from 'eventemitter3';
 import {GamepadController} from '../../src/controllers/gamepadcontroller';
+import { Controllers } from '../../src/controllers/controllers';
 
 describe('GamepadController', () => {
 
@@ -14,15 +15,8 @@ describe('GamepadController', () => {
 			id: 'gamepad',
 			hand: 'left'
 		};
-		locomotion = {
-			scene: {
-				camera: {
-					quaternion: [1, 2, 3, 4]
-				}
-			}
-		};
 
-		gamepadController = new GamepadController(gamepad, locomotion);
+		gamepadController = new GamepadController(gamepad);
 	});
 
 	it('should be a class', () => {
@@ -38,82 +32,78 @@ describe('GamepadController', () => {
 		assert.deepEqual(GamepadController.prototype.pressedButtons, {});
 	});
 
-	describe('#init', () => {
+	describe('#constructor', () => {
+
+		it('should initialize EventEmitter', () => {
+			assert.instanceOf(gamepadController.__proto__, EventEmitter);
+		});
 
 		it('should set some properties', () => {
-			assert.equal(gamepadController.locomotion, locomotion);
 			assert.equal(gamepadController.id, 'gamepad (left)');
-			assert.deepEqual(gamepadController.cameraQuaternion.toArray(), [1, 2, 3, 4]);
 		});
 	});
 
 	describe('#handleTriggerPressed', () => {
-
-		let locomotion;
 		
 		beforeEach(() => {
-			locomotion = {
-				teleportation: {
-					isRayCurveActive: false,
-					resetTeleport: sinon.stub(),
-					setRayCurveState: sinon.stub()
-				},
-				virtualPersona: {
-					interactions: {
-						selection: {
-							isHovering: false
-						}
+			sinon.stub(gamepadController, 'emit');
+			gamepadController.handleTriggerPressed(true);
+		});
+
+		it('should emit trigger event', () => {
+			assert.isTrue(gamepadController.emit.calledOnce);
+			assert.isTrue(gamepadController.emit.calledWith('trigger'));
+		})
+	});
+	
+	describe('#update', () => {
+
+		beforeEach(() => {
+			sinon.stub(Controllers, 'getGamepad');
+			sinon.stub(gamepadController, 'emit');
+		});
+
+		afterEach(() => {
+			Controllers.getGamepad.restore();
+		});
+
+		describe('no gamepad', () => {
+
+			beforeEach(() => {
+				gamepadController.update();
+			});
+
+			it('should emit controllerdisconnected', () => {
+				assert.isTrue(gamepadController.emit.calledOnce);
+				assert.equal(gamepadController.emit.firstCall.args[0], 'controllerdisconnected');
+				assert.deepEqual(gamepadController.emit.firstCall.args[1], {
+					id: 'gamepad (left)'
+				});
+			});
+		});
+
+		describe('gamepad', () => {
+
+			let gamepad = {
+				buttons: {
+					0: {
+						pressed: true
 					}
 				}
 			};
 
-			gamepadController.locomotion = locomotion;
-		});
-
-		describe('ray curve inactive', () => {
-
 			beforeEach(() => {
-				gamepadController.handleTriggerPressed(true);
-			});
-			
-			it('should activate ray curve', () => {
-				assert.isTrue(locomotion.teleportation.setRayCurveState.calledOnce);
-				assert.isTrue(locomotion.teleportation.setRayCurveState.calledWith(true));
-			});
-		});
+				sinon.stub(gamepadController, 'handleTriggerPressed');
+				Controllers.getGamepad.returns(gamepad);
 
-		describe('ray curve inactive', () => {
-
-			beforeEach(() => {
-				locomotion.teleportation.isRayCurveActive = true;
-
-				gamepadController.handleTriggerPressed(true);
+				gamepadController.update();
 			});
-			
-			it('should activate ray curve', () => {
-				assert.isTrue(locomotion.teleportation.resetTeleport.calledOnce);
+
+			it('should handle pressed button', () => {
+				assert.isTrue(gamepadController.handleTriggerPressed.calledOnce);
+				assert.isTrue(gamepadController.handleTriggerPressed.calledWith(true));
+				assert.isTrue(gamepadController.pressedButtons[0]);
 			});
 		});
-	});
-	
-	xdescribe('#update', () => {
-
-		let locomotion;
-
-		beforeEach(() => {
-			sinon.stub(Utils, 'areQuaternionsEqual').returns(true);
-			locomotion = {
-
-			};
-			gamepadController.locomotion = locomotion;
-
-			gamepadController.update();
-		});
-
-		afterEach(() => {
-			Utils.areQuaternionsEqual.restore();
-		});
-
-		it('')
 	});
 });

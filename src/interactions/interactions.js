@@ -34,6 +34,15 @@ class Interactions {
 	getMeshes() {
 		return [this.selection.reticle];
 	}
+
+	/**
+	 * Adds Interaction handlers to an emitter
+	 *
+	 * @param {Object} emitter - Object that emits events that Interactions needs to handle
+	 */
+	setUpEventListeners(emitter) {
+		emitter.on('trigger', this.selection.handleSelection);
+	}
 }
 
 export {Interactions};

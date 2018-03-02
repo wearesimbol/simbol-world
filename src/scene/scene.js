@@ -40,6 +40,8 @@ class Scene {
 	 * @param {HTMLCanvasElement} config.canvas - Canvas element where the scene will be rendered
 	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Holonet needs access to your renderer
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Holonet needs access to your camera
+	 *
+	 * @returns {Scene}
 	 */
 	constructor(config) {
 		if (config.render) {
@@ -88,6 +90,8 @@ class Scene {
 				this._setupMeshes(loadedScene);
 				this.scene = loadedScene;
 				this.animate();
+
+				return Promise.resolve();
 			}, console.warn);
 	}
 
@@ -104,6 +108,7 @@ class Scene {
 		if (!(meshes instanceof Array)) {
 			meshes = [meshes];
 		}
+
 		for (const mesh of meshes) {
 			if (mesh.isObject3D && !mesh.isLight) {
 				this._setupMeshes(mesh, collidable, shadow);
