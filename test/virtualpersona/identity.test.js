@@ -131,10 +131,13 @@ describe('Identity', () => {
 		const data = {};
 		let returnedData;
 
+		beforeEach(() => {
+			Identity.prototype.getIdentity.restore();
+		});
+
 		describe('instance data', () => {
 			
 			beforeEach(() => {
-				Identity.prototype.getIdentity.restore();
 				identity.uPortData = data;
 
 				returnedData = identity.getIdentity();
@@ -148,7 +151,6 @@ describe('Identity', () => {
 		describe('localStorage data', () => {
 			
 			beforeEach(() => {
-				Identity.prototype.getIdentity.restore();
 				sinon.stub(localStorage, 'getItem').returns('{}');
 				sinon.stub(identity, 'setUPortData');
 
@@ -166,6 +168,28 @@ describe('Identity', () => {
 			it('should save instance data', () => {
 				assert.isTrue(identity.setUPortData.calledOnce);
 				assert.isTrue(identity.setUPortData.calledWith(returnedData));
+			});
+		});
+
+		describe('error', () => {
+
+			let caughtError;
+
+			beforeEach((done) => {
+				identity.on('error', (error) => {
+					caughtError = error;
+					done();
+				});
+				sinon.stub(localStorage, 'getItem').returns('{a:a}');
+				sinon.spy(identity, 'emit');
+
+				identity.getIdentity();
+			});
+
+			it('should emit error', () => {
+				assert.isTrue(identity.emit.calledOnce);
+				assert.isTrue(identity.emit.calledWith('error', caughtError));
+				assert.instanceOf(caughtError, Error);
 			});
 		});
 	});

@@ -1,3 +1,4 @@
+import EventEmitter from 'eventemitter3';
 import uport from '../libs/uport-connect';
 
 const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
@@ -34,6 +35,9 @@ class Identity {
 	 * @returns {undefined}
 	 */
 	constructor() {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
 			network: 'rinkeby',
@@ -81,6 +85,7 @@ class Identity {
 	 * 2. Saved in LocalStorage
 	 *
 	 * @returns {object} identity
+	 * @emits Identity#error error - Error that may occur when parsing the JSON
 	 */
 	getIdentity() {
 		if (this.uPortData) {
@@ -98,7 +103,14 @@ class Identity {
 			this.setUPortData(identity);
 			return identity;
 		} catch (error) {
-			console.log(error);
+			/**
+			 * Identity error that may happen parsing the JSON
+			 *
+			 * @event Identity#error
+			 * @type {Error}
+			 * 
+			 */
+			this.emit('error', error);
 		}
 	}
 

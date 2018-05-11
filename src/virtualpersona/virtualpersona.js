@@ -60,7 +60,9 @@ class VirtualPersona {
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new THREE.Object3D();
-		this.vrControls = new VRControls(fakeCamera, console.log);
+		this.vrControls = new VRControls(fakeCamera, (event) => {
+			this.emit('error', event);
+		});
 		this.vrControls.userHeight = 0;
 		this.fakeCamera = fakeCamera;
 
@@ -69,6 +71,9 @@ class VirtualPersona {
 		this._floorRayCaster.far = this.userHeight + 10;
 
 		this.identity = new Identity();
+		this.identity.on('error', (event) => {
+			this.emit('error', event);
+		});
 		this.multiVP = new MultiVP(config.multiVP || {}, this);
 		this.multiVP.on('add', (event) => {
 			this.emit('add', event);
@@ -78,6 +83,9 @@ class VirtualPersona {
 		});
 		this.multiVP.on('addanimatefunctions', (event) => {
 			this.emit('addanimatefunctions', event);
+		});
+		this.multiVP.on('error', (event) => {
+			this.emit('error', event);
 		});
 	}
 
@@ -111,7 +119,7 @@ class VirtualPersona {
 				return Promise.resolve(mesh);
 			})
 			.catch((error) => {
-				throw error;
+				return Promise.reject(error)
 			});
 	}
 
@@ -172,7 +180,9 @@ class VirtualPersona {
 	signIn() {
 		return this.identity.signIn()
 			.then(() => this.loadMesh(this.identity.avatarPath, true))
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error)
+			});
 	}
 
 	/**
@@ -183,7 +193,9 @@ class VirtualPersona {
 	signOut() {
 		this.identity.signOut();
 		return this.loadMesh(this.identity.avatarPath, true)
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error)
+			});
 	}
 
 	/**

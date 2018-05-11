@@ -61,10 +61,21 @@ describe('VirtualPersona', () => {
 			assert.instanceOf(vp.identity, Identity);
 			assert.instanceOf(vp.multiVP, MultiVP);
 			assert.equal(vp.multiVP.vp, vp);
-			assert.isTrue(EventEmitter.prototype.on.calledThrice);
-			assert.isTrue(EventEmitter.prototype.on.firstCall.calledWith('add'));
-			assert.isTrue(EventEmitter.prototype.on.secondCall.calledWith('remove'));
-			assert.isTrue(EventEmitter.prototype.on.thirdCall.calledWith('addanimatefunctions'));
+			assert.equal(EventEmitter.prototype.on.callCount, 5);
+			assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('add'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('remove'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('addanimatefunctions'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('error'));
+		});
+
+		it('should forward Identity.error event', (done) => {
+			const event = {error: 1};
+			vp.on('error', (fwdevent) => {
+				assert.equal(fwdevent, event);
+				done();
+			});
+			vp.identity.emit('error', event);
 		});
 
 		it('should forward MultiVP.add event', (done) => {
@@ -93,6 +104,15 @@ describe('VirtualPersona', () => {
 			});
 			vp.multiVP.emit('addanimatefunctions', event);
 		});
+
+		it('should forward MultiVP.error event', (done) => {
+			const event = {error: 1};
+			vp.on('error', (fwdevent) => {
+				assert.equal(fwdevent, event);
+				done();
+			});
+			vp.multiVP.emit('error', event);
+		});
 	});
 
 	describe('#init', () => {
@@ -110,39 +130,63 @@ describe('VirtualPersona', () => {
 
 	describe('#loadMesh', () => {
 
-		const mesh = {};
+		describe('resolves', () => {
 
-		beforeEach((done) => {
-			sinon.stub(Loader.prototype, 'load');
+			const mesh = {};
+			let loadedMesh;
+
+			beforeEach((done) => {
+				sinon.stub(Loader.prototype, 'load').resolves(mesh);
+	
+				sinon.stub(vp, '_setUpMesh').returns(mesh);
+				sinon.stub(vp, 'render');
+	
+				vp.loadMesh(1, true).then(() => {
+					loadedMesh = mesh;
+					done();
+				});
+			});
+	
+			afterEach(() => {
+				Loader.prototype.load.restore();
+			})
+	
+			it('should load mesh', () => {
+				// assert.isTrue(Loader.calledWith(1));
+				assert.isTrue(Loader.prototype.load.calledOnce);
+			});
+	
+			it('should call _setUpMesh', () => {
+				assert.isTrue(vp._setUpMesh.calledOnce);
+				assert.isTrue(vp._setUpMesh.calledWith(mesh));
+			});
+	
+			it('should render mesh', () => {
+				assert.isTrue(vp.render.calledOnce);
+				assert.isTrue(vp.render.calledWith(mesh));
+			});
+
+			it('should resolve mesh', () => {
+				assert.equal(loadedMesh, mesh);
+			});
+		});
+
+		describe('rejects', () => {
 			
-			Loader.prototype.load.returns(new Promise((resolve) => {
-				resolve(mesh);
-			}));
+			let caughtError;
 
-			sinon.stub(vp, '_setUpMesh').returns(mesh);
-			sinon.stub(vp, 'render');
+			beforeEach((done) => {
+				sinon.stub(Loader.prototype, 'load').rejects('error');
 
-			vp.loadMesh(1, true)
-				.then(() => { done(); });
-		});
+				vp.loadMesh().catch((error) => {
+					caughtError = error;
+					done();
+				});
+			});
 
-		afterEach(() => {
-			Loader.prototype.load.restore();
-		})
-
-		it('should load mesh', () => {
-			// assert.isTrue(Loader.calledWith(1));
-			assert.isTrue(Loader.prototype.load.calledOnce);
-		});
-
-		it('should call _setUpMesh', () => {
-			assert.isTrue(vp._setUpMesh.calledOnce);
-			assert.isTrue(vp._setUpMesh.calledWith(mesh));
-		});
-
-		it('should render mesh', () => {
-			assert.isTrue(vp.render.calledOnce);
-			assert.isTrue(vp.render.calledWith(mesh));
+			it('should reject error', () => {
+				assert.equal(caughtError, 'error');
+			});
 		});
 	});
 
@@ -213,10 +257,10 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should add mesh to the scene', () => {
-				// Called in constructor via MultiVP
-				assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+				// Called in constructor via MultiVP and in getIdentity
+				assert.equal(EventEmitter.prototype.emit.callCount, 3);
 				assert.isTrue(EventEmitter.prototype.emit.calledWith('add'));
-				assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {
+				assert.deepEqual(EventEmitter.prototype.emit.thirdCall.args[1], {
 					mesh: mesh
 				});
 			});
@@ -230,10 +274,10 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should remove saved mesh', () => {
-				// Called in constructor via MultiVP
-				assert.isTrue(EventEmitter.prototype.emit.calledThrice);
+				// Called in constructor via MultiVP and in getIdentity
+				assert.equal(EventEmitter.prototype.emit.callCount, 4);
 				assert.isTrue(EventEmitter.prototype.emit.calledWith('remove'));
-				assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {
+				assert.deepEqual(EventEmitter.prototype.emit.thirdCall.args[1], {
 					mesh: true
 				});
 			});
@@ -242,46 +286,88 @@ describe('VirtualPersona', () => {
 
 	describe('#signIn', () => {
 
-		let promise;
+		describe('resolves', () => {
 
-		beforeEach((done) => {
-			vp.identity = {
-				signIn: sinon.stub().returns(Promise.resolve())
-			};
-			sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+			let promise;
+
+			beforeEach((done) => {
+				vp.identity = {
+					signIn: sinon.stub().returns(Promise.resolve())
+				};
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+		
+				promise = vp.signIn().then(done);
+			});
 	
-			promise = vp.signIn().then(done);
+			it('should sign in and load mesh', () => {
+				assert.isTrue(vp.identity.signIn.calledOnce);
+				assert.isTrue(vp.loadMesh.calledOnce);
+			});
+	
+			it('should return a promise', () => {
+				assert.instanceOf(promise, Promise);
+			});
 		});
 
-		it('should sign in and load mesh', () => {
-			assert.isTrue(vp.identity.signIn.calledOnce);
-			assert.isTrue(vp.loadMesh.calledOnce);
-		});
+		describe('rejects', () => {
+			
+			let caughtError;
 
-		it('should return a promise', () => {
-			assert.instanceOf(promise, Promise);
+			beforeEach((done) => {
+				sinon.stub(vp.identity, 'signIn').rejects('error');
+
+				vp.signIn().catch((error) => {
+					caughtError = error;
+					done();
+				});
+			});
+
+			it('should reject error', () => {
+				assert.equal(caughtError, 'error');
+			});
 		});
 	});
 
 	describe('#signOut', () => {
 
-		let promise;
+		describe('resolves', () => {
 
-		beforeEach((done) => {
-			vp.identity = {
-				signOut: sinon.stub().returns(Promise.resolve())
-			};
-			sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+			let promise;
+
+			beforeEach((done) => {
+				vp.identity = {
+					signOut: sinon.stub().returns(Promise.resolve())
+				};
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+		
+				promise = vp.signOut().then(done);
+			});
 	
-			promise = vp.signOut().then(done);
+			it('should sign in and load mesh', () => {
+				assert.isTrue(vp.identity.signOut.calledOnce);
+			});
+	
+			it('should return a promise', () => {
+				assert.instanceOf(promise, Promise);
+			});
 		});
 
-		it('should sign in and load mesh', () => {
-			assert.isTrue(vp.identity.signOut.calledOnce);
-		});
+		describe('rejects', () => {
+			
+			let caughtError;
 
-		it('should return a promise', () => {
-			assert.instanceOf(promise, Promise);
+			beforeEach((done) => {
+				sinon.stub(vp, 'loadMesh').rejects('error');
+
+				vp.signOut().catch((error) => {
+					caughtError = error;
+					done();
+				});
+			});
+
+			it('should reject error', () => {
+				assert.equal(caughtError, 'error');
+			});
 		});
 	});
 

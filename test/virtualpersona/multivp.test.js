@@ -149,8 +149,16 @@ describe('MultiVP', () => {
 		});
 	});
 		
-	xdescribe('#_socketError', () => {
-		// Currently only logs the error
+	describe('#_socketError', () => {
+		
+		beforeEach(() => {
+			multiVP._socketError('error');
+		});
+
+		it('should emit socker errors', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('error', 'error'));
+		});
 	});
 	
 	describe('#_socketMessage', () => {
@@ -309,8 +317,16 @@ describe('MultiVP', () => {
 		});
 	});
 
-	xdescribe('#_peerError', () => {
-		// Currently just logs
+	describe('#_peerError', () => {
+		
+		beforeEach(() => {
+			multiVP._peerError('error');
+		});
+
+		it('should emit peer errors', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('error', 'error'));
+		});
 	});
 
 	describe('#_peerConnect', () => {
@@ -390,7 +406,6 @@ describe('MultiVP', () => {
 				assert.isTrue(true);
 			});
 		});
-
 		describe('mesh data', () => {
 
 			let mesh;
@@ -542,31 +557,54 @@ describe('MultiVP', () => {
 
 	describe('#_loadAvatar', () => {
 
-		let mesh;
+		describe('resolves', () => {
+
+			let mesh;
+
+			beforeEach((done) => {
+				mesh = {};
+	
+				multiVP.vp = {
+					loadMesh: sinon.stub().resolves(mesh)
+				};
+	
+				multiVP._loadAvatar('test', 0).then(() => { done(); });
+			});
+	
+			it('should load the avatar', () => {
+				assert.isTrue(multiVP.vp.loadMesh.calledOnce);
+				assert.isTrue(multiVP.vp.loadMesh.calledWith('test'));
+			});
+	
+			it('should set the name', () => {
+				assert.equal(mesh.name, 0);
+			});
+	
+			it('should save the mesh', () => {
+				assert.equal(multiVP.meshes[0].mesh, mesh);
+				assert.deepEqual(multiVP.meshes[0].position, []);
+				assert.equal(multiVP.meshes[0].rotation, 0);
+			});
+		});
+	});
+
+	describe('rejects', () => {
+
+		let caughtError;
 
 		beforeEach((done) => {
-			mesh = {};
-
 			multiVP.vp = {
-				loadMesh: sinon.stub().resolves(mesh)
+				loadMesh: sinon.stub().rejects('error')
 			};
 
-			multiVP._loadAvatar('test', 0).then(() => { done(); });
+			multiVP._loadAvatar().catch((error) => {
+				caughtError = error;
+				done();
+			});
 		});
 
-		it('should load the avatar', () => {
-			assert.isTrue(multiVP.vp.loadMesh.calledOnce);
-			assert.isTrue(multiVP.vp.loadMesh.calledWith('test'));
-		});
-
-		it('should set the name', () => {
-			assert.equal(mesh.name, 0);
-		});
-
-		it('should save the mesh', () => {
-			assert.equal(multiVP.meshes[0].mesh, mesh);
-			assert.deepEqual(multiVP.meshes[0].position, []);
-			assert.equal(multiVP.meshes[0].rotation, 0);
+		it('should reject errors', () => {
+			assert.equal(caughtError, 'error');
 		});
 	});
 });

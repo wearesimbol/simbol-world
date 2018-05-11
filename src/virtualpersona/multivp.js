@@ -91,11 +91,19 @@ class MultiVP {
 	 * @param {Object} error - Error event Object
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error 
 	 *
 	 * @private
 	 */
 	_socketError(error) {
-		console.log('socket error', error);
+		/**
+		 * MultiVP error event for a socket error
+		 *
+		 * @event MultiVP#error
+		 * @type {Error}
+		 * 
+		 */
+		this.emit('error', error);
 	}
 
 	/**
@@ -179,11 +187,20 @@ class MultiVP {
 	 * @param {Object} error - Event object for an error handler
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error 
 	 *
 	 * @private
 	 */
 	_peerError(error) {
-		console.log('peer error', error);
+		/**
+		 * MultiVP error event for a SimplePeer error. It emits an Error object
+		 *
+		 * @event MultiVP#error
+		 * @type {Error}
+		 * @property {string} code - SimplePeer error code
+		 * 
+		 */
+		this.emit('error', error);
 	}
 
 	/**
@@ -222,7 +239,9 @@ class MultiVP {
 						mesh
 					});
 				})
-				.catch(console.log);
+				.catch((error) => {
+					this.emit('error', error);
+				});
 		} else {
 			const mesh = this.multiVP.meshes[this.id];
 			if (mesh) {
@@ -338,7 +357,9 @@ class MultiVP {
 				};
 				return Promise.resolve(loadedMesh);
 			})
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 }
 

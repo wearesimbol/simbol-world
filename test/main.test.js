@@ -127,9 +127,8 @@ describe('Holonet', () => {
 
         beforeEach(() => {
             holonet.addListeners.restore();
-            component1 = {
-                on: sinon.stub()
-            };
+            component1 = new EventEmitter();
+            sinon.spy(component1, 'on');
             component2 = {
                 on: sinon.stub()
             };
@@ -138,14 +137,25 @@ describe('Holonet', () => {
         });
 
         it('should add all listeners to all components', () => {
-            assert.equal(component1.on.callCount, 3);
+            assert.equal(component1.on.callCount, 4);
             assert.equal(component1.on.firstCall.args[0], 'add');
             assert.equal(component1.on.secondCall.args[0], 'remove');
             assert.equal(component1.on.thirdCall.args[0], 'addanimatefunctions');
-            assert.equal(component2.on.callCount, 3);
+            assert.equal(component1.on.getCall(3).args[0], 'error');
+            assert.equal(component2.on.callCount, 4);
             assert.equal(component2.on.firstCall.args[0], 'add');
             assert.equal(component2.on.secondCall.args[0], 'remove');
             assert.equal(component2.on.thirdCall.args[0], 'addanimatefunctions');
+            assert.equal(component2.on.getCall(3).args[0], 'error');
+        });
+
+        it('should forward error', (done) => {
+            const event = {};
+            holonet.on('error', (fwdevent) => {
+                assert.equal(fwdevent, event);
+                done();
+            });
+            component1.emit('error', event);
         });
     });
 

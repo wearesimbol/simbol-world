@@ -49,7 +49,7 @@ class Holonet {
 	 * Initialises Holonet by initialising its different components
 	 * and adding all necessary meshes into the scene
 	 *
-	 * @returns {undefined}
+	 * @returns {Promise} promise - Signals that all components have been initiated
 	 */
 	init() {
 		return this._scene.init()
@@ -84,6 +84,10 @@ class Holonet {
 			
 			component.on('addanimatefunctions', (event) => {
 				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('error', (event) => {
+				this.emit('error', event);
 			});
 		}
 	}
