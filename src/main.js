@@ -3,7 +3,7 @@ import * as THREE from 'three';
 Object.assign(window.THREE = {}, THREE);
 import * as webvrPolyfill from 'webvr-polyfill'; // eslint-disable-line no-unused-vars
 
-import {Utils} from './utils/utils';
+import {Utils, Loader, Link} from './utils/utils';
 import {Physics} from './physics/physics'; 
 import {Controllers} from './controllers/controllers';
 import {Interactions} from './interactions/interactions';
@@ -33,7 +33,7 @@ class Holonet {
 		this._scene = new Scene(config.scene);
 
 		this.virtualPersona = new VirtualPersona(config.virtualPersona);
-	
+
 		this.controllers = new Controllers(this._scene.canvas);
 
 		this.locomotion = new Locomotion();
@@ -42,7 +42,6 @@ class Holonet {
 		this.interactions.setUpEventListeners(this.controllers);
 		this.locomotion.setUpEventListeners(this.controllers, this.interactions);
 		this.addListeners(this.virtualPersona, this.controllers, this.interactions);
-		this.addAnimateFunctions(this.animate.bind(this));
 	}
 
 	/**
@@ -59,10 +58,13 @@ class Holonet {
 					...this.interactions.getMeshes(),
 					...this.locomotion.getMeshes()
 				]);
+				this.addAnimateFunctions([this.animate.bind(this)]);
 
 				return Promise.resolve();
 			})
-			.catch(Promise.reject)
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 
 	/**
@@ -75,7 +77,7 @@ class Holonet {
 	addListeners(...components) {
 		for (const component of components) {
 			component.on('add', (event) => {
-				this.addToScene(event.mesh);
+				this.addToScene([event.mesh]);
 			});
 
 			component.on('remove', (event) => {
@@ -127,11 +129,23 @@ class Holonet {
 		this._scene.addAnimateFunctions(...functions);
 	}
 
+	/**
+	 * Helper function that wraps VREffect.prototype.requestPresent
+	 * and sets Utils.isPresenting
+	 *
+	 * @returns {undefined}
+	 */
 	startPresenting() {
 		this._scene.vrEffect.requestPresent();
 		Utils.isPresenting = true;
 	}
 
+	/**
+	 * Helper function that wraps VREffect.prototype.exitPresent
+	 * and sets Utils.isPresenting
+	 *
+	 * @returns {undefined}
+	 */
 	stopPresenting() {
 		this._scene.vrEffect.exitPresent();
 		Utils.isPresenting = false;
@@ -252,7 +266,7 @@ Holonet.prototype.animate = (function() {
 		for (const controllerId of controllerIds) {
 			// Gets the controller from the list with this id and updates it
 			const controller = this.controllers.currentControllers[controllerId];
-			controller.update(camera,
+			controller.update && controller.update(camera,
 				this.virtualPersona.userHeight,
 				this.virtualPersona.vrControls.getStandingMatrix());
 		}
@@ -260,4 +274,4 @@ Holonet.prototype.animate = (function() {
 }());
 
 export default Holonet;
-export {Utils};
+export {Utils, Loader, Link};

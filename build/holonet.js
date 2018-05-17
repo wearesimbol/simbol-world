@@ -7,6 +7,7 @@ function createCommonjsModule(fn, module) {
 }
 
 var eventemitter3 = createCommonjsModule(function (module) {
+
 var has = Object.prototype.hasOwnProperty
   , prefix = '~';
 
@@ -36558,8 +36559,6 @@ Object.assign( Font.prototype, {
 								cpx0 = laste.x;
 								cpy0 = laste.y;
 
-								
-
 							}
 
 							break;
@@ -36581,8 +36580,6 @@ Object.assign( Font.prototype, {
 
 								cpx0 = laste.x;
 								cpy0 = laste.y;
-
-								
 
 							}
 
@@ -44175,10 +44172,7 @@ function CanvasRenderer() {
 
 }
 
-
-
-
-var THREE = Object.freeze({
+var THREE = /*#__PURE__*/Object.freeze({
 	WebGLRenderTargetCube: WebGLRenderTargetCube,
 	WebGLRenderTarget: WebGLRenderTarget,
 	WebGLRenderer: WebGLRenderer,
@@ -44901,7 +44895,6 @@ Util.frameDataFromPose = (function() {
 
     return out;
   }
-
   function mat4_translate(out, a, v) {
     var x = v[0], y = v[1], z = v[2],
         a00, a01, a02, a03,
@@ -44930,7 +44923,6 @@ Util.frameDataFromPose = (function() {
 
     return out;
   }
-
   function mat4_invert(out, a) {
     var a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
         a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
@@ -44977,7 +44969,6 @@ Util.frameDataFromPose = (function() {
 
     return out;
   }
-
   var defaultOrientation = new Float32Array([0, 0, 0, 1]);
   var defaultPosition = new Float32Array([0, 0, 0]);
 
@@ -45243,7 +45234,6 @@ function CardboardUI(gl) {
 
   this.onResize();
 }
-
 /**
  * Tears down all the resources created by the UI renderer.
  */
@@ -45553,7 +45543,6 @@ function CardboardDistorter(gl) {
     this.cardboardUI = new cardboardUi(gl);
   }
 }
-
 /**
  * Tears down all the resources created by the distorter and removes any
  * patches.
@@ -46557,7 +46546,6 @@ var Viewers = {
   })
 };
 
-
 /**
  * Manages information about the device and the viewer.
  *
@@ -46857,7 +46845,7 @@ var dpdb = {
 	devices: devices
 };
 
-var dpdb$1 = Object.freeze({
+var dpdb$1 = /*#__PURE__*/Object.freeze({
 	format: format,
 	last_updated: last_updated,
 	devices: devices,
@@ -47050,7 +47038,6 @@ var dpdb$2 = Dpdb;
 function SensorSample(sample, timestampS) {
   this.set(sample, timestampS);
 }
-
 SensorSample.prototype.set = function(sample, timestampS) {
   this.sample = sample;
   this.timestampS = timestampS;
@@ -48087,7 +48074,6 @@ function VRFrameData$1() {
   this.rightViewMatrix = new Float32Array(16);
   this.pose = null;
 }
-
 /**
  * The base class for all VR displays.
  */
@@ -49113,7 +49099,7 @@ var _package = {
 	version: version
 };
 
-var _package$1 = Object.freeze({
+var _package$1 = /*#__PURE__*/Object.freeze({
 	_args: _args,
 	_from: _from,
 	_id: _id,
@@ -49424,7 +49410,6 @@ function InstallWebVRSpecShim() {
     };
   }
 }
-
 WebVRPolyfill.InstallWebVRSpecShim = InstallWebVRSpecShim;
 WebVRPolyfill.version = version$1;
 
@@ -50131,9 +50116,6 @@ const GLTFLoader = function () {
 		return Promise.all( pending );
 
 	};
-
-	/* BINARY EXTENSION */
-
 	var BINARY_EXTENSION_HEADER_MAGIC = 'glTF';
 	var BINARY_EXTENSION_HEADER_LENGTH = 12;
 	var BINARY_EXTENSION_CHUNK_TYPES = { JSON: 0x4E4F534A, BIN: 0x004E4942 };
@@ -50922,11 +50904,7 @@ const GLTFLoader = function () {
 
 			}
 
-			if ( target.TANGENT !== undefined ) {
-
-				// TODO: implement
-
-			}
+			if ( target.TANGENT !== undefined ) ;
 
 			positionAttribute.name = attributeName;
 			normalAttribute.name = attributeName;
@@ -52192,6 +52170,107 @@ class Loader$1 {
 				reject('Invalid mesh provided');
 			}
 		});
+	}
+}
+
+class Link {
+
+	/** @property {THREE.Color} defaultRingColor - Color value for the ring */
+	get defaultRingColor() {
+		if (!this._defaultRingColor) {
+			this._defaultRingColor = new Color(1, 1, 1);
+		}
+		return this._defaultRingColor;
+	}
+
+	set defaultRingColor(defaultRingColor) {
+		this._defaultRingColor = defaultRingColor;
+	}
+
+	/** @property {THREE.Color} defaultRingHoverColor - Color value when the link is hovered */
+	get defaultRingHoverColor() {
+		if (!this._defaultRingHoverColor) {
+			this._defaultRingHoverColor = new Color(2, 2, 2);
+		}
+		return this._defaultRingHoverColor;
+	}
+
+	set defaultRingHoverColor(defaultRingHoverColor) {
+		this._defaultRingHoverColor = defaultRingHoverColor;
+	}
+
+	/** @property {THREE.Vector3} position - Position value of where the link object will be */
+	get position() {
+		return this._position;
+	}
+
+	set position(position) {
+		if (!this._position) {
+			this._position = new Vector3(...position);
+		} else {
+			this._position.set(...position);
+		}
+
+		if (this.mesh) {
+			this.mesh.position.copy(this.position);
+		}
+	}
+
+	/**
+	 * Builds a Link instance with its mesh at the se
+	 *
+	 * @param {string} path - Where the link will point to
+	 * @param {array} position - 3 element array indicating the x, y and z position of the link in the scene
+	 */
+	constructor(path, position, scene) {
+		this.path = path;
+		this.position = position;
+
+		this.mesh = this._constructMesh();
+	}
+
+	/**
+	 * Builds the link mesh
+	 *
+	 * @returns {THREE.Mesh} mesh
+	 *
+	 * @private
+	 */
+	_constructMesh() {
+		const geometry = new CircleBufferGeometry(1, 64);
+		const material = new MeshBasicMaterial({
+			color: 0xfcca46,
+			side: DoubleSide
+		});
+		const mesh = new Mesh(geometry, material);
+		mesh.position.copy(this.position);
+		return mesh;
+	}
+
+	/**
+	 * Adds the link mesh to the scene
+	 *
+	 * @param {Holonet.Scene} scene - Holonet scene instance to be used to add the link object to it
+	 *
+	 * @returns {undefined}
+	*/
+	render(scene) {
+		if (scene) {
+			scene.addToScene(this.mesh, false, false);
+		}
+	}
+
+	hover() {
+
+	}
+
+	/**
+	 * Performs the action of redirecting to the link's path
+	 *
+	 * @returns {undefined}
+	*/
+	navigate() {
+		window.location = this.path;
 	}
 }
 
@@ -53770,7 +53849,6 @@ class PoseController {
 	 * @return {undefined}
 	 */
 	handleGripPressed(state) {
-		
 	}
 
 	/**
@@ -53781,7 +53859,6 @@ class PoseController {
 	 * @return {undefined}
 	 */
 	handleAppMenuPressed(state) {
-		
 	}
 
 	/**
@@ -54047,8 +54124,6 @@ class PointerController {
 		Object.setPrototypeOf(this.__proto__, new eventemitter3());
 	
 		this._canvas = canvas;
-		this._theta = 0;
-		this._phi = 0;
 
 		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
 		this._canvas.addEventListener('click', this._handleClick.bind(this));
@@ -54057,6 +54132,7 @@ class PointerController {
 		this._canvas.addEventListener('touchend', () => {
 			this.emit('ztranslationend');
 		});
+		this._moveHandler = this._moveHandler.bind(this);
 		this._canvas.addEventListener('touchmove', this._moveHandler);
 	}
 
@@ -54101,20 +54177,22 @@ class PointerController {
 	 * @private
 	*/
 	_moveHandler(event) {
+		const lol = new Vector2();
 		// Gets the new rotation vector
 		if (event.touches) {
 			if (event.touches.length > 1) {
 				return;
 			}
 
-			this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
+			lol.set(event.touches[0].pageX, event.touches[0].pageY);
 		} else {
-			this.rotation.set(this.rotation.x - event.movementX,
+			lol.set(this.rotation.x - event.movementX,
 				this.rotation.y - event.movementY);
 		}
 
+		this.rotation.copy(lol);
 		this.emit('orientation', {
-			rotation: this.rotation
+			rotation: lol
 		});
 	}
 
@@ -54155,14 +54233,11 @@ class PointerController {
 	/**
 	 * Locks the pointer if not displaying to an HMD when canvas is clicked
 	 *
-	 * @param {Event} event - Event supplied
-	 *
 	 * @return {undefined}
 	 *
 	 * @private
 	*/
-	_pointerLock(event) {
-		this.rotation.set(event.clientX, event.clientY);
+	_pointerLock() {
 		this._canvas.requestPointerLock();
 	}
 }
@@ -55164,7 +55239,7 @@ class Locomotion {
 	/** @property {number} velocity - translation velocity in m/s */
 	get velocity() {
 		if (!this._velocity) {
-			this._velocity = 1.5;
+			this._velocity = 2;
 		}
 		return this._velocity;
 	}
@@ -55357,7 +55432,7 @@ class Locomotion {
 		});
 
 		controllers.on('trigger', (event) => {
-			if (!event.touch) {
+			if (!event || !event.touch) {
 				this.teleport();
 			}
 		});
@@ -55643,6 +55718,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -55688,8 +55764,7 @@ if (typeof Object.create === 'function') {
 /***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(global) {/*!
+/* WEBPACK VAR INJECTION */(function(global) {/*!
  * The buffer module from node.js, for the browser.
  *
  * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
@@ -57554,6 +57629,8 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module) {(function (module, exports) {
+
+  // Utils
   function assert (val, msg) {
     if (!val) throw new Error(msg || 'Assertion failed');
   }
@@ -59573,9 +59650,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
       maskedWords.length = s;
     }
 
-    if (s === 0) {
-      // No-op, we should not move anything at all
-    } else if (this.length > s) {
+    if (s === 0) ; else if (this.length > s) {
       this.length -= s;
       for (i = 0; i < this.length; i++) {
         this.words[i] = this.words[i + s];
@@ -60983,7 +61058,6 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 /***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -61000,7 +61074,6 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 	     */
 	    var create = Object.create || (function () {
 	        function F() {}
-
 	        return function (obj) {
 	            var subtype;
 
@@ -61741,6 +61814,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var elliptic = exports;
 
 elliptic.version = __webpack_require__(206).version;
@@ -61974,7 +62048,7 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (eval)("this");
+	g = g || Function("return this")() || (0, eval)("this");
 } catch(e) {
 	// This works if the window reference is available
 	if(typeof window === "object")
@@ -61991,6 +62065,7 @@ module.exports = g;
 /***/ }),
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var elliptic = exports;
 
@@ -62009,6 +62084,7 @@ elliptic.eddsa = __webpack_require__(232);
 /***/ }),
 /* 11 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var assert = __webpack_require__(8);
 var inherits = __webpack_require__(1);
@@ -62268,6 +62344,8 @@ exports.shr64_lo = shr64_lo;
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module) {(function (module, exports) {
+
+// Utils
 
 function assert(val, msg) {
   if (!val)
@@ -63445,9 +63523,7 @@ BN.prototype.iushrn = function iushrn(bits, hint, extended) {
     maskedWords.length = s;
   }
 
-  if (s === 0) {
-    // No-op, we should not move anything at all
-  } else if (this.length > s) {
+  if (s === 0) ; else if (this.length > s) {
     this.length -= s;
     for (var i = 0; i < this.length; i++)
       this.words[i] = this.words[i + s];
@@ -64821,7 +64897,6 @@ module.exports = CipherBase;
 /***/ }),
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -66328,6 +66403,35 @@ module.exports = {
 /***/ }),
 /* 16 */
 /***/ (function(module, exports, __webpack_require__) {
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a duplex stream is just a stream that is both readable and writable.
+// Since JS doesn't have multiple prototypal inheritance, this class
+// prototypally inherits from Readable, and then parasitically from
+// Writable.
+
+
+
+/*<replacement>*/
 
 var processNextTick = __webpack_require__(40);
 /*</replacement>*/
@@ -66418,8 +66522,6 @@ Duplex.prototype._destroy = function (err, cb) {
   processNextTick(cb, err);
 };
 
-
-
 /***/ }),
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -66474,8 +66576,7 @@ asn1.encoders = __webpack_require__(221);
 /***/ }),
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(global, process) {
+/* WEBPACK VAR INJECTION */(function(global, process) {
 
 function oldBrowser () {
   throw new Error('Secure random number generation is not supported by this browser.\nUse Chrome, Firefox or Internet Explorer 11')
@@ -66749,8 +66850,7 @@ function objectToString(o) {
 /***/ }),
 /* 25 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var inherits = __webpack_require__(1);
 var md5 = __webpack_require__(48);
 var RIPEMD160 = __webpack_require__(57);
@@ -66808,6 +66908,7 @@ module.exports = function createHash (alg) {
 /***/ }),
 /* 26 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(11);
 var assert = __webpack_require__(8);
@@ -67037,6 +67138,7 @@ Stream.prototype.pipe = function(dest, options) {
 /***/ }),
 /* 28 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -67316,6 +67418,7 @@ module.exports = {
 /***/ }),
 /* 30 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -67743,6 +67846,7 @@ module.exports.AES = AES;
 /* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var curve = exports;
 
 curve.base = __webpack_require__(179);
@@ -67817,6 +67921,7 @@ base.Node = __webpack_require__(216);
 /***/ }),
 /* 38 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var curve = exports;
 
@@ -67942,8 +68047,7 @@ function decrypt (data, password) {
 /***/ }),
 /* 40 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(process) {
+/* WEBPACK VAR INJECTION */(function(process) {
 
 if (!process.version ||
     process.version.indexOf('v0.') === 0 ||
@@ -68773,6 +68877,15 @@ function getr(priv) {
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/*
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.1 Copyright (C) Paul Johnston 1999 - 2002.
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+
 var makeHash = __webpack_require__(167);
 
 /*
@@ -68919,6 +69032,7 @@ module.exports = function md5 (buf) {
 /***/ }),
 /* 49 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 exports.utils = __webpack_require__(176);
 exports.Cipher = __webpack_require__(173);
@@ -69239,6 +69353,7 @@ function isUndefined(arg) {
 /* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -69256,6 +69371,7 @@ exports.cryptoClients = cryptoClients;
 /***/ }),
 /* 52 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -69293,6 +69409,7 @@ function decodeToken(token) {
 /***/ }),
 /* 53 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -69339,6 +69456,7 @@ var InvalidTokenError = exports.InvalidTokenError = function (_Error2) {
 /***/ }),
 /* 54 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -69410,8 +69528,7 @@ Object.defineProperty(exports, 'cryptoClients', {
 /***/ }),
 /* 55 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(process, setImmediate, global) {// Copyright Joyent, Inc. and other Node contributors.
+/* WEBPACK VAR INJECTION */(function(process, setImmediate, global) {// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -69445,7 +69562,8 @@ var processNextTick = __webpack_require__(40);
 
 module.exports = Writable;
 
-/* <replacement> */
+// It seems a linked list but it is not
+// there will be only 2 of these for each stream
 function CorkedRequest(state) {
   var _this = this;
 
@@ -70084,8 +70202,7 @@ exports.PassThrough = __webpack_require__(254);
 /***/ }),
 /* 57 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var inherits = __webpack_require__(1);
 var HashBase = __webpack_require__(195);
 
@@ -70404,6 +70521,7 @@ exports.sha512 = __webpack_require__(112);
 /* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var Buffer = __webpack_require__(3).Buffer;
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
@@ -70443,7 +70561,6 @@ function _normalizeEncoding(enc) {
     }
   }
 }
-
 // Do not cache `Buffer.isEncoding` when checking encoding names as some
 // modules monkey-patch it to support additional encodings
 function normalizeEncoding(enc) {
@@ -70679,6 +70796,7 @@ function simpleEnd(buf) {
 /* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -70743,6 +70861,7 @@ module.exports = exports['default'];
 /* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -70764,6 +70883,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 62 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -70960,6 +71080,7 @@ module.exports = Method;
 /* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var _Credentials = __webpack_require__(269);
 
 var _Credentials2 = _interopRequireDefault(_Credentials);
@@ -70981,7 +71102,6 @@ module.exports = { Credentials: _Credentials2.default, SimpleSigner: _SimpleSign
 /***/ }),
 /* 65 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -71113,7 +71233,6 @@ module.exports = { Credentials: _Credentials2.default, SimpleSigner: _SimpleSign
 /***/ }),
 /* 66 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -71242,7 +71361,6 @@ module.exports = { Credentials: _Credentials2.default, SimpleSigner: _SimpleSign
 /***/ }),
 /* 67 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -71657,6 +71775,7 @@ module.exports = Property;
 /***/ }),
 /* 69 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -72291,8 +72410,7 @@ function DERDecoder(entity) {
   // Construct base tree
   this.tree = new DERNode();
   this.tree._init(entity.body);
-}
-module.exports = DERDecoder;
+}module.exports = DERDecoder;
 
 DERDecoder.prototype.decode = function decode(data, options) {
   if (!(data instanceof base.DecoderBuffer))
@@ -72621,8 +72739,7 @@ function DEREncoder(entity) {
   // Construct base tree
   this.tree = new DERNode();
   this.tree._init(entity.body);
-}
-module.exports = DEREncoder;
+}module.exports = DEREncoder;
 
 DEREncoder.prototype.encode = function encode(data, reporter) {
   return this.tree._encode(data, reporter).join();
@@ -72906,8 +73023,17 @@ function encodeTag(tag, primitive, cls, reporter) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/MikeMcl/bignumber.js/LICENCE */
-
 (function (global) {
+
+    /*
+      bignumber.js v2.0.7
+      A JavaScript library for arbitrary-precision arithmetic.
+      https://github.com/MikeMcl/bignumber.js
+      Copyright (c) 2015 Michael Mclaughlin <M8ch88l@gmail.com>
+      MIT Expat Licence
+    */
+
+
     var BigNumber, crypto, parseNumeric,
         isNumeric = /^-?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i,
         mathceil = Math.ceil,
@@ -73073,7 +73199,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
                 }
 
                 if ( ( num = typeof n == 'number' ) && n * 0 == 0 ) {
-                    x.s = 1 / n < 0 ? ( n = -n, -1) : 1;
+                    x.s = 1 / n < 0 ? ( n = -n, -1 ) : 1;
 
                     // Fast path for integers.
                     if ( n === ~~n ) {
@@ -73087,7 +73213,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
                     str = n + '';
                 } else {
                     if ( !isNumeric.test( str = n + '' ) ) return parseNumeric( x, str, num );
-                    x.s = str.charCodeAt(0) === 45 ? ( str = str.slice(1), -1) : 1;
+                    x.s = str.charCodeAt(0) === 45 ? ( str = str.slice(1), -1 ) : 1;
                 }
             } else {
                 b = b | 0;
@@ -73109,7 +73235,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
                 }
 
                 if (num) {
-                    x.s = 1 / n < 0 ? ( str = str.slice(1), -1) : 1;
+                    x.s = 1 / n < 0 ? ( str = str.slice(1), -1 ) : 1;
 
                     if ( ERRORS && str.replace( /^0\.0*|\./, '' ).length > 15 ) {
 
@@ -73120,7 +73246,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
                     // Prevent later check for length on converted number.
                     num = false;
                 } else {
-                    x.s = str.charCodeAt(0) === 45 ? ( str = str.slice(1), -1) : 1;
+                    x.s = str.charCodeAt(0) === 45 ? ( str = str.slice(1), -1 ) : 1;
                 }
 
                 str = convertBase( str, 10, b, x.s );
@@ -74504,13 +74630,13 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
             if ( !xe || !ye ) {
 
                 // Either Infinity?
-                if ( !xc || !yc ) return xc ? ( y.s = -b, y) : new BigNumber( yc ? x : NaN );
+                if ( !xc || !yc ) return xc ? ( y.s = -b, y ) : new BigNumber( yc ? x : NaN );
 
                 // Either zero?
                 if ( !xc[0] || !yc[0] ) {
 
                     // Return y if y is non-zero, x if x is non-zero, or zero if both are zero.
-                    return yc[0] ? ( y.s = -b, y) : new BigNumber( xc[0] ? x :
+                    return yc[0] ? ( y.s = -b, y ) : new BigNumber( xc[0] ? x :
 
                       // IEEE 754 (2008) 6.3: n - n = -0 when rounding to -Infinity
                       ROUNDING_MODE == 3 ? -0 : 0 );
@@ -74972,7 +75098,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
                 base, sqrtBase,
                 x = this,
                 xc = x.c,
-                yc = ( id = 17, y = new BigNumber( y, b )).c;
+                yc = ( id = 17, y = new BigNumber( y, b ) ).c;
 
             // Either NaN, ±Infinity or ±0?
             if ( !xc || !yc || !xc[0] || !yc[0] ) {
@@ -75565,7 +75691,8 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/Mik
 
     // AMD.
     {
-        !(__WEBPACK_AMD_DEFINE_RESULT__ = function () { return BigNumber; }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+        !(__WEBPACK_AMD_DEFINE_RESULT__ = function () { return BigNumber; }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
     // Node and other environments that support module.exports.
     }
@@ -75967,6 +76094,7 @@ function findPrime(bits, gen) {
 /* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = __webpack_require__(11);
 var common = __webpack_require__(26);
 var shaCommon = __webpack_require__(83);
@@ -76075,6 +76203,7 @@ SHA256.prototype._digest = function digest(enc) {
 /***/ }),
 /* 82 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(11);
 var common = __webpack_require__(26);
@@ -76410,6 +76539,7 @@ function g1_512_lo(xh, xl) {
 /* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = __webpack_require__(11);
 var rotr32 = utils.rotr32;
 
@@ -76478,7 +76608,6 @@ function isFunction (fn) {
       fn === window.confirm ||
       fn === window.prompt))
 }
-
 
 /***/ }),
 /* 85 */
@@ -76696,8 +76825,7 @@ function DERDecoder(entity) {
   // Construct base tree
   this.tree = new DERNode();
   this.tree._init(entity.body);
-}
-module.exports = DERDecoder;
+}module.exports = DERDecoder;
 
 DERDecoder.prototype.decode = function decode(data, options) {
   if (!(data instanceof base.DecoderBuffer))
@@ -76994,8 +77122,7 @@ function DEREncoder(entity) {
   // Construct base tree
   this.tree = new DERNode();
   this.tree._init(entity.body);
-}
-module.exports = DEREncoder;
+}module.exports = DEREncoder;
 
 DEREncoder.prototype.encode = function encode(data, reporter) {
   return this.tree._encode(data, reporter).join();
@@ -77375,6 +77502,7 @@ MillerRabin.prototype.getDivisor = function getDivisor(n, k) {
 /* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = exports;
 
 function toArray(msg, enc) {
@@ -77444,6 +77572,7 @@ utils.encode = function encode(arr, enc) {
 /*!@license Copyright 2013, Heinrich Goebl, License: MIT, see https://github.com/hgoebl/mobile-detect.js*/
 (function (define, undefined) {
 define(function () {
+
     var impl = {};
 
     impl.mobileDetectRules = {
@@ -78674,6 +78803,7 @@ module.exports = function xor(a, b) {
 /* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var replace = String.prototype.replace;
 var percentTwenties = /%20/g;
 
@@ -78695,6 +78825,7 @@ module.exports = {
 /***/ }),
 /* 106 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var has = Object.prototype.hasOwnProperty;
 
@@ -78901,8 +79032,7 @@ exports.isBuffer = function isBuffer(obj) {
 /***/ }),
 /* 107 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
+/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -79908,6 +80038,70 @@ function indexOf(xs, x) {
 /***/ }),
 /* 108 */
 /***/ (function(module, exports, __webpack_require__) {
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a transform stream is a readable/writable stream where you do
+// something with the data.  Sometimes it's called a "filter",
+// but that's not a great name for it, since that implies a thing where
+// some bits pass through, and others are simply ignored.  (That would
+// be a valid example of a transform, of course.)
+//
+// While the output is causally related to the input, it's not a
+// necessarily symmetric or synchronous transformation.  For example,
+// a zlib stream might take multiple plain-text writes(), and then
+// emit a single compressed chunk some time in the future.
+//
+// Here's how this works:
+//
+// The Transform stream has all the aspects of the readable and writable
+// stream classes.  When you write(chunk), that calls _write(chunk,cb)
+// internally, and returns false if there's a lot of pending writes
+// buffered up.  When you call read(), that calls _read(n) until
+// there's enough pending readable data buffered up.
+//
+// In a transform stream, the written data is placed in a buffer.  When
+// _read(n) is called, it transforms the queued up data, calling the
+// buffered _write cb's as it consumes chunks.  If consuming a single
+// written chunk would result in multiple output chunks, then the first
+// outputted bit calls the readcb, and subsequent chunks just go into
+// the read buffer, and will cause it to emit 'readable' if necessary.
+//
+// This way, back-pressure is actually determined by the reading side,
+// since _read has to be called to start processing a new chunk.  However,
+// a pathological inflate type of transform can cause excessive buffering
+// here.  For example, imagine a stream where every byte of input is
+// interpreted as an integer from 0-255, and then results in that many
+// bytes of output.  Writing the 4 bytes {ff,ff,ff,ff} would result in
+// 1kb of data being output.  In this case, you could write a very small
+// amount of input, and end up with a very large amount of output.  In
+// such a pathological inflating mechanism, there'd be no way to tell
+// the system to stop doing the transform.  A single 4MB write could
+// cause the system to run out of memory.
+//
+// However, even in such a pathological case, only a single written chunk
+// would be consumed, and then the rest would wait (un-transformed) until
+// the results of the previous transformed chunk were consumed.
+
+
 
 module.exports = Transform;
 
@@ -80062,6 +80256,9 @@ function done(stream, er, data) {
 /***/ }),
 /* 109 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
+/*<replacement>*/
 
 var processNextTick = __webpack_require__(40);
 /*</replacement>*/
@@ -80609,6 +80806,7 @@ exports.clearImmediate = clearImmediate;
 /* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -80749,6 +80947,7 @@ exports.default = { createJWT: createJWT, verifyJWT: verifyJWT };
 /* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -80814,6 +81013,7 @@ for (var _locale, _i = 0; _i < arabicLocales.length; _i++) {
 /* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -80834,6 +81034,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 117 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -80870,6 +81071,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 118 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -80963,6 +81165,7 @@ module.exports = exports['default'];
 /* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -80985,6 +81188,7 @@ function isFullWidth(str) {
 /***/ }),
 /* 120 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -81009,6 +81213,7 @@ function isHalfWidth(str) {
 /* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -81031,6 +81236,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 122 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -81096,10 +81302,7 @@ function isIP(str) {
           return false; // multiple :: in address
         }
         foundOmissionBlock = true;
-      } else if (foundIPv4TransitionBlock && i === blocks.length - 1) {
-        // it has been checked before that the last
-        // block is a valid IPv4 address
-      } else if (!ipv6Block.test(blocks[i])) {
+      } else if (foundIPv4TransitionBlock && i === blocks.length - 1) ; else if (!ipv6Block.test(blocks[i])) {
         return false;
       }
     }
@@ -81115,6 +81318,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 123 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -81137,6 +81341,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 124 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -81165,6 +81370,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 125 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -81374,7 +81580,6 @@ module.exports = function (value, options) {
 /***/ }),
 /* 128 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -81675,6 +81880,8 @@ module.exports = function (value, options) {
 /***/ }),
 /* 129 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
 
 var TYPED_OK =  (typeof Uint8Array !== 'undefined') &&
                 (typeof Uint16Array !== 'undefined') &&
@@ -82640,7 +82847,6 @@ function Entity(name, body) {
   this.decoders = {};
   this.encoders = {};
 }
-
 Entity.prototype._createNamed = function createNamed(base) {
   var named;
   try {
@@ -83434,8 +83640,7 @@ Reporter.prototype.wrapResult = function wrapResult(result) {
 function ReporterError(path, msg) {
   this.path = path;
   this.rethrow(msg);
-}
-inherits(ReporterError, Error);
+}inherits(ReporterError, Error);
 
 ReporterError.prototype.rethrow = function rethrow(msg) {
   this.message = msg + ' at: ' + (this.path || '(shallow)');
@@ -83524,8 +83729,7 @@ var DERDecoder = __webpack_require__(72);
 function PEMDecoder(entity) {
   DERDecoder.call(this, entity);
   this.enc = 'pem';
-}
-inherits(PEMDecoder, DERDecoder);
+}inherits(PEMDecoder, DERDecoder);
 module.exports = PEMDecoder;
 
 PEMDecoder.prototype.decode = function decode(data, options) {
@@ -83588,8 +83792,7 @@ var DEREncoder = __webpack_require__(73);
 function PEMEncoder(entity) {
   DEREncoder.call(this, entity);
   this.enc = 'pem';
-}
-inherits(PEMEncoder, DEREncoder);
+}inherits(PEMEncoder, DEREncoder);
 module.exports = PEMEncoder;
 
 PEMEncoder.prototype.encode = function encode(data, options) {
@@ -83610,7 +83813,8 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 
 /* WEBPACK VAR INJECTION */(function(setImmediate, process, global, module) {(function (global, factory) {
    factory(exports);
-}(this, (function (exports) { function slice(arrayLike, start) {
+}(this, (function (exports) {
+function slice(arrayLike, start) {
     start = start|0;
     var newLen = Math.max(arrayLike.length - start, 0);
     var newArr = Array(newLen);
@@ -89206,6 +89410,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 /* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -89394,6 +89599,7 @@ exports.default = TopicFactory;
 /* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -89544,6 +89750,7 @@ exports.default = UportSubprovider;
 /* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -89562,6 +89769,7 @@ function randomString(length) {
 /***/ }),
 /* 147 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 exports.byteLength = byteLength;
 exports.toByteArray = toByteArray;
@@ -89680,8 +89888,7 @@ function fromByteArray (uint8) {
 /***/ }),
 /* 148 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var pad_string_1 = __webpack_require__(149);
 function encode(input, encoding) {
     if (encoding === void 0) { encoding = "utf8"; }
@@ -89690,7 +89897,6 @@ function encode(input, encoding) {
     }
     return fromBase64(new Buffer(input, encoding).toString("base64"));
 }
-
 function decode(base64url, encoding) {
     if (encoding === void 0) { encoding = "utf8"; }
     return new Buffer(toBase64(base64url), "base64").toString(encoding);
@@ -89724,8 +89930,7 @@ exports.default = base64url;
 /***/ }),
 /* 149 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 function padString(input) {
     var segmentLength = 4;
     var stringLength = input.length;
@@ -90905,8 +91110,7 @@ function formatReturnValue(bn, enc, len) {
 /***/ }),
 /* 167 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var intSize = 4;
 var zeroBuffer = new Buffer(intSize);
 zeroBuffer.fill(0);
@@ -90993,6 +91197,7 @@ module.exports = Hmac;
 /***/ }),
 /* 169 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = __webpack_require__(20);
 exports.createHash = exports.Hash = __webpack_require__(25);
@@ -91094,7 +91299,6 @@ exports.constants = {
 /***/ }),
 /* 170 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -91234,7 +91438,6 @@ exports.constants = {
 /***/ }),
 /* 171 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -91382,6 +91585,7 @@ exports.constants = {
 /* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var assert = __webpack_require__(8);
 var inherits = __webpack_require__(1);
 
@@ -91450,6 +91654,7 @@ proto._update = function _update(inp, inOff, out, outOff) {
 /***/ }),
 /* 173 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var assert = __webpack_require__(8);
 
@@ -91595,6 +91800,7 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
 /***/ }),
 /* 174 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var assert = __webpack_require__(8);
 var inherits = __webpack_require__(1);
@@ -91743,6 +91949,7 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
 /* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var assert = __webpack_require__(8);
 var inherits = __webpack_require__(1);
 
@@ -91801,6 +92008,7 @@ EDE.prototype._unpad = DES.prototype._unpad;
 /***/ }),
 /* 176 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 exports.readUInt32BE = function readUInt32BE(bytes, off) {
   var res =  (bytes[0 + off] << 24) |
@@ -92282,6 +92490,7 @@ function formatReturnValue(bn, enc) {
 /* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var BN = __webpack_require__(4);
 var elliptic = __webpack_require__(6);
 var utils = elliptic.utils;
@@ -92660,6 +92869,7 @@ BasePoint.prototype.dblp = function dblp(k) {
 /***/ }),
 /* 180 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var curve = __webpack_require__(35);
 var elliptic = __webpack_require__(6);
@@ -93098,6 +93308,7 @@ Point.prototype.mixedAdd = Point.prototype.add;
 /* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var curve = __webpack_require__(35);
 var BN = __webpack_require__(4);
 var inherits = __webpack_require__(1);
@@ -93281,6 +93492,7 @@ Point.prototype.getX = function getX() {
 /***/ }),
 /* 182 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var curve = __webpack_require__(35);
 var elliptic = __webpack_require__(6);
@@ -94224,6 +94436,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
 /* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var curves = exports;
 
 var hash = __webpack_require__(18);
@@ -94432,6 +94645,7 @@ defineCurve('secp256k1', {
 /***/ }),
 /* 184 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var BN = __webpack_require__(4);
 var HmacDRBG = __webpack_require__(202);
@@ -94677,6 +94891,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
 /* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var BN = __webpack_require__(4);
 var elliptic = __webpack_require__(6);
 var utils = elliptic.utils;
@@ -94799,6 +95014,7 @@ KeyPair.prototype.inspect = function inspect() {
 /***/ }),
 /* 186 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var BN = __webpack_require__(4);
 
@@ -94939,6 +95155,7 @@ Signature.prototype.toDER = function toDER(enc) {
 /* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var hash = __webpack_require__(18);
 var elliptic = __webpack_require__(6);
 var utils = elliptic.utils;
@@ -95061,6 +95278,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
 /* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var elliptic = __webpack_require__(6);
 var utils = elliptic.utils;
 var assert = utils.assert;
@@ -95160,6 +95378,7 @@ module.exports = KeyPair;
 /***/ }),
 /* 189 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var BN = __webpack_require__(4);
 var elliptic = __webpack_require__(6);
@@ -96017,6 +96236,7 @@ module.exports = {
 /* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = exports;
 var BN = __webpack_require__(4);
 var minAssert = __webpack_require__(8);
@@ -96140,8 +96360,7 @@ utils.intFromLE = intFromLE;
 /***/ }),
 /* 192 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var isHexPrefixed = __webpack_require__(85);
 var stripHexPrefix = __webpack_require__(264);
@@ -96438,8 +96657,7 @@ module.exports = win;
 /***/ }),
 /* 195 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var Transform = __webpack_require__(27).Transform;
 var inherits = __webpack_require__(1);
 
@@ -96529,6 +96747,7 @@ module.exports = HashBase;
 /* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = __webpack_require__(11);
 var assert = __webpack_require__(8);
 
@@ -96579,6 +96798,7 @@ Hmac.prototype.digest = function digest(enc) {
 /***/ }),
 /* 197 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(11);
 var common = __webpack_require__(26);
@@ -96730,6 +96950,7 @@ var sh = [
 /* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 exports.sha1 = __webpack_require__(199);
 exports.sha224 = __webpack_require__(200);
 exports.sha256 = __webpack_require__(81);
@@ -96740,6 +96961,7 @@ exports.sha512 = __webpack_require__(82);
 /***/ }),
 /* 199 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(11);
 var common = __webpack_require__(26);
@@ -96819,6 +97041,7 @@ SHA1.prototype._digest = function digest(enc) {
 /* 200 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = __webpack_require__(11);
 var SHA256 = __webpack_require__(81);
 
@@ -96852,6 +97075,7 @@ SHA224.prototype._digest = function digest(enc) {
 /***/ }),
 /* 201 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(11);
 
@@ -96891,6 +97115,7 @@ SHA384.prototype._digest = function digest(enc) {
 /***/ }),
 /* 202 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var hash = __webpack_require__(18);
 var utils = __webpack_require__(95);
@@ -97137,8 +97362,7 @@ module.exports = {"2.16.840.1.101.3.4.1.1":"aes-128-ecb","2.16.840.1.101.3.4.1.2
 /***/ }),
 /* 209 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -97278,8 +97502,7 @@ function joseToDer(signature, alg) {
 /***/ }),
 /* 210 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -97345,9 +97568,7 @@ var SECP256K1Client = exports.SECP256K1Client = function () {
       }
       if (privateKey.length == 66) {
         privateKey = privateKey.slice(0, 64);
-      } else if (privateKey.length <= 64) {
-        // do nothing
-      } else {
+      } else if (privateKey.length <= 64) ; else {
         throw Error('private key must be 66 characters or less');
       }
       if (compressed === undefined) {
@@ -97416,6 +97637,7 @@ SECP256K1Client.keyEncoder = new _keyEncoder2.default({
 /***/ }),
 /* 211 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -97509,6 +97731,7 @@ var TokenSigner = exports.TokenSigner = function () {
 /* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
@@ -97574,13 +97797,13 @@ var TokenVerifier = exports.TokenVerifier = function () {
 /* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 module.exports = __webpack_require__(214);
 
 /***/ }),
 /* 214 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var asn1 = __webpack_require__(19),
     BN = __webpack_require__(12),
@@ -97674,9 +97897,7 @@ KeyEncoder.prototype.encodePrivate = function(privateKey, originalFormat, destin
             rawPublicKey = privateKeyObject.getPublic('hex');
         privateKeyObject = this.privateKeyObject(privateKey, rawPublicKey);
     } else if (originalFormat === 'der') {
-        if (typeof privateKey === 'buffer') {
-            // do nothing
-        } else if (typeof privateKey === 'string') {
+        if (typeof privateKey === 'buffer') ; else if (typeof privateKey === 'string') {
             privateKey = new Buffer(privateKey, 'hex');
         } else {
             throw 'private key must be a buffer or a string'
@@ -97713,9 +97934,7 @@ KeyEncoder.prototype.encodePublic = function(publicKey, originalFormat, destinat
         }
         publicKeyObject = this.publicKeyObject(publicKey);
     } else if (originalFormat === 'der') {
-        if (typeof publicKey === 'buffer') {
-            // do nothing
-        } else if (typeof publicKey === 'string') {
+        if (typeof publicKey === 'buffer') ; else if (typeof publicKey === 'string') {
             publicKey = new Buffer(publicKey, 'hex');
         } else {
             throw 'public key must be a buffer or a string'
@@ -97765,7 +97984,6 @@ function Entity(name, body) {
   this.decoders = {};
   this.encoders = {};
 }
-
 Entity.prototype._createNamed = function createNamed(base) {
   var named;
   try {
@@ -98286,6 +98504,8 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     return state.children[0]._encode(data, reporter || new Reporter());
 
   var result = null;
+
+  // Set reporter to share it with a child class
   this.reporter = reporter;
 
   // Check if data is there
@@ -98296,7 +98516,7 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
       return;
   }
 
-  // For error reporting
+  // Encode children first
   var content = null;
   var primitive = false;
   if (state.any) {
@@ -98505,8 +98725,7 @@ Reporter.prototype.wrapResult = function wrapResult(result) {
 function ReporterError(path, msg) {
   this.path = path;
   this.rethrow(msg);
-}
-inherits(ReporterError, Error);
+}inherits(ReporterError, Error);
 
 ReporterError.prototype.rethrow = function rethrow(msg) {
   this.message = msg + ' at: ' + (this.path || '(shallow)');
@@ -98587,8 +98806,7 @@ var DERDecoder = __webpack_require__(92);
 function PEMDecoder(entity) {
   DERDecoder.call(this, entity);
   this.enc = 'pem';
-}
-inherits(PEMDecoder, DERDecoder);
+}inherits(PEMDecoder, DERDecoder);
 module.exports = PEMDecoder;
 
 PEMDecoder.prototype.decode = function decode(data, options) {
@@ -98653,8 +98871,7 @@ var DEREncoder = __webpack_require__(93);
 function PEMEncoder(entity) {
   DEREncoder.call(this, entity);
   this.enc = 'pem';
-}
-inherits(PEMEncoder, DEREncoder);
+}inherits(PEMEncoder, DEREncoder);
 module.exports = PEMEncoder;
 
 PEMEncoder.prototype.encode = function encode(data, options) {
@@ -98674,6 +98891,8 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module) {(function (module, exports) {
+
+// Utils
 
 function assert(val, msg) {
   if (!val)
@@ -99752,9 +99971,7 @@ BN.prototype.ishrn = function ishrn(bits, hint, extended) {
     maskedWords.length = s;
   }
 
-  if (s === 0) {
-    // No-op, we should not move anything at all
-  } else if (this.length > s) {
+  if (s === 0) ; else if (this.length > s) {
     this.length -= s;
     for (var i = 0; i < this.length; i++)
       this.words[i] = this.words[i + s];
@@ -100994,6 +101211,7 @@ Mont.prototype.invm = function invm(a) {
 /* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var bn = __webpack_require__(12);
 var elliptic = __webpack_require__(10);
 var utils = elliptic.utils;
@@ -101348,6 +101566,7 @@ BasePoint.prototype.dblp = function dblp(k) {
 /***/ }),
 /* 225 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var curve = __webpack_require__(38);
 var elliptic = __webpack_require__(10);
@@ -101759,6 +101978,7 @@ Point.prototype.mixedAdd = Point.prototype.add;
 /* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var curve = __webpack_require__(38);
 var bn = __webpack_require__(12);
 var inherits = __webpack_require__(1);
@@ -101938,6 +102158,7 @@ Point.prototype.getX = function getX() {
 /***/ }),
 /* 227 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var curve = __webpack_require__(38);
 var elliptic = __webpack_require__(10);
@@ -102850,6 +103071,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
 /* 228 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var curves = exports;
 
 var hash = __webpack_require__(18);
@@ -103058,6 +103280,7 @@ defineCurve('secp256k1', {
 /***/ }),
 /* 229 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var bn = __webpack_require__(12);
 var elliptic = __webpack_require__(10);
@@ -103273,6 +103496,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
 /* 230 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var bn = __webpack_require__(12);
 
 function KeyPair(ec, options) {
@@ -103383,6 +103607,7 @@ KeyPair.prototype.inspect = function inspect() {
 /***/ }),
 /* 231 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var bn = __webpack_require__(12);
 
@@ -103523,6 +103748,7 @@ Signature.prototype.toDER = function toDER(enc) {
 /* 232 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var hash = __webpack_require__(18);
 var elliptic = __webpack_require__(10);
 var utils = elliptic.utils;
@@ -103645,6 +103871,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
 /* 233 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var elliptic = __webpack_require__(10);
 var utils = elliptic.utils;
 var assert = utils.assert;
@@ -103745,6 +103972,7 @@ module.exports = KeyPair;
 /* 234 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var bn = __webpack_require__(12);
 var elliptic = __webpack_require__(10);
 var utils = elliptic.utils;
@@ -103814,6 +104042,7 @@ module.exports = Signature;
 /***/ }),
 /* 235 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var hash = __webpack_require__(18);
 var elliptic = __webpack_require__(10);
@@ -104719,6 +104948,7 @@ module.exports = {
 /* 237 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var utils = exports;
 var bn = __webpack_require__(12);
 
@@ -104895,8 +105125,7 @@ utils.intFromLE = intFromLE;
 /***/ }),
 /* 238 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 var inherits = __webpack_require__(1);
 var HashBase = __webpack_require__(239);
 
@@ -105158,6 +105387,7 @@ module.exports = HashBase;
  */
 /*jslint bitwise: true */
 (function () {
+
   var root = typeof window === 'object' ? window : {};
   var NODE_JS = !root.JS_SHA3_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
   if (NODE_JS) {
@@ -105627,6 +105857,9 @@ module.exports = HashBase;
 /***/ }),
 /* 241 */
 /***/ (function(module, exports, __webpack_require__) {
+// from https://github.com/indutny/self-signed/blob/gh-pages/lib/asn1.js
+// Fedor, you are amazing.
+
 
 var asn1 = __webpack_require__(17);
 
@@ -105751,6 +105984,10 @@ exports.signature = asn1.define('signature', function () {
 /***/ }),
 /* 242 */
 /***/ (function(module, exports, __webpack_require__) {
+// from https://github.com/Rantanen/node-dtls/blob/25a7dc861bda38cfeac93a723500eea4f0ac2e86/Certificate.js
+// thanks to @Rantanen
+
+
 
 var asn = __webpack_require__(17);
 
@@ -106242,6 +106479,7 @@ function nonZero(len, crypto) {
 /* 249 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 var stringify = __webpack_require__(251);
 var parse = __webpack_require__(250);
 var formats = __webpack_require__(105);
@@ -106256,6 +106494,7 @@ module.exports = {
 /***/ }),
 /* 250 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(106);
 
@@ -106434,6 +106673,7 @@ module.exports = function (str, opts) {
 /***/ }),
 /* 251 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var utils = __webpack_require__(106);
 var formats = __webpack_require__(105);
@@ -106648,8 +106888,7 @@ module.exports = function (object, opts) {
 /***/ }),
 /* 252 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(global, process) {
+/* WEBPACK VAR INJECTION */(function(global, process) {
 
 function oldBrowser () {
   throw new Error('secure random number generation not supported by this browser\nuse chrome, FireFox or Internet Explorer 11')
@@ -106770,6 +107009,32 @@ module.exports = __webpack_require__(16);
 /***/ }),
 /* 254 */
 /***/ (function(module, exports, __webpack_require__) {
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// a passthrough stream.
+// basically just the most minimal sort of Transform stream.
+// Every written chunk gets output as-is.
+
+
 
 module.exports = PassThrough;
 
@@ -106795,6 +107060,9 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 /***/ }),
 /* 255 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
+/*<replacement>*/
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -106893,6 +107161,7 @@ module.exports = __webpack_require__(55);
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+
     if (global.setImmediate) {
         return;
     }
@@ -107460,6 +107729,7 @@ exports.right = function(str){
     root.nacl.util = f();
   }
 }(this, function() {
+
   var util = {};
 
   function validateBase64(s) {
@@ -107534,6 +107804,7 @@ exports.right = function(str){
 /***/ }),
 /* 267 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 var base58 = __webpack_require__(32)(BASE58);
@@ -107740,6 +108011,7 @@ module.exports = UportLite;
 /* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -107778,7 +108050,7 @@ var encodeMethodReadable = function encodeMethodReadable(methodObject, methodArg
 
     if (input.type === 'string') {
       argString += '\'' + methodArgs[i] + '\'';
-    } else if (input.type === ('bytes32' || 'bytes')) {
+    } else if (input.type === ('bytes')) {
       // TODO don't assume hex input? or throw error if not hex
       // argString += `0x${new Buffer(methodArgs[i], 'hex')}`
       argString += '' + methodArgs[i];
@@ -107855,6 +108127,7 @@ exports.Contract = Contract;
 /***/ }),
 /* 269 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -108222,6 +108495,7 @@ exports.default = Credentials;
 /* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -108256,6 +108530,13 @@ function SimpleSigner(privateKey) {
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(nacl) {
+
+// Ported in 2014 by Dmitry Chestnykh and Devi Mandiri.
+// Public domain.
+//
+// Implementation derived from TweetNaCl version 20140427.
+// See for details: http://tweetnacl.cr.yp.to/
+
 var gf = function(init) {
   var i, r = new Float64Array(16);
   if (init) for (i = 0; i < init.length; i++) r[i] = init[i];
@@ -110704,6 +110985,7 @@ function config (name) {
 /* 273 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111028,6 +111310,7 @@ module.exports = exports['default'];
 /* 274 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111053,6 +111336,7 @@ module.exports = exports['default'];
 /* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111074,6 +111358,7 @@ module.exports = exports['default'];
 /* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111094,6 +111379,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 277 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111124,6 +111410,7 @@ module.exports = exports['default'];
 /* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111151,6 +111438,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 279 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111180,6 +111468,7 @@ module.exports = exports['default'];
 /* 280 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111204,6 +111493,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 281 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111232,6 +111522,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 282 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111262,6 +111553,7 @@ module.exports = exports['default'];
 /* 283 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111282,6 +111574,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 284 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111330,6 +111623,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 285 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111419,6 +111713,7 @@ module.exports = exports['default'];
 /* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111442,6 +111737,7 @@ module.exports = exports['default'];
 /* 287 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111464,6 +111760,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 288 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111490,6 +111787,7 @@ module.exports = exports['default'];
 /* 289 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111510,6 +111808,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 290 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111538,6 +111837,7 @@ module.exports = exports['default'];
 /* 291 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111560,6 +111860,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 292 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111621,6 +111922,7 @@ module.exports = exports['default'];
 /* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111672,6 +111974,7 @@ module.exports = exports['default'];
 /* 294 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111697,6 +112000,7 @@ var iso8601 = exports.iso8601 = /^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(
 /* 295 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111720,6 +112024,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 296 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111782,6 +112087,7 @@ module.exports = exports['default'];
 /* 297 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111824,6 +112130,7 @@ module.exports = exports['default'];
 /* 298 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111860,6 +112167,7 @@ module.exports = exports['default'];
 /* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111887,6 +112195,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 300 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111925,6 +112234,7 @@ module.exports = exports['default'];
 /* 301 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111945,6 +112255,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 302 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -111969,6 +112280,7 @@ module.exports = exports['default'];
 /* 303 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -111991,6 +112303,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 304 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112076,6 +112389,7 @@ module.exports = exports['default'];
 /* 305 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112100,6 +112414,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 306 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112126,6 +112441,7 @@ module.exports = exports['default'];
 /* 307 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112149,6 +112465,7 @@ module.exports = exports['default'];
 /* 308 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112171,6 +112488,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 309 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112318,6 +112636,7 @@ module.exports = exports['default'];
 /* 310 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112349,6 +112668,7 @@ module.exports = exports['default'];
 /* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112369,6 +112689,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 312 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112394,6 +112715,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 313 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112421,6 +112743,7 @@ module.exports = exports['default'];
 /* 314 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112444,6 +112767,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 315 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112585,6 +112909,7 @@ module.exports = exports['default'];
 /* 316 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112611,6 +112936,7 @@ module.exports = exports['default'];
 /* 317 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112635,6 +112961,7 @@ module.exports = exports['default'];
 /* 318 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112655,6 +112982,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 319 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112680,6 +113008,7 @@ module.exports = exports['default'];
 /* 320 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -112700,6 +113029,7 @@ module.exports = exports['default'];
 /***/ }),
 /* 321 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -112991,6 +113321,8 @@ module.exports = coder;
 /* 323 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// go env doesn't have and need XMLHttpRequest
 if (typeof XMLHttpRequest === 'undefined') {
     exports.XMLHttpRequest = {};
 } else {
@@ -113318,6 +113650,7 @@ function extend() {
 /* 332 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -113539,8 +113872,7 @@ exports.uportQRDisplay = uportQRDisplay;
 /***/ }),
 /* 333 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(global) {
+/* WEBPACK VAR INJECTION */(function(global) {
 
 // compare and isBuffer taken from https://github.com/feross/buffer/blob/680e9e5e488f22aac27599a57dc844a6315928dd/index.js
 // original notice:
@@ -114036,7 +114368,6 @@ var objectKeys = Object.keys || function (obj) {
 /***/ }),
 /* 334 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -114232,7 +114563,6 @@ var objectKeys = Object.keys || function (obj) {
 /***/ }),
 /* 335 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -114447,8 +114777,7 @@ var objectKeys = Object.keys || function (obj) {
 	                var lane = state[0];
 	                var roundConstant = ROUND_CONSTANTS[round];
 	                lane.high ^= roundConstant.high;
-	                lane.low  ^= roundConstant.low;
-	            }
+	                lane.low  ^= roundConstant.low;	            }
 	        },
 
 	        _doFinalize: function () {
@@ -114552,7 +114881,6 @@ var objectKeys = Object.keys || function (obj) {
 /***/ }),
 /* 336 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -114873,6 +115201,30 @@ var objectKeys = Object.keys || function (obj) {
 /* 337 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// Note: adler32 takes 12% for level 0 and 2% for level 6.
+// It isn't worth it to make additional optimizations as in original.
+// Small size is preferable.
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
 function adler32(adler, buf, len, pos) {
   var s1 = (adler & 0xffff) |0,
       s2 = ((adler >>> 16) & 0xffff) |0,
@@ -114905,6 +115257,31 @@ module.exports = adler32;
 /* 338 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// Note: we can't get significant speed boost here.
+// So write code to minimize size - no pregenerated tables
+// and array tools dependencies.
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+// Use ordinary array, since untyped makes no boost here
 function makeTable() {
   var c, table = [];
 
@@ -115371,10 +115748,8 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
 
 
 function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
   var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    if (cur.indexOf('\n') >= 0) ;
     return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
   }, 0);
 
@@ -116000,6 +116375,7 @@ module.exports = Jsonrpc;
 /* 343 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -116109,6 +116485,7 @@ exports.default = Connect;
 /* 344 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -116145,6 +116522,7 @@ exports.MNID = MNID;
 /* 346 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
@@ -116171,8 +116549,7 @@ exports.default = SVG;
 /***/ }),
 /* 347 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer, process) {
+/* WEBPACK VAR INJECTION */(function(Buffer, process) {
 /* eslint camelcase: "off" */
 
 var assert = __webpack_require__(333);
@@ -116586,8 +116963,7 @@ exports.Zlib = Zlib;
 /***/ }),
 /* 348 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(process) {
+/* WEBPACK VAR INJECTION */(function(process) {
 
 var Buffer = __webpack_require__(2).Buffer;
 var Transform = __webpack_require__(27).Transform;
@@ -117201,7 +117577,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 349 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117430,7 +117805,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 350 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -117576,7 +117950,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 351 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117639,7 +118012,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 352 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117654,7 +118026,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 353 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -117727,7 +118098,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 354 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117802,7 +118172,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 355 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117915,7 +118284,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 356 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -117970,7 +118338,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 357 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118007,7 +118374,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 358 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118058,7 +118424,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 359 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118104,7 +118469,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 360 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118145,7 +118509,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 361 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118182,7 +118545,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 362 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118209,7 +118571,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 363 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118251,7 +118612,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 364 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118393,7 +118753,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 365 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118580,7 +118939,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 366 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118769,7 +119127,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 367 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -118905,7 +119262,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 368 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory) {
 	{
 		// CommonJS
@@ -119169,7 +119525,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 369 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -119246,7 +119601,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 370 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -119326,7 +119680,6 @@ util.inherits(Unzip, Zlib);
 /***/ }),
 /* 371 */
 /***/ (function(module, exports, __webpack_require__) {
-
 (function (root, factory, undef) {
 	{
 		// CommonJS
@@ -120118,6 +120471,26 @@ module.exports = {"version":"0.19.0"};
 /* 376 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
 module.exports = {
 
   /* Allowed flush values; see deflate() and inflate() below for details */
@@ -120170,6 +120543,26 @@ module.exports = {
 /***/ }),
 /* 377 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
 
 var utils   = __webpack_require__(129);
 var trees   = __webpack_require__(382);
@@ -120388,7 +120781,7 @@ function longest_match(s, cur_match) {
   var best_len = s.prev_length;              /* best match length so far */
   var nice_match = s.nice_match;             /* stop if match long enough */
   var limit = (s.strstart > (s.w_size - MIN_LOOKAHEAD)) ?
-      s.strstart - (s.w_size - MIN_LOOKAHEAD) : 0;
+      s.strstart - (s.w_size - MIN_LOOKAHEAD) : 0/*NIL*/;
 
   var _win = s.window; // shortcut
 
@@ -122030,6 +122423,27 @@ exports.deflateTune = deflateTune;
 /* 378 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+// See state defs from inflate.js
 var BAD = 30;       /* got a data error -- remain here until reset */
 var TYPE = 12;      /* i: waiting for type bits, including last-flag bit */
 
@@ -122358,6 +122772,26 @@ module.exports = function inflate_fast(strm, start) {
 /***/ }),
 /* 379 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
 
 var utils         = __webpack_require__(129);
 var adler32       = __webpack_require__(337);
@@ -123900,6 +124334,26 @@ exports.inflateUndermine = inflateUndermine;
 /* 380 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
 var utils = __webpack_require__(129);
 
 var MAXBITS = 15;
@@ -124228,6 +124682,26 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
 /* 381 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
 module.exports = {
   2:      'need dictionary',     /* Z_NEED_DICT       2  */
   1:      'stream end',          /* Z_STREAM_END      1  */
@@ -124244,6 +124718,26 @@ module.exports = {
 /***/ }),
 /* 382 */
 /***/ (function(module, exports, __webpack_require__) {
+
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
 
 var utils = __webpack_require__(129);
 
@@ -124618,7 +125112,7 @@ function gen_codes(tree, max_code, bl_count)
   //Tracev((stderr,"\ngen_codes: max_code %d ", max_code));
 
   for (n = 0;  n <= max_code; n++) {
-    var len = tree[n * 2 + 1];
+    var len = tree[n * 2 + 1]/*.Len*/;
     if (len === 0) { continue; }
     /* Now reverse the bits */
     tree[n * 2]/*.Code*/ = bi_reverse(next_code[len]++, len);
@@ -125003,7 +125497,7 @@ function scan_tree(s, tree, max_code)
   var prevlen = -1;          /* last emitted length */
   var curlen;                /* length of current code */
 
-  var nextlen = tree[0 * 2 + 1]; /* length of next code */
+  var nextlen = tree[0 * 2 + 1]/*.Len*/; /* length of next code */
 
   var count = 0;             /* repeat count of the current code */
   var max_count = 7;         /* max repeat count */
@@ -125069,7 +125563,7 @@ function send_tree(s, tree, max_code)
   var prevlen = -1;          /* last emitted length */
   var curlen;                /* length of current code */
 
-  var nextlen = tree[0 * 2 + 1]; /* length of next code */
+  var nextlen = tree[0 * 2 + 1]/*.Len*/; /* length of next code */
 
   var count = 0;             /* repeat count of the current code */
   var max_count = 7;         /* max repeat count */
@@ -125450,6 +125944,26 @@ exports._tr_align = _tr_align;
 /* 383 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
 function ZStream() {
   /* next input byte */
   this.input = null; // JS specific, because we have no pointers
@@ -125481,8 +125995,7 @@ module.exports = ZStream;
 /***/ }),
 /* 384 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(process, Buffer) {
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {
 
 (function() {
 
@@ -125537,8 +126050,7 @@ module.exports = crc32;
 /***/ }),
 /* 385 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var crc_table = [];
 
@@ -125594,8 +126106,7 @@ module.exports = crc32;
 /***/ }),
 /* 386 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 function pushBits(arr, n, value) {
     for (var bit = 1 << (n - 1); bit; bit = bit >>> 1) {
@@ -125776,8 +126287,7 @@ module.exports = encode;
 /***/ }),
 /* 387 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 // {{{1 Galois Field Math
 var GF256_BASE = 285;
@@ -125860,8 +126370,7 @@ module.exports = function calculate_ec(msg, ec_len) {
 /***/ }),
 /* 388 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 // {{{1 Initialize matrix with zeros
 function init(version) {
@@ -125984,8 +126493,7 @@ var fillReserved = (function() {
     return function fillReserved(matrix, ec_level, mask) {
         var N = matrix.length;
         var format = FORMATS[EC_LEVELS[ec_level] << 3 | mask];
-        function F(k) { return format >> k & 1 ? 0x81 : 0x80 }
-        for (var i = 0; i < 8; i++) {
+        function F(k) { return format >> k & 1 ? 0x81 : 0x80 }        for (var i = 0; i < 8; i++) {
             matrix[8][N - 1 - i] = F(i);
             if (i < 6) matrix[i][8] = F(i);
         }
@@ -125999,8 +126507,7 @@ var fillReserved = (function() {
 
         var version = VERSIONS[(N - 17)/4];
         if (!version) return;
-        function V(k) { return version >> k & 1 ? 0x81 : 0x80 }
-        for (var i = 0; i < 6; i++) {
+        function V(k) { return version >> k & 1 ? 0x81 : 0x80 }        for (var i = 0; i < 6; i++) {
             for (var j = 0; j < 3; j++) {
                 matrix[N - 11 + j][i] = matrix[i][N - 11 + j] = V(i * 3 + j);
             }
@@ -126137,9 +126644,7 @@ function calculatePenalty(matrix) {
     }
 
     // Rule 3
-    function I(k) { return matrix[i][j + k] & 1 }
-    function J(k) { return matrix[i + k][j] & 1 }
-    for (var i = 0; i < N; i++) {
+    function I(k) { return matrix[i][j + k] & 1 }    function J(k) { return matrix[i + k][j] & 1 }    for (var i = 0; i < N; i++) {
         for (var j = 0; j < N; j++) {
             if (j < N - 6 && I(0) && !I(1) && I(2) && I(3) && I(4) && !I(5) && I(6)) {
                 if (j >= 4 && !(I(-4) || I(-3) || I(-2) || I(-1))) {
@@ -126219,8 +126724,7 @@ module.exports = {
 /***/ }),
 /* 389 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var zlib = __webpack_require__(348);
 
@@ -126290,8 +126794,7 @@ module.exports = {
 /***/ }),
 /* 390 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(Buffer) {
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var encode = __webpack_require__(386);
 var calculateEC = __webpack_require__(387);
@@ -126477,8 +126980,7 @@ module.exports = {
 /***/ }),
 /* 391 */
 /***/ (function(module, exports, __webpack_require__) {
-
-(function(process, Buffer) {
+/* WEBPACK VAR INJECTION */(function(process, Buffer) {
 
 var Readable = __webpack_require__(27).Readable;
 
@@ -126605,6 +127107,7 @@ module.exports = {
 /***/ }),
 /* 392 */
 /***/ (function(module, exports, __webpack_require__) {
+
 
 function matrix2path(matrix) {
     var N = matrix.length;
@@ -127094,7 +127597,8 @@ module.exports = {
 	{
 		!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
 			return utf8;
-		}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	}
 
 }(this));
@@ -128441,6 +128945,29 @@ module.exports = SolidityFunction;
 /***/ }),
 /* 412 */
 /***/ (function(module, exports, __webpack_require__) {
+/*
+    This file is part of web3.js.
+
+    web3.js is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    web3.js is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/** @file ipcprovider.js
+ * @authors:
+ *   Fabian Vogelsteller <fabian@ethdev.com>
+ * @date 2015
+ */
+
+
 
 var utils = __webpack_require__(15);
 var errors = __webpack_require__(43);
@@ -128702,6 +129229,30 @@ module.exports = DB;
 /***/ }),
 /* 414 */
 /***/ (function(module, exports, __webpack_require__) {
+/*
+    This file is part of web3.js.
+
+    web3.js is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    web3.js is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file eth.js
+ * @author Marek Kotewicz <marek@ethdev.com>
+ * @author Fabian Vogelsteller <fabian@ethdev.com>
+ * @date 2015
+ */
+
+
 
 var formatters = __webpack_require__(42);
 var utils = __webpack_require__(15);
@@ -129095,6 +129646,30 @@ module.exports = Net;
 /***/ }),
 /* 416 */
 /***/ (function(module, exports, __webpack_require__) {
+/*
+    This file is part of web3.js.
+
+    web3.js is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    web3.js is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file eth.js
+ * @author Marek Kotewicz <marek@ethdev.com>
+ * @author Fabian Vogelsteller <fabian@ethdev.com>
+ * @date 2015
+ */
+
+
 
 var Method = __webpack_require__(63);
 var Property = __webpack_require__(68);
@@ -129283,6 +129858,31 @@ module.exports = Shh;
 /***/ }),
 /* 418 */
 /***/ (function(module, exports, __webpack_require__) {
+/*
+    This file is part of web3.js.
+
+    web3.js is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    web3.js is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file bzz.js
+ * @author Alex Beregszaszi <alex@rtfs.hu>
+ * @date 2016
+ *
+ * Reference: https://github.com/ethereum/go-ethereum/blob/swarm/internal/web3ext/web3ext.go#L33
+ */
+
+
 
 var Method = __webpack_require__(63);
 var Property = __webpack_require__(68);
@@ -129974,6 +130574,9 @@ class Identity {
 	 * @returns {undefined}
 	 */
 	constructor() {
+		// Initializes EventEmitter
+		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
 			network: 'rinkeby',
@@ -129989,7 +130592,7 @@ class Identity {
 	 *
 	 * @param {string} information - Pieces of information to be requested to the human
 	 *
-	 * @returns {Promise} promise
+	 * @returns {Promise<string|undefined>} promise - If the user rejects signing in, it will resolve with that error object
 	 */
 	signIn(...information) {
 		return this.uPort.requestCredentials({
@@ -130000,7 +130603,12 @@ class Identity {
 			this.setUPortData(credentials, true);
 			this.signedIn = true;
 			return Promise.resolve();
-		}, (error) => Promise.reject(error));
+		}, (error) => {
+			if (error.message === 'Request Cancelled') {
+				return Promise.resolve(error)
+			}
+			return Promise.reject(error)
+		});
 	}
 
 	/**
@@ -130021,6 +130629,7 @@ class Identity {
 	 * 2. Saved in LocalStorage
 	 *
 	 * @returns {object} identity
+	 * @emits Identity#error error - Error that may occur when parsing the JSON
 	 */
 	getIdentity() {
 		if (this.uPortData) {
@@ -130038,7 +130647,14 @@ class Identity {
 			this.setUPortData(identity);
 			return identity;
 		} catch (error) {
-			console.log(error);
+			/**
+			 * Identity error that may happen parsing the JSON
+			 *
+			 * @event Identity#error
+			 * @type {Error}
+			 * 
+			 */
+			this.emit('error', error);
 		}
 	}
 
@@ -130269,15 +130885,6 @@ var isArray = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-/*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-/* eslint-disable no-proto */
-
-
 var INSPECT_MAX_BYTES = 50;
 
 /**
@@ -130312,6 +130919,7 @@ Buffer.TYPED_ARRAY_SUPPORT = global$1.TYPED_ARRAY_SUPPORT !== undefined
  * Export kMaxLength after typed array support is determined.
  */
 var _kMaxLength = kMaxLength();
+
 function kMaxLength () {
   return Buffer.TYPED_ARRAY_SUPPORT
     ? 0x7fffffff
@@ -130403,7 +131011,6 @@ Buffer.from = function (value, encodingOrOffset, length) {
 if (Buffer.TYPED_ARRAY_SUPPORT) {
   Buffer.prototype.__proto__ = Uint8Array.prototype;
   Buffer.__proto__ = Uint8Array;
-  
 }
 
 function assertSize (size) {
@@ -132050,8 +132657,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isFastBuffer(obj.slice(0, 0))
 }
 
-
-var buffer = Object.freeze({
+var bufferEs6 = /*#__PURE__*/Object.freeze({
 	INSPECT_MAX_BYTES: INSPECT_MAX_BYTES,
 	kMaxLength: _kMaxLength,
 	Buffer: Buffer,
@@ -132219,8 +132825,7 @@ function binding(name) {
 function cwd () { return '/' }
 function chdir (dir) {
     throw new Error('process.chdir is not supported');
-}
-function umask() { return 0; }
+}function umask() { return 0; }
 
 // from https://github.com/kumavis/browser-process-hrtime/blob/master/index.js
 var performance$1 = global$1.performance || {};
@@ -132638,7 +133243,6 @@ function coerce(val) {
   return val;
 }
 });
-
 var debug_1 = debug.coerce;
 var debug_2 = debug.disable;
 var debug_3 = debug.enable;
@@ -132835,7 +133439,6 @@ function localstorage() {
   } catch (e) {}
 }
 });
-
 var browser_1 = browser$1.log;
 var browser_2 = browser$1.formatArgs;
 var browser_3 = browser$1.save;
@@ -132889,7 +133492,7 @@ if (typeof Object.create === 'function') {
 var safeBuffer = createCommonjsModule(function (module, exports) {
 /* eslint-disable node/no-deprecated-api */
 
-var Buffer = buffer.Buffer;
+var Buffer = bufferEs6.Buffer;
 
 // alternative to using Object.keys for old browsers
 function copyProps (src, dst) {
@@ -132898,10 +133501,10 @@ function copyProps (src, dst) {
   }
 }
 if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-  module.exports = buffer;
+  module.exports = bufferEs6;
 } else {
   // Copy properties from require('buffer')
-  copyProps(buffer, exports);
+  copyProps(bufferEs6, exports);
   exports.Buffer = SafeBuffer;
 }
 
@@ -132947,13 +133550,13 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   if (typeof size !== 'number') {
     throw new TypeError('Argument must be a number')
   }
-  return buffer.SlowBuffer(size)
+  return bufferEs6.SlowBuffer(size)
 };
 });
-
 var safeBuffer_1 = safeBuffer.Buffer;
 
-var browser$3 = createCommonjsModule(function (module) {
+var browser$2 = createCommonjsModule(function (module) {
+
 function oldBrowser () {
   throw new Error('secure random number generation not supported by this browser\nuse chrome, FireFox or Internet Explorer 11')
 }
@@ -133000,26 +133603,27 @@ var domain;
 function EventHandlers() {}
 EventHandlers.prototype = Object.create(null);
 
-function EventEmitter$1() {
-  EventEmitter$1.init.call(this);
+function EventEmitter() {
+  EventEmitter.init.call(this);
 }
+
 // nodejs oddity
 // require('events') === require('events').EventEmitter
-EventEmitter$1.EventEmitter = EventEmitter$1;
+EventEmitter.EventEmitter = EventEmitter;
 
-EventEmitter$1.usingDomains = false;
+EventEmitter.usingDomains = false;
 
-EventEmitter$1.prototype.domain = undefined;
-EventEmitter$1.prototype._events = undefined;
-EventEmitter$1.prototype._maxListeners = undefined;
+EventEmitter.prototype.domain = undefined;
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
 
 // By default EventEmitters will print a warning if more than 10 listeners are
 // added to it. This is a useful default which helps finding memory leaks.
-EventEmitter$1.defaultMaxListeners = 10;
+EventEmitter.defaultMaxListeners = 10;
 
-EventEmitter$1.init = function() {
+EventEmitter.init = function() {
   this.domain = null;
-  if (EventEmitter$1.usingDomains) {
+  if (EventEmitter.usingDomains) {
     // if there is an active domain, then attach to it.
     if (domain.active && !(this instanceof domain.Domain)) {
       this.domain = domain.active;
@@ -133036,7 +133640,7 @@ EventEmitter$1.init = function() {
 
 // Obviously not all Emitters should be limited to 10. This function allows
 // that to be increased. Set to zero for unlimited.
-EventEmitter$1.prototype.setMaxListeners = function setMaxListeners(n) {
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
   if (typeof n !== 'number' || n < 0 || isNaN(n))
     throw new TypeError('"n" argument must be a positive number');
   this._maxListeners = n;
@@ -133045,11 +133649,11 @@ EventEmitter$1.prototype.setMaxListeners = function setMaxListeners(n) {
 
 function $getMaxListeners(that) {
   if (that._maxListeners === undefined)
-    return EventEmitter$1.defaultMaxListeners;
+    return EventEmitter.defaultMaxListeners;
   return that._maxListeners;
 }
 
-EventEmitter$1.prototype.getMaxListeners = function getMaxListeners() {
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
   return $getMaxListeners(this);
 };
 
@@ -133110,7 +133714,7 @@ function emitMany(handler, isFn, self, args) {
   }
 }
 
-EventEmitter$1.prototype.emit = function emit(type) {
+EventEmitter.prototype.emit = function emit(type) {
   var er, handler, len, args, i, events, domain;
   var needDomainExit = false;
   var doError = (type === 'error');
@@ -133245,13 +133849,13 @@ function _addListener(target, type, listener, prepend) {
 function emitWarning(e) {
   typeof console.warn === 'function' ? console.warn(e) : console.log(e);
 }
-EventEmitter$1.prototype.addListener = function addListener(type, listener) {
+EventEmitter.prototype.addListener = function addListener(type, listener) {
   return _addListener(this, type, listener, false);
 };
 
-EventEmitter$1.prototype.on = EventEmitter$1.prototype.addListener;
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-EventEmitter$1.prototype.prependListener =
+EventEmitter.prototype.prependListener =
     function prependListener(type, listener) {
       return _addListener(this, type, listener, true);
     };
@@ -133269,14 +133873,14 @@ function _onceWrap(target, type, listener) {
   return g;
 }
 
-EventEmitter$1.prototype.once = function once(type, listener) {
+EventEmitter.prototype.once = function once(type, listener) {
   if (typeof listener !== 'function')
     throw new TypeError('"listener" argument must be a function');
   this.on(type, _onceWrap(this, type, listener));
   return this;
 };
 
-EventEmitter$1.prototype.prependOnceListener =
+EventEmitter.prototype.prependOnceListener =
     function prependOnceListener(type, listener) {
       if (typeof listener !== 'function')
         throw new TypeError('"listener" argument must be a function');
@@ -133285,7 +133889,7 @@ EventEmitter$1.prototype.prependOnceListener =
     };
 
 // emits a 'removeListener' event iff the listener was removed
-EventEmitter$1.prototype.removeListener =
+EventEmitter.prototype.removeListener =
     function removeListener(type, listener) {
       var list, events, position, i, originalListener;
 
@@ -133342,7 +133946,7 @@ EventEmitter$1.prototype.removeListener =
       return this;
     };
 
-EventEmitter$1.prototype.removeAllListeners =
+EventEmitter.prototype.removeAllListeners =
     function removeAllListeners(type) {
       var listeners, events;
 
@@ -133392,7 +133996,7 @@ EventEmitter$1.prototype.removeAllListeners =
       return this;
     };
 
-EventEmitter$1.prototype.listeners = function listeners(type) {
+EventEmitter.prototype.listeners = function listeners(type) {
   var evlistener;
   var ret;
   var events = this._events;
@@ -133412,7 +134016,7 @@ EventEmitter$1.prototype.listeners = function listeners(type) {
   return ret;
 };
 
-EventEmitter$1.listenerCount = function(emitter, type) {
+EventEmitter.listenerCount = function(emitter, type) {
   if (typeof emitter.listenerCount === 'function') {
     return emitter.listenerCount(type);
   } else {
@@ -133420,7 +134024,7 @@ EventEmitter$1.listenerCount = function(emitter, type) {
   }
 };
 
-EventEmitter$1.prototype.listenerCount = listenerCount;
+EventEmitter.prototype.listenerCount = listenerCount;
 function listenerCount(type) {
   var events = this._events;
 
@@ -133437,7 +134041,7 @@ function listenerCount(type) {
   return 0;
 }
 
-EventEmitter$1.prototype.eventNames = function eventNames() {
+EventEmitter.prototype.eventNames = function eventNames() {
   return this._eventsCount > 0 ? Reflect.ownKeys(this._events) : [];
 };
 
@@ -133488,26 +134092,6 @@ if (typeof Object.create === 'function'){
 }
 var inherits$1 = inherits;
 
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
 var formatRegExp = /%[sdj%]/g;
 function format$1(f) {
   if (!isString(f)) {
@@ -133547,7 +134131,6 @@ function format$1(f) {
   return str;
 }
 
-
 // Mark that a method should not be used.
 // Returns a modified function which warns once by default.
 // If --no-deprecation is set, then it is a no-op.
@@ -133581,7 +134164,6 @@ function deprecate(fn, msg) {
   return deprecated;
 }
 
-
 var debugs = {};
 var debugEnviron;
 function debuglog(set) {
@@ -133601,7 +134183,6 @@ function debuglog(set) {
   }
   return debugs[set];
 }
-
 
 /**
  * Echos the value of a value. Trys to print the value out
@@ -133912,10 +134493,8 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
 
 
 function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
   var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    if (cur.indexOf('\n') >= 0) ;
     return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
   }, 0);
 
@@ -133946,8 +134525,6 @@ function isNull(arg) {
   return arg === null;
 }
 
-
-
 function isNumber(arg) {
   return typeof arg === 'number';
 }
@@ -133955,8 +134532,6 @@ function isNumber(arg) {
 function isString(arg) {
   return typeof arg === 'string';
 }
-
-
 
 function isUndefined(arg) {
   return arg === void 0;
@@ -133983,32 +134558,10 @@ function isFunction(arg) {
   return typeof arg === 'function';
 }
 
-
-
-
-
 function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-
-// log is just a thin wrapper to console.log that prepends a timestamp
-
-
-
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * The Function.prototype.inherits from lang.js rewritten as a standalone
- * function (not on Function.prototype). NOTE: If this file is to be loaded
- * during bootstrapping this function needs to be rewritten using some native
- * functions as prototype setup using normal JavaScript does not work as
- * expected during bootstrapping (see mirror.js in r114903).
- *
- * @param {function} ctor Constructor function which needs to inherit the
- *     prototype.
- * @param {function} superCtor Constructor function to inherit prototype from.
- */
 function _extend(origin, add) {
   // Don't do anything if add isn't an object
   if (!add || !isObject(add)) return origin;
@@ -134020,32 +134573,31 @@ function _extend(origin, add) {
   }
   return origin;
 }
-
 function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-function BufferList$1() {
+function BufferList() {
   this.head = null;
   this.tail = null;
   this.length = 0;
 }
 
-BufferList$1.prototype.push = function (v) {
+BufferList.prototype.push = function (v) {
   var entry = { data: v, next: null };
   if (this.length > 0) this.tail.next = entry;else this.head = entry;
   this.tail = entry;
   ++this.length;
 };
 
-BufferList$1.prototype.unshift = function (v) {
+BufferList.prototype.unshift = function (v) {
   var entry = { data: v, next: this.head };
   if (this.length === 0) this.tail = entry;
   this.head = entry;
   ++this.length;
 };
 
-BufferList$1.prototype.shift = function () {
+BufferList.prototype.shift = function () {
   if (this.length === 0) return;
   var ret = this.head.data;
   if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
@@ -134053,12 +134605,12 @@ BufferList$1.prototype.shift = function () {
   return ret;
 };
 
-BufferList$1.prototype.clear = function () {
+BufferList.prototype.clear = function () {
   this.head = this.tail = null;
   this.length = 0;
 };
 
-BufferList$1.prototype.join = function (s) {
+BufferList.prototype.join = function (s) {
   if (this.length === 0) return '';
   var p = this.head;
   var ret = '' + p.data;
@@ -134067,7 +134619,7 @@ BufferList$1.prototype.join = function (s) {
   }return ret;
 };
 
-BufferList$1.prototype.concat = function (n) {
+BufferList.prototype.concat = function (n) {
   if (this.length === 0) return Buffer.alloc(0);
   if (this.length === 1) return this.head.data;
   var ret = Buffer.allocUnsafe(n >>> 0);
@@ -134082,26 +134634,6 @@ BufferList$1.prototype.concat = function (n) {
 };
 
 // Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 var isBufferEncoding = Buffer.isEncoding
   || function(encoding) {
        switch (encoding && encoding.toLowerCase()) {
@@ -134157,7 +134689,6 @@ function StringDecoder(encoding) {
   // Number of bytes expected for the current incomplete multi-byte character.
   this.charLength = 0;
 }
-
 
 // write decodes the given buffer and returns it as JS string that is
 // guaranteed to not contain any partial multi-byte characters. Any partial
@@ -134301,9 +134832,10 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-Readable$1.ReadableState = ReadableState;
-var debug$2 = debuglog('stream');
-inherits$1(Readable$1, EventEmitter$1);
+Readable.ReadableState = ReadableState;
+
+var debug$1 = debuglog('stream');
+inherits$1(Readable, EventEmitter);
 
 function prependListener(emitter, event, fn) {
   // Sadly this is not cacheable as some libraries bundle their own
@@ -134334,7 +134866,7 @@ function ReadableState(options, stream) {
   // make all the buffer merging and length checks go away
   this.objectMode = !!options.objectMode;
 
-  if (stream instanceof Duplex$1) this.objectMode = this.objectMode || !!options.readableObjectMode;
+  if (stream instanceof Duplex) this.objectMode = this.objectMode || !!options.readableObjectMode;
 
   // the point at which it stops calling _read() to fill the buffer
   // Note: 0 is a valid value, means "don't call _read preemptively ever"
@@ -134348,7 +134880,7 @@ function ReadableState(options, stream) {
   // A linked list is used to store data chunks instead of an array because the
   // linked list can remove elements from the beginning faster than
   // array.shift()
-  this.buffer = new BufferList$1();
+  this.buffer = new BufferList();
   this.length = 0;
   this.pipes = null;
   this.pipesCount = 0;
@@ -134392,9 +134924,9 @@ function ReadableState(options, stream) {
     this.encoding = options.encoding;
   }
 }
-function Readable$1(options) {
+function Readable(options) {
 
-  if (!(this instanceof Readable$1)) return new Readable$1(options);
+  if (!(this instanceof Readable)) return new Readable(options);
 
   this._readableState = new ReadableState(options, this);
 
@@ -134403,14 +134935,14 @@ function Readable$1(options) {
 
   if (options && typeof options.read === 'function') this._read = options.read;
 
-  EventEmitter$1.call(this);
+  EventEmitter.call(this);
 }
 
 // Manually shove something into the read() buffer.
 // This returns true if the highWaterMark has not been hit yet,
 // similar to how Writable.write() returns true if you should
 // write() some more.
-Readable$1.prototype.push = function (chunk, encoding) {
+Readable.prototype.push = function (chunk, encoding) {
   var state = this._readableState;
 
   if (!state.objectMode && typeof chunk === 'string') {
@@ -134425,12 +134957,12 @@ Readable$1.prototype.push = function (chunk, encoding) {
 };
 
 // Unshift should *always* be something directly out of read()
-Readable$1.prototype.unshift = function (chunk) {
+Readable.prototype.unshift = function (chunk) {
   var state = this._readableState;
   return readableAddChunk(this, state, chunk, '', true);
 };
 
-Readable$1.prototype.isPaused = function () {
+Readable.prototype.isPaused = function () {
   return this._readableState.flowing === false;
 };
 
@@ -134494,7 +135026,7 @@ function needMoreData(state) {
 }
 
 // backwards compatibility.
-Readable$1.prototype.setEncoding = function (enc) {
+Readable.prototype.setEncoding = function (enc) {
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -134540,8 +135072,8 @@ function howMuchToRead(n, state) {
 }
 
 // you can override either this method, or the async _read(n) below.
-Readable$1.prototype.read = function (n) {
-  debug$2('read', n);
+Readable.prototype.read = function (n) {
+  debug$1('read', n);
   n = parseInt(n, 10);
   var state = this._readableState;
   var nOrig = n;
@@ -134552,7 +135084,7 @@ Readable$1.prototype.read = function (n) {
   // already have a bunch of data in the buffer, then just trigger
   // the 'readable' event and move on.
   if (n === 0 && state.needReadable && (state.length >= state.highWaterMark || state.ended)) {
-    debug$2('read: emitReadable', state.length, state.ended);
+    debug$1('read: emitReadable', state.length, state.ended);
     if (state.length === 0 && state.ended) endReadable(this);else emitReadable(this);
     return null;
   }
@@ -134589,21 +135121,21 @@ Readable$1.prototype.read = function (n) {
 
   // if we need a readable event, then we need to do some reading.
   var doRead = state.needReadable;
-  debug$2('need readable', doRead);
+  debug$1('need readable', doRead);
 
   // if we currently have less than the highWaterMark, then also read some
   if (state.length === 0 || state.length - n < state.highWaterMark) {
     doRead = true;
-    debug$2('length less than watermark', doRead);
+    debug$1('length less than watermark', doRead);
   }
 
   // however, if we've ended, then there's no point, and if we're already
   // reading, then it's unnecessary.
   if (state.ended || state.reading) {
     doRead = false;
-    debug$2('reading or ended', doRead);
+    debug$1('reading or ended', doRead);
   } else if (doRead) {
-    debug$2('do read');
+    debug$1('do read');
     state.reading = true;
     state.sync = true;
     // if the length is currently zero, then we *need* a readable event.
@@ -134670,14 +135202,14 @@ function emitReadable(stream) {
   var state = stream._readableState;
   state.needReadable = false;
   if (!state.emittedReadable) {
-    debug$2('emitReadable', state.flowing);
+    debug$1('emitReadable', state.flowing);
     state.emittedReadable = true;
     if (state.sync) nextTick(emitReadable_, stream);else emitReadable_(stream);
   }
 }
 
 function emitReadable_(stream) {
-  debug$2('emit readable');
+  debug$1('emit readable');
   stream.emit('readable');
   flow(stream);
 }
@@ -134698,7 +135230,7 @@ function maybeReadMore(stream, state) {
 function maybeReadMore_(stream, state) {
   var len = state.length;
   while (!state.reading && !state.flowing && !state.ended && state.length < state.highWaterMark) {
-    debug$2('maybeReadMore read 0');
+    debug$1('maybeReadMore read 0');
     stream.read(0);
     if (len === state.length)
       // didn't get any data, stop spinning.
@@ -134711,11 +135243,11 @@ function maybeReadMore_(stream, state) {
 // call cb(er, data) where data is <= n in length.
 // for virtual (non-string, non-buffer) streams, "length" is somewhat
 // arbitrary, and perhaps not very meaningful.
-Readable$1.prototype._read = function (n) {
+Readable.prototype._read = function (n) {
   this.emit('error', new Error('not implemented'));
 };
 
-Readable$1.prototype.pipe = function (dest, pipeOpts) {
+Readable.prototype.pipe = function (dest, pipeOpts) {
   var src = this;
   var state = this._readableState;
 
@@ -134731,7 +135263,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
       break;
   }
   state.pipesCount += 1;
-  debug$2('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
+  debug$1('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
 
   var doEnd = (!pipeOpts || pipeOpts.end !== false);
 
@@ -134740,14 +135272,14 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
 
   dest.on('unpipe', onunpipe);
   function onunpipe(readable) {
-    debug$2('onunpipe');
+    debug$1('onunpipe');
     if (readable === src) {
       cleanup();
     }
   }
 
   function onend() {
-    debug$2('onend');
+    debug$1('onend');
     dest.end();
   }
 
@@ -134760,7 +135292,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
 
   var cleanedUp = false;
   function cleanup() {
-    debug$2('cleanup');
+    debug$1('cleanup');
     // cleanup event handlers once the pipe is broken
     dest.removeListener('close', onclose);
     dest.removeListener('finish', onfinish);
@@ -134788,7 +135320,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
   var increasedAwaitDrain = false;
   src.on('data', ondata);
   function ondata(chunk) {
-    debug$2('ondata');
+    debug$1('ondata');
     increasedAwaitDrain = false;
     var ret = dest.write(chunk);
     if (false === ret && !increasedAwaitDrain) {
@@ -134797,7 +135329,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
       // also returned false.
       // => Check whether `dest` is still a piping destination.
       if ((state.pipesCount === 1 && state.pipes === dest || state.pipesCount > 1 && indexOf(state.pipes, dest) !== -1) && !cleanedUp) {
-        debug$2('false write response, pause', src._readableState.awaitDrain);
+        debug$1('false write response, pause', src._readableState.awaitDrain);
         src._readableState.awaitDrain++;
         increasedAwaitDrain = true;
       }
@@ -134808,7 +135340,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
   // if the dest has an error, then stop piping into it.
   // however, don't suppress the throwing behavior for this.
   function onerror(er) {
-    debug$2('onerror', er);
+    debug$1('onerror', er);
     unpipe();
     dest.removeListener('error', onerror);
     if (listenerCount$1(dest, 'error') === 0) dest.emit('error', er);
@@ -134824,14 +135356,14 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
   }
   dest.once('close', onclose);
   function onfinish() {
-    debug$2('onfinish');
+    debug$1('onfinish');
     dest.removeListener('close', onclose);
     unpipe();
   }
   dest.once('finish', onfinish);
 
   function unpipe() {
-    debug$2('unpipe');
+    debug$1('unpipe');
     src.unpipe(dest);
   }
 
@@ -134840,7 +135372,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
 
   // start the flow if it hasn't been started already.
   if (!state.flowing) {
-    debug$2('pipe resume');
+    debug$1('pipe resume');
     src.resume();
   }
 
@@ -134850,7 +135382,7 @@ Readable$1.prototype.pipe = function (dest, pipeOpts) {
 function pipeOnDrain(src) {
   return function () {
     var state = src._readableState;
-    debug$2('pipeOnDrain', state.awaitDrain);
+    debug$1('pipeOnDrain', state.awaitDrain);
     if (state.awaitDrain) state.awaitDrain--;
     if (state.awaitDrain === 0 && src.listeners('data').length) {
       state.flowing = true;
@@ -134859,7 +135391,7 @@ function pipeOnDrain(src) {
   };
 }
 
-Readable$1.prototype.unpipe = function (dest) {
+Readable.prototype.unpipe = function (dest) {
   var state = this._readableState;
 
   // if we're not piping anywhere, then do nothing.
@@ -134910,8 +135442,8 @@ Readable$1.prototype.unpipe = function (dest) {
 
 // set up data events if they are asked for
 // Ensure readable listeners eventually get something
-Readable$1.prototype.on = function (ev, fn) {
-  var res = EventEmitter$1.prototype.on.call(this, ev, fn);
+Readable.prototype.on = function (ev, fn) {
+  var res = EventEmitter.prototype.on.call(this, ev, fn);
 
   if (ev === 'data') {
     // Start flowing on next tick if stream isn't explicitly paused
@@ -134931,19 +135463,19 @@ Readable$1.prototype.on = function (ev, fn) {
 
   return res;
 };
-Readable$1.prototype.addListener = Readable$1.prototype.on;
+Readable.prototype.addListener = Readable.prototype.on;
 
 function nReadingNextTick(self) {
-  debug$2('readable nexttick read 0');
+  debug$1('readable nexttick read 0');
   self.read(0);
 }
 
 // pause() and resume() are remnants of the legacy readable stream API
 // If the user uses them, then switch into old mode.
-Readable$1.prototype.resume = function () {
+Readable.prototype.resume = function () {
   var state = this._readableState;
   if (!state.flowing) {
-    debug$2('resume');
+    debug$1('resume');
     state.flowing = true;
     resume(this, state);
   }
@@ -134959,7 +135491,7 @@ function resume(stream, state) {
 
 function resume_(stream, state) {
   if (!state.reading) {
-    debug$2('resume read 0');
+    debug$1('resume read 0');
     stream.read(0);
   }
 
@@ -134970,10 +135502,10 @@ function resume_(stream, state) {
   if (state.flowing && !state.reading) stream.read(0);
 }
 
-Readable$1.prototype.pause = function () {
-  debug$2('call pause flowing=%j', this._readableState.flowing);
+Readable.prototype.pause = function () {
+  debug$1('call pause flowing=%j', this._readableState.flowing);
   if (false !== this._readableState.flowing) {
-    debug$2('pause');
+    debug$1('pause');
     this._readableState.flowing = false;
     this.emit('pause');
   }
@@ -134982,20 +135514,20 @@ Readable$1.prototype.pause = function () {
 
 function flow(stream) {
   var state = stream._readableState;
-  debug$2('flow', state.flowing);
+  debug$1('flow', state.flowing);
   while (state.flowing && stream.read() !== null) {}
 }
 
 // wrap an old-style stream as the async data source.
 // This is *not* part of the readable stream interface.
 // It is an ugly unfortunate mess of history.
-Readable$1.prototype.wrap = function (stream) {
+Readable.prototype.wrap = function (stream) {
   var state = this._readableState;
   var paused = false;
 
   var self = this;
   stream.on('end', function () {
-    debug$2('wrapped end');
+    debug$1('wrapped end');
     if (state.decoder && !state.ended) {
       var chunk = state.decoder.end();
       if (chunk && chunk.length) self.push(chunk);
@@ -135005,7 +135537,7 @@ Readable$1.prototype.wrap = function (stream) {
   });
 
   stream.on('data', function (chunk) {
-    debug$2('wrapped data');
+    debug$1('wrapped data');
     if (state.decoder) chunk = state.decoder.write(chunk);
 
     // don't skip over falsy values in objectMode
@@ -135039,7 +135571,7 @@ Readable$1.prototype.wrap = function (stream) {
   // when we try to consume some more bytes, simply unpause the
   // underlying stream.
   self._read = function (n) {
-    debug$2('wrapped _read', n);
+    debug$1('wrapped _read', n);
     if (paused) {
       paused = false;
       stream.resume();
@@ -135050,7 +135582,7 @@ Readable$1.prototype.wrap = function (stream) {
 };
 
 // exposed for testing purposes only.
-Readable$1._fromList = fromList;
+Readable._fromList = fromList;
 
 // Pluck off n bytes from an array of buffers.
 // Length is the combined lengths of all the buffers in the list.
@@ -135188,12 +135720,8 @@ function indexOf(xs, x) {
 }
 
 // A bit simpler than readable streams.
-// Implement an async ._write(chunk, encoding, cb), and it'll handle all
-// the drain event emission and buffering.
-
-
-Writable$1.WritableState = WritableState;
-inherits$1(Writable$1, EventEmitter$1);
+Writable.WritableState = WritableState;
+inherits$1(Writable, EventEmitter);
 
 function nop() {}
 
@@ -135216,7 +135744,7 @@ function WritableState(options, stream) {
   // contains buffers or objects.
   this.objectMode = !!options.objectMode;
 
-  if (stream instanceof Duplex$1) this.objectMode = this.objectMode || !!options.writableObjectMode;
+  if (stream instanceof Duplex) this.objectMode = this.objectMode || !!options.writableObjectMode;
 
   // the point at which write() starts returning false
   // Note: 0 is a valid value, means that we always return false if
@@ -135311,12 +135839,11 @@ WritableState.prototype.getBuffer = function writableStateGetBuffer() {
   }
   return out;
 };
-
-function Writable$1(options) {
+function Writable(options) {
 
   // Writable ctor is applied to Duplexes, though they're not
   // instanceof Writable, they're instanceof Readable.
-  if (!(this instanceof Writable$1) && !(this instanceof Duplex$1)) return new Writable$1(options);
+  if (!(this instanceof Writable) && !(this instanceof Duplex)) return new Writable(options);
 
   this._writableState = new WritableState(options, this);
 
@@ -135329,11 +135856,11 @@ function Writable$1(options) {
     if (typeof options.writev === 'function') this._writev = options.writev;
   }
 
-  EventEmitter$1.call(this);
+  EventEmitter.call(this);
 }
 
 // Otherwise people can pipe Writable streams, which is just wrong.
-Writable$1.prototype.pipe = function () {
+Writable.prototype.pipe = function () {
   this.emit('error', new Error('Cannot pipe, not readable'));
 };
 
@@ -135368,7 +135895,7 @@ function validChunk(stream, state, chunk, cb) {
   return valid;
 }
 
-Writable$1.prototype.write = function (chunk, encoding, cb) {
+Writable.prototype.write = function (chunk, encoding, cb) {
   var state = this._writableState;
   var ret = false;
 
@@ -135389,13 +135916,13 @@ Writable$1.prototype.write = function (chunk, encoding, cb) {
   return ret;
 };
 
-Writable$1.prototype.cork = function () {
+Writable.prototype.cork = function () {
   var state = this._writableState;
 
   state.corked++;
 };
 
-Writable$1.prototype.uncork = function () {
+Writable.prototype.uncork = function () {
   var state = this._writableState;
 
   if (state.corked) {
@@ -135405,7 +135932,7 @@ Writable$1.prototype.uncork = function () {
   }
 };
 
-Writable$1.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
+Writable.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
   // node::ParseEncoding() requires lower case.
   if (typeof encoding === 'string') encoding = encoding.toLowerCase();
   if (!(['hex', 'utf8', 'utf-8', 'ascii', 'binary', 'base64', 'ucs2', 'ucs-2', 'utf16le', 'utf-16le', 'raw'].indexOf((encoding + '').toLowerCase()) > -1)) throw new TypeError('Unknown encoding: ' + encoding);
@@ -135575,13 +136102,13 @@ function clearBuffer(stream, state) {
   state.bufferProcessing = false;
 }
 
-Writable$1.prototype._write = function (chunk, encoding, cb) {
+Writable.prototype._write = function (chunk, encoding, cb) {
   cb(new Error('not implemented'));
 };
 
-Writable$1.prototype._writev = null;
+Writable.prototype._writev = null;
 
-Writable$1.prototype.end = function (chunk, encoding, cb) {
+Writable.prototype.end = function (chunk, encoding, cb) {
   var state = this._writableState;
 
   if (typeof chunk === 'function') {
@@ -135665,18 +136192,18 @@ function CorkedRequest(state) {
   };
 }
 
-inherits$1(Duplex$1, Readable$1);
+inherits$1(Duplex, Readable);
 
-var keys = Object.keys(Writable$1.prototype);
+var keys = Object.keys(Writable.prototype);
 for (var v = 0; v < keys.length; v++) {
   var method = keys[v];
-  if (!Duplex$1.prototype[method]) Duplex$1.prototype[method] = Writable$1.prototype[method];
+  if (!Duplex.prototype[method]) Duplex.prototype[method] = Writable.prototype[method];
 }
-function Duplex$1(options) {
-  if (!(this instanceof Duplex$1)) return new Duplex$1(options);
+function Duplex(options) {
+  if (!(this instanceof Duplex)) return new Duplex(options);
 
-  Readable$1.call(this, options);
-  Writable$1.call(this, options);
+  Readable.call(this, options);
+  Writable.call(this, options);
 
   if (options && options.readable === false) this.readable = false;
 
@@ -135704,49 +136231,7 @@ function onEndNT(self) {
 }
 
 // a transform stream is a readable/writable stream where you do
-// something with the data.  Sometimes it's called a "filter",
-// but that's not a great name for it, since that implies a thing where
-// some bits pass through, and others are simply ignored.  (That would
-// be a valid example of a transform, of course.)
-//
-// While the output is causally related to the input, it's not a
-// necessarily symmetric or synchronous transformation.  For example,
-// a zlib stream might take multiple plain-text writes(), and then
-// emit a single compressed chunk some time in the future.
-//
-// Here's how this works:
-//
-// The Transform stream has all the aspects of the readable and writable
-// stream classes.  When you write(chunk), that calls _write(chunk,cb)
-// internally, and returns false if there's a lot of pending writes
-// buffered up.  When you call read(), that calls _read(n) until
-// there's enough pending readable data buffered up.
-//
-// In a transform stream, the written data is placed in a buffer.  When
-// _read(n) is called, it transforms the queued up data, calling the
-// buffered _write cb's as it consumes chunks.  If consuming a single
-// written chunk would result in multiple output chunks, then the first
-// outputted bit calls the readcb, and subsequent chunks just go into
-// the read buffer, and will cause it to emit 'readable' if necessary.
-//
-// This way, back-pressure is actually determined by the reading side,
-// since _read has to be called to start processing a new chunk.  However,
-// a pathological inflate type of transform can cause excessive buffering
-// here.  For example, imagine a stream where every byte of input is
-// interpreted as an integer from 0-255, and then results in that many
-// bytes of output.  Writing the 4 bytes {ff,ff,ff,ff} would result in
-// 1kb of data being output.  In this case, you could write a very small
-// amount of input, and end up with a very large amount of output.  In
-// such a pathological inflating mechanism, there'd be no way to tell
-// the system to stop doing the transform.  A single 4MB write could
-// cause the system to run out of memory.
-//
-// However, even in such a pathological case, only a single written chunk
-// would be consumed, and then the rest would wait (un-transformed) until
-// the results of the previous transformed chunk were consumed.
-
-
-inherits$1(Transform$1, Duplex$1);
+inherits$1(Transform, Duplex);
 
 function TransformState(stream) {
   this.afterTransform = function (er, data) {
@@ -135781,10 +136266,10 @@ function afterTransform(stream, er, data) {
     stream._read(rs.highWaterMark);
   }
 }
-function Transform$1(options) {
-  if (!(this instanceof Transform$1)) return new Transform$1(options);
+function Transform(options) {
+  if (!(this instanceof Transform)) return new Transform(options);
 
-  Duplex$1.call(this, options);
+  Duplex.call(this, options);
 
   this._transformState = new TransformState(this);
 
@@ -135812,9 +136297,9 @@ function Transform$1(options) {
   });
 }
 
-Transform$1.prototype.push = function (chunk, encoding) {
+Transform.prototype.push = function (chunk, encoding) {
   this._transformState.needTransform = false;
-  return Duplex$1.prototype.push.call(this, chunk, encoding);
+  return Duplex.prototype.push.call(this, chunk, encoding);
 };
 
 // This is the part where you do stuff!
@@ -135827,11 +136312,11 @@ Transform$1.prototype.push = function (chunk, encoding) {
 // Call `cb(err)` when you are done with this chunk.  If you pass
 // an error, then that'll put the hurt on the whole operation.  If you
 // never call cb(), then you'll never get another chunk.
-Transform$1.prototype._transform = function (chunk, encoding, cb) {
+Transform.prototype._transform = function (chunk, encoding, cb) {
   throw new Error('Not implemented');
 };
 
-Transform$1.prototype._write = function (chunk, encoding, cb) {
+Transform.prototype._write = function (chunk, encoding, cb) {
   var ts = this._transformState;
   ts.writecb = cb;
   ts.writechunk = chunk;
@@ -135845,7 +136330,7 @@ Transform$1.prototype._write = function (chunk, encoding, cb) {
 // Doesn't matter what the args are here.
 // _transform does all the work.
 // That we got here means that the readable side wants more data.
-Transform$1.prototype._read = function (n) {
+Transform.prototype._read = function (n) {
   var ts = this._transformState;
 
   if (ts.writechunk !== null && ts.writecb && !ts.transforming) {
@@ -135873,35 +136358,35 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-inherits$1(PassThrough$1, Transform$1);
-function PassThrough$1(options) {
-  if (!(this instanceof PassThrough$1)) return new PassThrough$1(options);
+inherits$1(PassThrough, Transform);
+function PassThrough(options) {
+  if (!(this instanceof PassThrough)) return new PassThrough(options);
 
-  Transform$1.call(this, options);
+  Transform.call(this, options);
 }
 
-PassThrough$1.prototype._transform = function (chunk, encoding, cb) {
+PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-inherits$1(Stream$1, EventEmitter$1);
-Stream$1.Readable = Readable$1;
-Stream$1.Writable = Writable$1;
-Stream$1.Duplex = Duplex$1;
-Stream$1.Transform = Transform$1;
-Stream$1.PassThrough = PassThrough$1;
+inherits$1(Stream, EventEmitter);
+Stream.Readable = Readable;
+Stream.Writable = Writable;
+Stream.Duplex = Duplex;
+Stream.Transform = Transform;
+Stream.PassThrough = PassThrough;
 
 // Backwards-compat with node 0.4.x
-Stream$1.Stream = Stream$1;
+Stream.Stream = Stream;
 
 // old-style streams.  Note that the pipe method (the only relevant
 // part of this class) is overridden in the Readable class.
 
-function Stream$1() {
-  EventEmitter$1.call(this);
+function Stream() {
+  EventEmitter.call(this);
 }
 
-Stream$1.prototype.pipe = function(dest, options) {
+Stream.prototype.pipe = function(dest, options) {
   var source = this;
 
   function ondata(chunk) {
@@ -135948,7 +136433,7 @@ Stream$1.prototype.pipe = function(dest, options) {
   // don't leave dangling pipes when there are errors.
   function onerror(er) {
     cleanup();
-    if (EventEmitter$1.listenerCount(this, 'error') === 0) {
+    if (EventEmitter.listenerCount(this, 'error') === 0) {
       throw er; // Unhandled stream error in pipe.
     }
   }
@@ -135984,22 +136469,21 @@ Stream$1.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-
-var stream = Object.freeze({
-	default: Stream$1,
-	Readable: Readable$1,
-	Writable: Writable$1,
-	Duplex: Duplex$1,
-	Transform: Transform$1,
-	PassThrough: PassThrough$1,
-	Stream: Stream$1
+var stream = /*#__PURE__*/Object.freeze({
+	default: Stream,
+	Readable: Readable,
+	Writable: Writable,
+	Duplex: Duplex,
+	Transform: Transform,
+	PassThrough: PassThrough,
+	Stream: Stream
 });
 
-var stream$1 = ( stream && Stream$1 ) || stream;
+var stream$1 = ( stream && Stream ) || stream;
 
 var simplePeer = Peer;
 
-var debug$3 = browser$1('simple-peer');
+var debug$2 = browser$1('simple-peer');
 
 
 
@@ -136018,7 +136502,7 @@ function Peer (opts) {
   var self = this;
   if (!(self instanceof Peer)) return new Peer(opts)
 
-  self._id = browser$3(4).toString('hex').slice(0, 7);
+  self._id = browser$2(4).toString('hex').slice(0, 7);
   self._debug('new peer %o', opts);
 
   opts = Object.assign({
@@ -136028,7 +136512,7 @@ function Peer (opts) {
   stream$1.Duplex.call(self, opts);
 
   self.channelName = opts.initiator
-    ? opts.channelName || browser$3(20).toString('hex')
+    ? opts.channelName || browser$2(20).toString('hex')
     : null;
 
   // Needed by _transformConstraints, so set this early
@@ -136746,7 +137230,7 @@ Peer.prototype._debug = function () {
   var self = this;
   var args = [].slice.call(arguments);
   args[0] = '[' + self._id + '] ' + args[0];
-  debug$3.apply(null, args);
+  debug$2.apply(null, args);
 };
 
 // Transform constraints objects into the new format (unless Chromium)
@@ -136843,16 +137327,53 @@ class MultiVP {
 	 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error 
 	 */
-	constructor(config, vp) {
+	constructor(config = {}, vp) {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new eventemitter3());
 
+		
+		this.audioEl = document.createElement('audio');
+		this.audioEl.autoplay = true;
+		this.audioEl.srcObject = new MediaStream();
+		document.body.appendChild(this.audioEl);
+
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
-		this.socket = this.createSocket();
-		this.emit('addanimatefunctions', {
-			functions: [this.animate.bind(this)]
+
+		this.getStream()
+			.then((stream) => {
+				this.stream = stream;
+				this.socket = this.createSocket();
+				this.emit('addanimatefunctions', {
+					functions: [this.animate.bind(this)]
+				});
+			})
+			.catch((error) => {
+				/**
+				 * MultiVP error event for a getUserMedia error
+				 *
+				 * @event MultiVP#error
+				 * @type {Error}
+				 * 
+				 */
+				this.emit('error', error);
+			});
+	}
+
+	/**
+	 * Wrapper around getUserMedia
+	 *
+	 * @returns {Promise<MediaStream>} stream
+	 */
+	getStream() {
+		return new Promise((resolve, reject) => {
+			navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
+				resolve(stream);
+			}, (error) => {
+				reject(error);
+			});
 		});
 	}
 
@@ -136890,11 +137411,19 @@ class MultiVP {
 	 * @param {Object} error - Error event Object
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error 
 	 *
 	 * @private
 	 */
 	_socketError(error) {
-		console.log('socket error', error);
+		/**
+		 * MultiVP error event for a socket error
+		 *
+		 * @event MultiVP#error
+		 * @type {Error}
+		 * 
+		 */
+		this.emit('error', error);
 	}
 
 	/**
@@ -136913,13 +137442,13 @@ class MultiVP {
 			this.id = message.from;
 		} else if (message.type === 'connected') {
 			if (!this.remotePeers[message.from]) {
-				const remotePeer = this.createPeer(true, message.from);
+				const remotePeer = this.createPeer(true, message.from, this.stream);
 				this.remotePeers[message.from] = remotePeer;
 			}
 		} else if (message.type === 'signal') {
 			// Offer, answer or icecandidate
 			if (!this.remotePeers[message.from]) {
-				const remotePeer = this.createPeer(false, message.from);
+				const remotePeer = this.createPeer(false, message.from, this.stream);
 				this.remotePeers[message.from] = remotePeer;
 			}
 			const peer = this.remotePeers[message.from];
@@ -136934,17 +137463,21 @@ class MultiVP {
 	 *
 	 * @param {boolean} initiator - Whether this peer is the initiator of the communication
 	 * @param {number} id - This peer's id, sent by the signalling server
+	 * @param {MediaStream} stream - Stream obtained from getUserMedia for audio
 	 *
 	 * @returns {Peer} peer - Created SimplePeer
 	 */
-	createPeer(initiator, id) {
+	createPeer(initiator, id, stream) {
 		this.config.peer.initiator = initiator;
 		this.config.peer.channelName = this.config.channelName;
+		this.config.peer.stream = stream;
+		
 		const peer = new simplePeer(this.config.peer);
 
 		peer.id = id;
 		peer.multiVP = this;
 
+		peer.on('stream', this._peerStream.bind(peer));
 		peer.on('signal', this._peerSignal.bind(peer));
 		peer.on('error', this._peerError.bind(peer));
 		peer.on('connect', this._peerConnect.bind(peer));
@@ -136952,6 +137485,12 @@ class MultiVP {
 		peer.on('close', this._peerClose.bind(peer));
 
 		return peer;
+	}
+
+	_peerStream(stream) {
+		for (const track of stream.getTracks()) {
+			this.multiVP.audioEl.srcObject.addTrack(track);
+		}
 	}
 
 	/**
@@ -136978,11 +137517,20 @@ class MultiVP {
 	 * @param {Object} error - Event object for an error handler
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error 
 	 *
 	 * @private
 	 */
 	_peerError(error) {
-		console.log('peer error', error);
+		/**
+		 * MultiVP error event for a SimplePeer error. It emits an Error object
+		 *
+		 * @event MultiVP#error
+		 * @type {Error}
+		 * @property {string} code - SimplePeer error code
+		 * 
+		 */
+		this.multiVP.emit('error', error);
 	}
 
 	/**
@@ -137017,11 +137565,13 @@ class MultiVP {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
-					this.emit('add', {
+					this.multiVP.emit('add', {
 						mesh
 					});
 				})
-				.catch(console.log);
+				.catch((error) => {
+					this.multiVP.emit('error', error);
+				});
 		} else {
 			const mesh = this.multiVP.meshes[this.id];
 			if (mesh) {
@@ -137137,7 +137687,9 @@ class MultiVP {
 				};
 				return Promise.resolve(loadedMesh);
 			})
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 }
 
@@ -137195,7 +137747,9 @@ class VirtualPersona {
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new Object3D();
-		this.vrControls = new VRControls(fakeCamera, console.log);
+		this.vrControls = new VRControls(fakeCamera, (event) => {
+			this.emit('error', event);
+		});
 		this.vrControls.userHeight = 0;
 		this.fakeCamera = fakeCamera;
 
@@ -137204,7 +137758,11 @@ class VirtualPersona {
 		this._floorRayCaster.far = this.userHeight + 10;
 
 		this.identity = new Identity();
-		this.multiVP = new MultiVP(config.multiVP || {}, this);
+		this.identity.on('error', (event) => {
+			this.emit('error', event);
+		});
+
+		this.multiVP = new MultiVP(config.multiVP, this);
 		this.multiVP.on('add', (event) => {
 			this.emit('add', event);
 		});
@@ -137214,6 +137772,9 @@ class VirtualPersona {
 		this.multiVP.on('addanimatefunctions', (event) => {
 			this.emit('addanimatefunctions', event);
 		});
+		this.multiVP.on('error', (event) => {
+			this.emit('error', event);
+		});
 	}
 
 	/**
@@ -137222,7 +137783,17 @@ class VirtualPersona {
 	 * @returns {Promise} promise - Promise that resolves when the mesh loads
 	*/
 	init() {
-		return this.loadMesh(this.identity.avatarPath, true);
+		return this.loadMesh(this.identity.avatarPath, true)
+			.then(() => {
+				if (!this.identity.signedIn) {
+					return this.signIn();
+				} else {
+					return Promise.resolve();
+				}
+			})
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 
 	/**
@@ -137246,7 +137817,7 @@ class VirtualPersona {
 				return Promise.resolve(mesh);
 			})
 			.catch((error) => {
-				throw error;
+				return Promise.reject(error)
 			});
 	}
 
@@ -137307,7 +137878,9 @@ class VirtualPersona {
 	signIn() {
 		return this.identity.signIn()
 			.then(() => this.loadMesh(this.identity.avatarPath, true))
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error)
+			});
 	}
 
 	/**
@@ -137318,7 +137891,9 @@ class VirtualPersona {
 	signOut() {
 		this.identity.signOut();
 		return this.loadMesh(this.identity.avatarPath, true)
-			.catch(console.log);
+			.catch((error) => {
+				return Promise.reject(error)
+			});
 	}
 
 	/**
@@ -137332,6 +137907,8 @@ class VirtualPersona {
 		this._feetPosition.copy(scene.camera.position);
 		// Make it so you only climb objects that are 0.4m above the ground
 		this._feetPosition.setY(this._feetPosition.y - this.userHeight + this.climbableHeight);
+		// TODO: Remove temporary hack to make stairs work
+		this._feetPosition.add(scene.camera.getWorldDirection().multiplyScalar(0.4));
 
 		this._floorRayCaster.set(this._feetPosition, VERTICAL_VECTOR$1);
 		const collisionMesh = scene.scene;
@@ -138034,6 +138611,7 @@ class Scene$1 {
 }
 
 Object.assign(window.THREE = {}, THREE);
+
 if (!navigator.getVRDisplays) {
 	InitializeWebVRPolyfill(); // eslint-disable-line
 }
@@ -138056,7 +138634,7 @@ class Holonet {
 		this._scene = new Scene$1(config.scene);
 
 		this.virtualPersona = new VirtualPersona(config.virtualPersona);
-	
+
 		this.controllers = new Controllers(this._scene.canvas);
 
 		this.locomotion = new Locomotion();
@@ -138065,14 +138643,13 @@ class Holonet {
 		this.interactions.setUpEventListeners(this.controllers);
 		this.locomotion.setUpEventListeners(this.controllers, this.interactions);
 		this.addListeners(this.virtualPersona, this.controllers, this.interactions);
-		this.addAnimateFunctions(this.animate.bind(this));
 	}
 
 	/**
 	 * Initialises Holonet by initialising its different components
 	 * and adding all necessary meshes into the scene
 	 *
-	 * @returns {undefined}
+	 * @returns {Promise} promise - Signals that all components have been initiated
 	 */
 	init() {
 		return this._scene.init()
@@ -138082,10 +138659,13 @@ class Holonet {
 					...this.interactions.getMeshes(),
 					...this.locomotion.getMeshes()
 				]);
+				this.addAnimateFunctions([this.animate.bind(this)]);
 
 				return Promise.resolve();
 			})
-			.catch(Promise.reject)
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 
 	/**
@@ -138098,7 +138678,7 @@ class Holonet {
 	addListeners(...components) {
 		for (const component of components) {
 			component.on('add', (event) => {
-				this.addToScene(event.mesh);
+				this.addToScene([event.mesh]);
 			});
 
 			component.on('remove', (event) => {
@@ -138107,6 +138687,11 @@ class Holonet {
 			
 			component.on('addanimatefunctions', (event) => {
 				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('error', (event) => {
+				console.log('holonet', event);
+				this.emit('error', event);
 			});
 		}
 	}
@@ -138146,11 +138731,23 @@ class Holonet {
 		this._scene.addAnimateFunctions(...functions);
 	}
 
+	/**
+	 * Helper function that wraps VREffect.prototype.requestPresent
+	 * and sets Utils.isPresenting
+	 *
+	 * @returns {undefined}
+	 */
 	startPresenting() {
 		this._scene.vrEffect.requestPresent();
 		Utils.isPresenting = true;
 	}
 
+	/**
+	 * Helper function that wraps VREffect.prototype.exitPresent
+	 * and sets Utils.isPresenting
+	 *
+	 * @returns {undefined}
+	 */
 	stopPresenting() {
 		this._scene.vrEffect.exitPresent();
 		Utils.isPresenting = false;
@@ -138271,13 +138868,13 @@ Holonet.prototype.animate = (function() {
 		for (const controllerId of controllerIds) {
 			// Gets the controller from the list with this id and updates it
 			const controller = this.controllers.currentControllers[controllerId];
-			controller.update(camera,
+			controller.update && controller.update(camera,
 				this.virtualPersona.userHeight,
 				this.virtualPersona.vrControls.getStandingMatrix());
 		}
 	};
 }());
 
-export { Utils };
 export default Holonet;
+export { Utils, Loader$1 as Loader, Link };
 //# sourceMappingURL=holonet.js.map

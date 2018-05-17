@@ -26,8 +26,6 @@ class PointerController {
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
 	
 		this._canvas = canvas;
-		this._theta = 0;
-		this._phi = 0;
 
 		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
 		this._canvas.addEventListener('click', this._handleClick.bind(this));
@@ -36,6 +34,7 @@ class PointerController {
 		this._canvas.addEventListener('touchend', () => {
 			this.emit('ztranslationend');
 		});
+		this._moveHandler = this._moveHandler.bind(this);
 		this._canvas.addEventListener('touchmove', this._moveHandler);
 	}
 
@@ -134,14 +133,11 @@ class PointerController {
 	/**
 	 * Locks the pointer if not displaying to an HMD when canvas is clicked
 	 *
-	 * @param {Event} event - Event supplied
-	 *
 	 * @return {undefined}
 	 *
 	 * @private
 	*/
-	_pointerLock(event) {
-		this.rotation.set(event.clientX, event.clientY);
+	_pointerLock() {
 		this._canvas.requestPointerLock();
 	}
 }

@@ -48,12 +48,10 @@ class Link {
 	 *
 	 * @param {string} path - Where the link will point to
 	 * @param {array} position - 3 element array indicating the x, y and z position of the link in the scene
-	 * @param {Holonet.Scene} scene - Holonet scene instance to be used to add the link object to it
 	 */
 	constructor(path, position, scene) {
 		this.path = path;
 		this.position = position;
-		this.scene = scene;
 
 		this.mesh = this._constructMesh();
 	}
@@ -79,11 +77,13 @@ class Link {
 	/**
 	 * Adds the link mesh to the scene
 	 *
+	 * @param {Holonet.Scene} scene - Holonet scene instance to be used to add the link object to it
+	 *
 	 * @returns {undefined}
 	*/
-	render() {
-		if (this.scene) {
-			this.scene.addToScene(this.mesh, false, false);
+	render(scene) {
+		if (scene) {
+			scene.addToScene(this.mesh, false, false);
 		}
 	}
 

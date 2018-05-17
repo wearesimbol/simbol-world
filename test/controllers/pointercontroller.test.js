@@ -265,26 +265,17 @@ describe('PointerController', () => {
 		let canvas;
 
 		beforeEach(() => {
-			event = {
-				clientX: 1,
-				clientY: 2
-			};
 			canvas = {
 				requestPointerLock: sinon.stub()
 			};
 
 			pointerController._canvas = canvas;
-			pointerController.rotation = {
-				set: sinon.stub()
-			};
 
-			pointerController._pointerLock(event);
+			pointerController._pointerLock();
 		});
 
 		it('should lock the pointer', () => {
 			assert.isTrue(canvas.requestPointerLock.calledOnce);
-			assert.isTrue(pointerController.rotation.set.calledOnce);
-			assert.isTrue(pointerController.rotation.set.calledWith(1, 2));
 		});
 	});
 });

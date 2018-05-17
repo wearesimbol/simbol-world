@@ -117,14 +117,49 @@ describe('VirtualPersona', () => {
 
 	describe('#init', () => {
 
-		beforeEach((done) => {
-			sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
-			vp.init().then(done);
+		describe('common', () => {
+
+			beforeEach((done) => {
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+				vp.identity.signedIn = true;
+	
+				vp.init().then(done);
+			});
+
+			it('should load mesh', () => {
+				assert.isTrue(vp.loadMesh.calledOnce);
+				assert.isTrue(vp.loadMesh.calledWith('https://holonet.one/assets/models/AnonymousVP.gltf', true));
+			});
 		});
 
-		it('should load mesh', () => {
-			assert.isTrue(vp.loadMesh.calledOnce);
-			assert.isTrue(vp.loadMesh.calledWith('https://holonet.one/assets/models/AnonymousVP.gltf', true));
+		describe('signedIn', () => {
+
+			beforeEach((done) => {
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+				sinon.stub(vp, 'signIn').resolves();
+				vp.identity.signedIn = true;
+	
+				vp.init().then(done);
+			});
+
+			it('should not sign in', () => {
+				assert.isFalse(vp.loadMesh.calledOnce);
+			});			
+		});
+
+		describe('signedOut', () => {
+
+			beforeEach((done) => {
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+				sinon.stub(vp, 'signIn').resolves();
+				vp.identity.signedIn = false;
+	
+				vp.init().then(done);
+			});
+
+			it('should not sign in', () => {
+				assert.isTrue(vp.loadMesh.calledOnce);
+			});	
 		});
 	});
 

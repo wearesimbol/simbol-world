@@ -44,16 +44,52 @@ class MultiVP {
 	 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
 	 *
 	 * @returns {undefined}
+	 * @emits MultiVP#error
 	 */
-	constructor(config, vp) {
+	constructor(config = {}, vp) {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
 
+		this.audioEl = document.createElement('audio');
+		this.audioEl.autoplay = true;
+		this.audioEl.srcObject = new MediaStream();
+		document.body.appendChild(this.audioEl);
+
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
-		this.socket = this.createSocket();
-		this.emit('addanimatefunctions', {
-			functions: [this.animate.bind(this)]
+
+		this.getStream()
+			.then((stream) => {
+				this.stream = stream;
+				this.socket = this.createSocket();
+				this.emit('addanimatefunctions', {
+					functions: [this.animate.bind(this)]
+				});
+			})
+			.catch((error) => {
+				/**
+				 * MultiVP error event for a getUserMedia error
+				 *
+				 * @event MultiVP#error
+				 * @type {Error}
+				 *
+				 */
+				this.emit('error', error);
+			});
+	}
+
+	/**
+	 * Wrapper around getUserMedia
+	 *
+	 * @returns {Promise<MediaStream>} stream
+	 */
+	getStream() {
+		return new Promise((resolve, reject) => {
+			navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
+				resolve(stream);
+			}, (error) => {
+				reject(error);
+			});
 		});
 	}
 
@@ -122,13 +158,13 @@ class MultiVP {
 			this.id = message.from;
 		} else if (message.type === 'connected') {
 			if (!this.remotePeers[message.from]) {
-				const remotePeer = this.createPeer(true, message.from);
+				const remotePeer = this.createPeer(true, message.from, this.stream);
 				this.remotePeers[message.from] = remotePeer;
 			}
 		} else if (message.type === 'signal') {
 			// Offer, answer or icecandidate
 			if (!this.remotePeers[message.from]) {
-				const remotePeer = this.createPeer(false, message.from);
+				const remotePeer = this.createPeer(false, message.from, this.stream);
 				this.remotePeers[message.from] = remotePeer;
 			}
 			const peer = this.remotePeers[message.from];
@@ -143,17 +179,21 @@ class MultiVP {
 	 *
 	 * @param {boolean} initiator - Whether this peer is the initiator of the communication
 	 * @param {number} id - This peer's id, sent by the signalling server
+	 * @param {MediaStream} stream - Stream obtained from getUserMedia for audio
 	 *
 	 * @returns {Peer} peer - Created SimplePeer
 	 */
-	createPeer(initiator, id) {
+	createPeer(initiator, id, stream) {
 		this.config.peer.initiator = initiator;
 		this.config.peer.channelName = this.config.channelName;
+		this.config.peer.stream = stream;
+
 		const peer = new Peer(this.config.peer);
 
 		peer.id = id;
 		peer.multiVP = this;
 
+		peer.on('stream', this._peerStream.bind(peer));
 		peer.on('signal', this._peerSignal.bind(peer));
 		peer.on('error', this._peerError.bind(peer));
 		peer.on('connect', this._peerConnect.bind(peer));
@@ -161,6 +201,13 @@ class MultiVP {
 		peer.on('close', this._peerClose.bind(peer));
 
 		return peer;
+	}
+
+	_peerStream(stream) {
+		for (const track of stream.getTracks()) {
+			console.log(track);
+			this.multiVP.audioEl.srcObject.addTrack(track);
+		}
 	}
 
 	/**
@@ -200,7 +247,7 @@ class MultiVP {
 		 * @property {string} code - SimplePeer error code
 		 * 
 		 */
-		this.emit('error', error);
+		this.multiVP.emit('error', error);
 	}
 
 	/**
@@ -235,12 +282,12 @@ class MultiVP {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
-					this.emit('add', {
+					this.multiVP.emit('add', {
 						mesh
 					});
 				})
 				.catch((error) => {
-					this.emit('error', error);
+					this.multiVP.emit('error', error);
 				});
 		} else {
 			const mesh = this.multiVP.meshes[this.id];

@@ -8,15 +8,13 @@ describe('Link', () => {
 	let link;
 	let path;
 	let position;
-	let scene;
 
 	beforeEach(() => {
 		path = 'mypath';
 		position = [1, 2, 3];
-		scene = {};
 		sinon.stub(Link.prototype, '_constructMesh').returns(1);
 
-		link = new Link(path, position, scene);
+		link = new Link(path, position);
 	});
 
 	afterEach(() => {
@@ -66,7 +64,6 @@ describe('Link', () => {
 		it('should set properties', () => {
 			assert.equal(link.path, path);
 			assert.deepEqual(link.position, new THREE.Vector3(1, 2, 3));
-			assert.equal(link.scene, scene);
 		});
 
 		it('should call _consturctMesh', () => {
@@ -100,9 +97,8 @@ describe('Link', () => {
 				addToScene: sinon.stub()
 			};
 			link.mesh = {};
-			link.scene = scene;
 
-			link.render();
+			link.render(scene);
 		});
 
 		it('should add mesh to scene', () => {

@@ -7,7 +7,7 @@ class Locomotion {
 	/** @property {number} velocity - translation velocity in m/s */
 	get velocity() {
 		if (!this._velocity) {
-			this._velocity = 1.5;
+			this._velocity = 2;
 		}
 		return this._velocity;
 	}
@@ -200,7 +200,7 @@ class Locomotion {
 		});
 
 		controllers.on('trigger', (event) => {
-			if (!event.touch) {
+			if (!event || !event.touch) {
 				this.teleport();
 			}
 		});

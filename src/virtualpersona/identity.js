@@ -53,7 +53,7 @@ class Identity {
 	 *
 	 * @param {string} information - Pieces of information to be requested to the human
 	 *
-	 * @returns {Promise} promise
+	 * @returns {Promise<string|undefined>} promise - If the user rejects signing in, it will resolve with that error object
 	 */
 	signIn(...information) {
 		return this.uPort.requestCredentials({
@@ -64,7 +64,12 @@ class Identity {
 			this.setUPortData(credentials, true);
 			this.signedIn = true;
 			return Promise.resolve();
-		}, (error) => Promise.reject(error));
+		}, (error) => {
+			if (error.message === 'Request Cancelled') {
+				return Promise.resolve(error)
+			}
+			return Promise.reject(error)
+		});
 	}
 
 	/**

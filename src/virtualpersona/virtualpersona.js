@@ -74,7 +74,8 @@ class VirtualPersona {
 		this.identity.on('error', (event) => {
 			this.emit('error', event);
 		});
-		this.multiVP = new MultiVP(config.multiVP || {}, this);
+
+		this.multiVP = new MultiVP(config.multiVP, this);
 		this.multiVP.on('add', (event) => {
 			this.emit('add', event);
 		});
@@ -95,7 +96,17 @@ class VirtualPersona {
 	 * @returns {Promise} promise - Promise that resolves when the mesh loads
 	*/
 	init() {
-		return this.loadMesh(this.identity.avatarPath, true);
+		return this.loadMesh(this.identity.avatarPath, true)
+			.then(() => {
+				if (!this.identity.signedIn) {
+					return this.signIn();
+				} else {
+					return Promise.resolve();
+				}
+			})
+			.catch((error) => {
+				return Promise.reject(error);
+			});
 	}
 
 	/**
@@ -209,6 +220,8 @@ class VirtualPersona {
 		this._feetPosition.copy(scene.camera.position);
 		// Make it so you only climb objects that are 0.4m above the ground
 		this._feetPosition.setY(this._feetPosition.y - this.userHeight + this.climbableHeight);
+		// TODO: Remove temporary hack to make stairs work
+		this._feetPosition.add(scene.camera.getWorldDirection().multiplyScalar(0.4));
 
 		this._floorRayCaster.set(this._feetPosition, VERTICAL_VECTOR);
 		const collisionMesh = scene.scene;
