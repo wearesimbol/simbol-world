@@ -49,8 +49,8 @@ describe('Selection', () => {
 
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter and Selection', () => {
-			assert.instanceOf(selection.__proto__, EventEmitter);
+		it('should extend EventEmitter and set properties', () => {
+			assert.instanceOf(selection, EventEmitter);
 			assert.instanceOf(selection.rayCaster, THREE.Raycaster);
 			assert.equal(selection.rayCaster.far, 10);
 			assert.isTrue(selection._createReticle.calledOnce);

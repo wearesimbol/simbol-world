@@ -47,8 +47,8 @@ describe('VirtualPersona', () => {
 
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(vp.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(vp, EventEmitter);
 		});
 
 

@@ -29,8 +29,8 @@ describe('KeyboardController', () => {
     
     describe('constructor', () => {
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(keyboardController.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(keyboardController, EventEmitter);
 		});
 
 		it('should add key event listeners', () => {

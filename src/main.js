@@ -4,10 +4,10 @@ Object.assign(window.THREE = {}, THREE);
 import * as webvrPolyfill from 'webvr-polyfill'; // eslint-disable-line no-unused-vars
 
 import {Utils, Loader, Link} from './utils/utils';
-import {Physics} from './physics/physics'; 
+import {Physics} from './physics/physics';
 import {Controllers} from './controllers/controllers';
 import {Interactions} from './interactions/interactions';
-import {Locomotion} from './locomotion/locomotion'
+import {Locomotion} from './locomotion/locomotion';
 import {VirtualPersona} from './virtualpersona/virtualpersona';
 import {Scene} from './scene/scene';
 
@@ -16,7 +16,7 @@ if (!navigator.getVRDisplays) {
 }
 
 /**  Main class for Holonet */
-class Holonet {
+class Holonet extends EventEmitter {
 
 	/**
 	 * Creates a Holonet instance
@@ -27,8 +27,7 @@ class Holonet {
 	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
 	 */
 	constructor(config) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this._scene = new Scene(config.scene);
 

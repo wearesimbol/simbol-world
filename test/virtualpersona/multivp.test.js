@@ -59,8 +59,8 @@ describe('MultiVP', () => {
 	
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(multiVP.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(multiVP, EventEmitter);
 		});
 
 		it('should set properties', () => {

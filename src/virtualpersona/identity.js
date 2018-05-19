@@ -3,7 +3,7 @@ import uport from '../libs/uport-connect';
 
 const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
 
-class Identity {
+class Identity extends EventEmitter {
 
 	/** @property {boolean} signedIn - Whether the human is signed in */
 	get signedIn() {
@@ -35,8 +35,7 @@ class Identity {
 	 * @returns {undefined}
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
@@ -113,7 +112,7 @@ class Identity {
 			 *
 			 * @event Identity#error
 			 * @type {Error}
-			 * 
+			 *
 			 */
 			this.emit('error', error);
 		}

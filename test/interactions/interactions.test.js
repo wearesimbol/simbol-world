@@ -30,10 +30,10 @@ describe('Interactions', () => {
 
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter and Selection', () => {
+		it('should extend EventEmitter and initialise Selection', () => {
 			assert.instanceOf(interactions.selection, Selection);
 			assert.isTrue(Selection.prototype._createReticle.calledOnce);
-			assert.instanceOf(interactions.__proto__, EventEmitter);
+			assert.instanceOf(interactions, EventEmitter);
 		});
 	});
 

@@ -48,8 +48,8 @@ describe('PoseController', () => {
 
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(poseController.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(poseController, EventEmitter);
 		});
 
 		it('should set some properties', () => {

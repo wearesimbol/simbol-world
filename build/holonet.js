@@ -53719,7 +53719,7 @@ const eyesToElbow = new Vector3(0.175, -0.3, -0.03);
 const forearm = new Vector3(0, 0, -0.175);
 
 /** Class wrapper for all controllers that have a pose */
-class PoseController {
+class PoseController extends eventemitter3 {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
 	get pressedButtons() {
@@ -53735,8 +53735,7 @@ class PoseController {
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 */
 	constructor(gamepad) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
@@ -53952,7 +53951,7 @@ const ControllerButtons$1 = {
 };
 
 /** Class wrapped for gamepad-like controllers that don't have a pose */
-class GamepadController {
+class GamepadController extends eventemitter3 {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
 	get pressedButtons() {
@@ -53968,8 +53967,7 @@ class GamepadController {
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 */
 	constructor(gamepad) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 	}
@@ -54018,12 +54016,11 @@ class GamepadController {
 }
 
 /** Class for keyboard inputs */
-class KeyboardController {
+class KeyboardController extends eventemitter3 {
 
 	/** Listens to keyboard presses and emits accordingly */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
 		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
@@ -54100,7 +54097,7 @@ class KeyboardController {
 	}
 }
 
-class PointerController {
+class PointerController extends eventemitter3 {
 
 	/** @property {THREE.Vector2} rotation - rotation vector */
 	get rotation() {
@@ -54117,12 +54114,13 @@ class PointerController {
 	/**
 	 * Listens to touch events and mouse click and emits appropriate events
 	 *
-	 * @return {undefined}
+	 * @param {HTMLCanvasElement} canvas - Canvas that listens to different events
+	 *
+	 * @returns {undefined}
 	*/
 	constructor(canvas) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
-	
+		super();
+
 		this._canvas = canvas;
 
 		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));
@@ -54241,7 +54239,7 @@ class PointerController {
 }
 
 /** Class to act as a wrapper for all controllers */
-class Controllers {
+class Controllers extends eventemitter3 {
 
 	/** @property {object} currentControllers - maps of controller ids to controller instances */
 	get currentControllers() {
@@ -54267,11 +54265,16 @@ class Controllers {
 		this._mainHandController = mainHandController;
 	}
 
-	/** Initialises a Controllers instance */
+	/**
+	 * Initialises a Controllers instance
+	 *
+	 * @param {HTMLCanvasElement} canvas - <canvas> element required by PointerController
+	 *
+	 * @returns {Controllers} this
+	 */
 	constructor(canvas) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
-	
+		super();
+
 		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
 		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
 
@@ -54504,7 +54507,7 @@ class Controllers {
 const RETICLE_DISTANCE = 3;
 
 /** Class for the Selection intraction */
-class Selection {
+class Selection extends eventemitter3 {
 
 	/** @property {object} objects - map of objects with ids that are selectable */
 	get objects() {
@@ -54570,8 +54573,7 @@ class Selection {
 	 * Initializes a Selection instance
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.rayCaster = new Raycaster();
 		this.rayCaster.far = 10;
@@ -54788,14 +54790,13 @@ class Selection {
 }
 
 /** Class utility for all interactions*/
-class Interactions {
+class Interactions extends eventemitter3 {
 
 	/**
 	 * Constructs an Interactions instance by initialising all interactions
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.selection = new Selection();
 	}
@@ -55434,7 +55435,6 @@ class Locomotion {
 
 		controllers.on('trigger', (event) => {
 			if (!event || !event.touch) {
-				console.log('teleporting');
 				this.teleport();
 			}
 		});
@@ -55461,7 +55461,6 @@ class Locomotion {
 		});
 
 		interactions.selection.on('selected', () => {
-			console.log('stop teleportation', this.teleportation.isRayCurveActive);
 			if (this.teleportation.isRayCurveActive) {
 				this.teleportation.resetTeleport();
 			} else {
@@ -130547,7 +130546,7 @@ var uport = unwrapExports(uportConnect);
 
 const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
 
-class Identity {
+class Identity extends eventemitter3 {
 
 	/** @property {boolean} signedIn - Whether the human is signed in */
 	get signedIn() {
@@ -130579,8 +130578,7 @@ class Identity {
 	 * @returns {undefined}
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.uPort = new uport.Connect('Holonet', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
@@ -130657,7 +130655,7 @@ class Identity {
 			 *
 			 * @event Identity#error
 			 * @type {Error}
-			 * 
+			 *
 			 */
 			this.emit('error', error);
 		}
@@ -137299,7 +137297,7 @@ const defaultConfig = {
 	}
 };
 
-class MultiVP {
+class MultiVP extends eventemitter3 {
 
 	/** @property {Object} meshes - Map of all meshes to their ids */
 	get meshes() {
@@ -137335,19 +137333,18 @@ class MultiVP {
 	 * @emits MultiVP#error
 	 */
 	constructor(config = {}, vp) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
 
 		this.getStream()
 			.then((stream) => {
-				this.stream = stream;
-				this.socket = this.createSocket();
 				this.emit('addanimatefunctions', {
 					functions: [this.animate.bind(this)]
 				});
+				this.stream = stream;
+				this.socket = this.createSocket();
 			})
 			.catch((error) => {
 				/**
@@ -137486,6 +137483,14 @@ class MultiVP {
 		return peer;
 	}
 
+	/**
+	 * Stream handler for a Peer instance
+	 * It creates an <audio> element to autoplay the incoming stream
+	 *
+	 * @param {MediaStream} stream - Incoming stream from the Peer instance
+	 *
+	 * @returns {undefined}
+	 */
 	_peerStream(stream) {
 		this.audioEl = document.createElement('audio');
 		this.audioEl.autoplay = true;
@@ -137698,7 +137703,7 @@ class MultiVP {
 const VERTICAL_VECTOR$1 = new Vector3(0, -1, 0);
 
 /** Class for a VirtualPersona */
-class VirtualPersona {
+class VirtualPersona extends eventemitter3 {
 
 	/** @property {number} floorHeight - Current height of the floor where the user is */
 	get floorHeight() {
@@ -137745,8 +137750,7 @@ class VirtualPersona {
 	 * @returns {undefined}
 	*/
 	constructor(config = { signIn: true }) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this.config = config;
 		this._feetPosition = new Vector3();
@@ -138447,7 +138451,7 @@ class Scene$1 {
 	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Holonet needs access to your renderer
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Holonet needs access to your camera
 	 *
-	 * @returns {Scene}
+	 * @returns {Scene} scene
 	 */
 	constructor(config) {
 		if (config.render) {
@@ -138527,15 +138531,13 @@ class Scene$1 {
 
 			if (!this.scene) {
 				if (this._meshesToAdd) {
-					this._meshesToAdd.push(mesh); 
+					this._meshesToAdd.push(mesh);
 				} else {
 					this._meshesToAdd = [mesh];
 				}
-
-				return;
+			} else {
+				this.scene.add(mesh);
 			}
-
-			this.scene.add(mesh);
 		}
 	}
 
@@ -140630,7 +140632,7 @@ class NodeElement extends eventemitter3 {
 		this._children = children;
 	}
 
-	/** @property {number} parent - Parent node */
+	/** @property {NodeElement} parent - Parent node */
 	get parent() {
 		return this._parent;
 	}
@@ -140639,7 +140641,7 @@ class NodeElement extends eventemitter3 {
 		this._parent = parent;
 	}
 
-	/** @property {number} mesh - Parent node */
+	/** @property {THREE.Mesh} mesh - Group mesh */
 	get mesh() {
 		if (typeof this._mesh === 'undefined') {
 			this._mesh = new Group();
@@ -140656,10 +140658,23 @@ class NodeElement extends eventemitter3 {
 		this._mesh = mesh;
 	}
 
+	/**
+	 * Creates a NodeElement instance that acts as a grouping element
+	 *
+	 * @returns {NodeElement} this
+	 */
 	constructor() {
 		super();
 	}
 
+	/**
+	 * Adds a child node, and if it has a mesh, adds it to the Group mesh
+	 * It also sets itself as the parent of the child node
+	 *
+	 * @param {NodeElement} node - Child node
+	 *
+	 * @returns {undefined}
+	 */
 	add(node) {
 		if (!(node instanceof NodeElement)) {
 			return;
@@ -140671,6 +140686,13 @@ class NodeElement extends eventemitter3 {
 		}
 	}
 
+	/**
+	 * Removes a child node, and if it has a mesh, removes it from the Group mesh
+	 *
+	 * @param {NodeElement} node - Child node
+	 *
+	 * @returns {undefined}
+	 */
 	remove(node) {
 		const index = this.children.indexOf(node);
 		if (index !== -1) {
@@ -140683,7 +140705,7 @@ class NodeElement extends eventemitter3 {
 
 class TextElement extends NodeElement {
 
-	/** @property {number} font - Saved font once it's loaded the first time */
+	/** @property {bmfont} font - Saved font once it's loaded the first time */
 	static get font() {
 		return this._font;
 	}
@@ -140692,7 +140714,7 @@ class TextElement extends NodeElement {
 		this._font = font;
 	}
 
-	/** @property {number} texture - Saved texture once it's loaded the first time */
+	/** @property {THREE.Texture} texture - Saved texture once it's loaded the first time */
 	static get texture() {
 		return this._texture;
 	}
@@ -140701,7 +140723,7 @@ class TextElement extends NodeElement {
 		this._texture = texture;
 	}
 
-	/** @property {number} mesh - Parent node */
+	/** @property {THREE.Mesh} mesh - Text mesh */
 	get mesh() {
 		return this._mesh;
 	}
@@ -140715,6 +140737,16 @@ class TextElement extends NodeElement {
 		this._mesh = mesh;
 	}
 
+	/**
+	 * Creates a TextElement instance for a string of text
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {string} config.text - String of text
+	 * @param {boolean} config.bold - Whether to use the bold or regular font
+	 * @param {array} config.position - Array that represents the desired position for the mesh
+	 *
+	 * @returns {TextElement} this
+	 */
 	constructor(config = {}) {
 		super();
 
@@ -140730,13 +140762,13 @@ class TextElement extends NodeElement {
 	/**
 	 * Consturcts a 3D MSDF based text geometry from a string
 	 *
-	 * @param {string} text - String to be converted to a 3D geometry
-	 * @param {boolean} bold - Whether it should use the bold font
-	 * @param {array} position - Where the mesh should be positioned
+	 * @param {string} text - String to be converted to a 3D geometry. (Default: '')
+	 * @param {boolean} bold - Whether it should use the bold font. (Default: false)
+	 * @param {array} position - Where the mesh should be positioned. (Default: [0, 0, 0])
 	 *
 	 * @return {Promise<THREE.Mesh>} promise - Resolves with the Text mesh
 	 */
-	constructMesh(text, bold, position) {
+	constructMesh(text = '', bold = false, position = [0, 0, 0]) {
 		return new Promise((resolve, reject) => {
 			const fontPath = `https://holonet.one/assets/fonts/Roboto-${bold ? 'Bold' : 'Regular'}`;
 			let font;
@@ -140784,6 +140816,13 @@ class TextElement extends NodeElement {
 		});
 	}
 
+	/**
+	 * Helper function to load and cache the font
+	 *
+	 * @param {string} path - Path to the font
+	 *
+	 * @returns {Promise<BMFont>} promise
+	 */
 	_loadFont(path) {
 		return new Promise((resolve, reject) => {
 			if (TextElement.font) {
@@ -140801,6 +140840,13 @@ class TextElement extends NodeElement {
 		});
 	}
 
+	/**
+	 * Helper function to load and cache the font texture
+	 *
+	 * @param {string} path - Path to the texture
+	 *
+	 * @returns {Promise<THREE.Texture>} promise
+	 */
 	_loadTexture(path) {
 		return new Promise((resolve, reject) => {
 			if (TextElement.texture) {
@@ -140818,6 +140864,7 @@ class TextElement extends NodeElement {
 	}
 }
 
+// @property {Elements} Elements - Object with access to all Elements
 const Elements = {
 	TextElement,
 	NodeElement
@@ -140830,7 +140877,7 @@ if (!navigator.getVRDisplays) {
 }
 
 /**  Main class for Holonet */
-class Holonet {
+class Holonet extends eventemitter3 {
 
 	/**
 	 * Creates a Holonet instance
@@ -140841,8 +140888,7 @@ class Holonet {
 	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
 	 */
 	constructor(config) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new eventemitter3());
+		super();
 
 		this._scene = new Scene$1(config.scene);
 

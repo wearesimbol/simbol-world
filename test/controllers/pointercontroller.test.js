@@ -54,8 +54,8 @@ describe('PointerController', () => {
 			assert.isTrue(document.addEventListener.calledWith('pointerlockchange'));
 		});
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(pointerController.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(pointerController, EventEmitter);
 		});
     });
 

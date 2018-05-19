@@ -5,7 +5,7 @@ import {KeyboardController} from './keyboardcontroller';
 import {PointerController} from './pointercontroller';
 
 /** Class to act as a wrapper for all controllers */
-class Controllers {
+class Controllers extends EventEmitter {
 
 	/** @property {object} currentControllers - maps of controller ids to controller instances */
 	get currentControllers() {
@@ -31,11 +31,16 @@ class Controllers {
 		this._mainHandController = mainHandController;
 	}
 
-	/** Initialises a Controllers instance */
+	/**
+	 * Initialises a Controllers instance
+	 *
+	 * @param {HTMLCanvasElement} canvas - <canvas> element required by PointerController
+	 *
+	 * @returns {Controllers} this
+	 */
 	constructor(canvas) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
-	
+		super();
+
 		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
 		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
 

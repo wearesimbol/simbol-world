@@ -5,7 +5,7 @@ import {Physics} from '../physics/physics';
 const RETICLE_DISTANCE = 3;
 
 /** Class for the Selection intraction */
-class Selection {
+class Selection extends EventEmitter {
 
 	/** @property {object} objects - map of objects with ids that are selectable */
 	get objects() {
@@ -71,8 +71,7 @@ class Selection {
 	 * Initializes a Selection instance
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.rayCaster = new THREE.Raycaster();
 		this.rayCaster.far = 10;

@@ -9,7 +9,7 @@ import {MultiVP} from './multivp';
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 
 /** Class for a VirtualPersona */
-class VirtualPersona {
+class VirtualPersona extends EventEmitter {
 
 	/** @property {number} floorHeight - Current height of the floor where the user is */
 	get floorHeight() {
@@ -56,8 +56,7 @@ class VirtualPersona {
 	 * @returns {undefined}
 	*/
 	constructor(config = { signIn: true }) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.config = config;
 		this._feetPosition = new THREE.Vector3();

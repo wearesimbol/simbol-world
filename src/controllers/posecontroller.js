@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
-import {Utils} from '../utils/utils';
 import {MTLLoader} from '../libs/MTLLoader';
 import {OBJLoader} from '../libs/OBJLoader';
 
@@ -27,7 +26,7 @@ const eyesToElbow = new THREE.Vector3(0.175, -0.3, -0.03);
 const forearm = new THREE.Vector3(0, 0, -0.175);
 
 /** Class wrapper for all controllers that have a pose */
-class PoseController {
+class PoseController extends EventEmitter {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
 	get pressedButtons() {
@@ -43,8 +42,7 @@ class PoseController {
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 */
 	constructor(gamepad) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;

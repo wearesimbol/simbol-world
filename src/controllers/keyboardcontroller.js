@@ -1,12 +1,11 @@
 import EventEmitter from 'eventemitter3';
 
 /** Class for keyboard inputs */
-class KeyboardController {
+class KeyboardController extends EventEmitter {
 
 	/** Listens to keyboard presses and emits accordingly */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
 		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));

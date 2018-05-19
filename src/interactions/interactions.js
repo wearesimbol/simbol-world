@@ -2,14 +2,13 @@ import EventEmitter from 'eventemitter3';
 import {Selection} from './selection';
 
 /** Class utility for all interactions*/
-class Interactions {
+class Interactions extends EventEmitter {
 
 	/**
 	 * Constructs an Interactions instance by initialising all interactions
 	 */
 	constructor() {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.selection = new Selection();
 	}

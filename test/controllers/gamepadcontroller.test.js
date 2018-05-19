@@ -34,8 +34,8 @@ describe('GamepadController', () => {
 
 	describe('#constructor', () => {
 
-		it('should initialize EventEmitter', () => {
-			assert.instanceOf(gamepadController.__proto__, EventEmitter);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(gamepadController, EventEmitter);
 		});
 
 		it('should set some properties', () => {

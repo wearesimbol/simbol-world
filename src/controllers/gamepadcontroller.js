@@ -1,7 +1,5 @@
-import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
 
-import {Utils} from '../utils/utils';
 import {Controllers} from './controllers';
 
 const ControllerButtons = {
@@ -9,7 +7,7 @@ const ControllerButtons = {
 };
 
 /** Class wrapped for gamepad-like controllers that don't have a pose */
-class GamepadController {
+class GamepadController extends EventEmitter {
 
 	/** @property {Object} pressedButtons - Objects that maps buttons to their states */
 	get pressedButtons() {
@@ -25,8 +23,7 @@ class GamepadController {
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 */
 	constructor(gamepad) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 	}

@@ -1,5 +1,6 @@
 'use strict';
 
+import EventEmitter from 'eventemitter3';
 import {Identity} from '../../src/virtualpersona/identity';
 import uPort from '../../src/libs/uport-connect';
 
@@ -33,6 +34,10 @@ describe('Identity', () => {
 	});
 
 	describe('#constructor', () => {
+
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(identity, EventEmitter);
+		});
 
 		it('should configure uPort', () => {
 			assert.equal(identity.uPort.clientId, '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ');

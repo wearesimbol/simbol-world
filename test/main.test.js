@@ -54,8 +54,8 @@ describe('Holonet', () => {
 
     describe('#constructor', () => {
 
-        it('should initialise EventEmitter', () => {
-            assert.instanceOf(holonet.__proto__, EventEmitter);
+        it('should extend EventEmitter', () => {
+            assert.instanceOf(holonet, EventEmitter);
         });
 
         it('should initialise a Scene', () => {

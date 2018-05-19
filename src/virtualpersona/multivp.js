@@ -11,7 +11,7 @@ const defaultConfig = {
 	}
 };
 
-class MultiVP {
+class MultiVP extends EventEmitter {
 
 	/** @property {Object} meshes - Map of all meshes to their ids */
 	get meshes() {
@@ -47,8 +47,7 @@ class MultiVP {
 	 * @emits MultiVP#error
 	 */
 	constructor(config = {}, vp) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;

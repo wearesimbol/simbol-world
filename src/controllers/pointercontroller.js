@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
 import { Utils } from '../utils/utils';
 
-class PointerController {
+class PointerController extends EventEmitter {
 
 	/** @property {THREE.Vector2} rotation - rotation vector */
 	get rotation() {
@@ -24,8 +24,7 @@ class PointerController {
 	 * @returns {undefined}
 	*/
 	constructor(canvas) {
-		// Initializes EventEmitter
-		Object.setPrototypeOf(this.__proto__, new EventEmitter());
+		super();
 
 		this._canvas = canvas;
 
