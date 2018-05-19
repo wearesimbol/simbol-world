@@ -71,8 +71,11 @@ describe('Scene', () => {
 		let mesh;
 	
 		beforeEach((done) => {
-			mesh = {};
-	
+			mesh = {
+				add: sinon.stub()
+			};
+
+			scene._meshesToAdd = [1];
 			scene._sceneLoader = {
 				load: sinon.stub().resolves(mesh)
 			};
@@ -88,27 +91,43 @@ describe('Scene', () => {
 			assert.equal(scene.scene, mesh);
 			assert.isTrue(scene._setupMeshes.calledOnce);
 			assert.isTrue(scene._setupMeshes.calledWith(mesh));
+			assert.isTrue(scene.scene.add.calledOnce);
+			assert.isTrue(scene.scene.add.calledWith(1));
 			assert.isTrue(scene.animate.calledOnce);
 		});
 	});
 
 	describe('#addToScene', () => {
 
-		let meshes;
+		let meshes = ['mesh1', 'mesh2'];
 
-		beforeEach(() => {
-			meshes = ['mesh1', 'mesh2'];
-			scene.scene = {
-				add: sinon.stub()
-			};
+		describe('scene', () => {
 
-			scene.addToScene([meshes[0], meshes[1]]);
+			beforeEach(() => {
+				scene.scene = {
+					add: sinon.stub()
+				};
+	
+				scene.addToScene([meshes[0], meshes[1]]);
+			});
+	
+			it('should add meshes to the scene', () => {
+				assert.isTrue(scene.scene.add.calledTwice);
+				assert.isTrue(scene.scene.add.firstCall.calledWith(meshes[0]));
+				assert.isTrue(scene.scene.add.secondCall.calledWith(meshes[1]));
+			});
 		});
 
-		it('should add meshes to the scene', () => {
-			assert.isTrue(scene.scene.add.calledTwice);
-			assert.isTrue(scene.scene.add.firstCall.calledWith(meshes[0]));
-			assert.isTrue(scene.scene.add.secondCall.calledWith(meshes[1]));
+		describe('no scene', () => {
+
+			beforeEach(() => {
+
+				scene.addToScene(meshes);
+			});
+	
+			it('should save meshes', () => {
+				assert.deepEqual(scene._meshesToAdd, meshes);
+			});
 		});
 	});
 

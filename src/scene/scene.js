@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+// TODO: Remove this hack to make THREE a global before three-bmfont-text is executed
+Object.assign(window.THREE = {}, THREE);
 import {VREffect} from '../libs/VREffect';
 import {Loader} from '../utils/loader';
 
@@ -41,7 +43,7 @@ class Scene {
 	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Holonet needs access to your renderer
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Holonet needs access to your camera
 	 *
-	 * @returns {Scene}
+	 * @returns {Scene} scene
 	 */
 	constructor(config) {
 		if (config.render) {
@@ -89,10 +91,15 @@ class Scene {
 
 				this._setupMeshes(loadedScene);
 				this.scene = loadedScene;
+				if (this._meshesToAdd) {
+					for (const mesh of this._meshesToAdd) {
+						this.scene.add(mesh);
+					}
+				}
 				this.animate();
 
 				return Promise.resolve();
-			}, console.warn);
+			}, (error) => Promise.reject(error));
 	}
 
 	/**
@@ -113,7 +120,16 @@ class Scene {
 			if (mesh.isObject3D && !mesh.isLight) {
 				this._setupMeshes(mesh, collidable, shadow);
 			}
-			this.scene.add(mesh);
+
+			if (!this.scene) {
+				if (this._meshesToAdd) {
+					this._meshesToAdd.push(mesh);
+				} else {
+					this._meshesToAdd = [mesh];
+				}
+			} else {
+				this.scene.add(mesh);
+			}
 		}
 	}
 

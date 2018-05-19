@@ -51,11 +51,15 @@ class VirtualPersona {
 	 * Constructs a VP instance and sets its properties
 	 *
 	 * @param {object} config - Configuration parameters for different elements
+	 * @param {boolean} signIn - Whether Holonet should attempt to sign in on init
+	 *
+	 * @returns {undefined}
 	*/
-	constructor(config = {}) {
+	constructor(config = { signIn: true }) {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
 
+		this.config = config;
 		this._feetPosition = new THREE.Vector3();
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
@@ -98,7 +102,7 @@ class VirtualPersona {
 	init() {
 		return this.loadMesh(this.identity.avatarPath, true)
 			.then(() => {
-				if (!this.identity.signedIn) {
+				if (this.config.signIn && !this.identity.signedIn) {
 					return this.signIn();
 				} else {
 					return Promise.resolve();
@@ -212,9 +216,9 @@ class VirtualPersona {
 	/**
 	 * Adjusts the floor height depending on the position
 	 *
-	 * @returns {undefined}
+	 * @param {Holonet.Scene} scene - Provide scene to adjust the floor height with respect to it
 	 *
-	 * @private
+	 * @returns {undefined}
 	 */
 	setFloorHeight(scene) {
 		this._feetPosition.copy(scene.camera.position);

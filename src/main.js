@@ -62,9 +62,7 @@ class Holonet {
 
 				return Promise.resolve();
 			})
-			.catch((error) => {
-				return Promise.reject(error);
-			});
+			.catch((error) => Promise.reject(error));
 	}
 
 	/**
@@ -83,7 +81,7 @@ class Holonet {
 			component.on('remove', (event) => {
 				this.removeFromScene(event.mesh);
 			});
-			
+
 			component.on('addanimatefunctions', (event) => {
 				this.addAnimateFunctions(event.functions);
 			});
@@ -275,3 +273,4 @@ Holonet.prototype.animate = (function() {
 
 export default Holonet;
 export {Utils, Loader, Link};
+export {Elements} from './elements/elements';

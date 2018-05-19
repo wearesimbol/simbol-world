@@ -19,12 +19,14 @@ class PointerController {
 	/**
 	 * Listens to touch events and mouse click and emits appropriate events
 	 *
-	 * @return {undefined}
+	 * @param {HTMLCanvasElement} canvas - Canvas that listens to different events
+	 *
+	 * @returns {undefined}
 	*/
 	constructor(canvas) {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
-	
+
 		this._canvas = canvas;
 
 		document.addEventListener('pointerlockchange', this._handlePointerLockChange.bind(this));

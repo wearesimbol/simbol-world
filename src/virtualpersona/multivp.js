@@ -50,21 +50,16 @@ class MultiVP {
 		// Initializes EventEmitter
 		Object.setPrototypeOf(this.__proto__, new EventEmitter());
 
-		this.audioEl = document.createElement('audio');
-		this.audioEl.autoplay = true;
-		this.audioEl.srcObject = new MediaStream();
-		document.body.appendChild(this.audioEl);
-
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
 
 		this.getStream()
 			.then((stream) => {
-				this.stream = stream;
-				this.socket = this.createSocket();
 				this.emit('addanimatefunctions', {
 					functions: [this.animate.bind(this)]
 				});
+				this.stream = stream;
+				this.socket = this.createSocket();
 			})
 			.catch((error) => {
 				/**
@@ -127,7 +122,7 @@ class MultiVP {
 	 * @param {Object} error - Error event Object
 	 *
 	 * @returns {undefined}
-	 * @emits MultiVP#error 
+	 * @emits MultiVP#error
 	 *
 	 * @private
 	 */
@@ -137,7 +132,7 @@ class MultiVP {
 		 *
 		 * @event MultiVP#error
 		 * @type {Error}
-		 * 
+		 *
 		 */
 		this.emit('error', error);
 	}
@@ -203,11 +198,20 @@ class MultiVP {
 		return peer;
 	}
 
+	/**
+	 * Stream handler for a Peer instance
+	 * It creates an <audio> element to autoplay the incoming stream
+	 *
+	 * @param {MediaStream} stream - Incoming stream from the Peer instance
+	 *
+	 * @returns {undefined}
+	 */
 	_peerStream(stream) {
-		for (const track of stream.getTracks()) {
-			console.log(track);
-			this.multiVP.audioEl.srcObject.addTrack(track);
-		}
+		this.audioEl = document.createElement('audio');
+		this.audioEl.autoplay = true;
+		this.audioEl.srcObject = stream;
+		document.body.appendChild(this.audioEl);
+		this.audioEl.play();
 	}
 
 	/**
@@ -234,7 +238,7 @@ class MultiVP {
 	 * @param {Object} error - Event object for an error handler
 	 *
 	 * @returns {undefined}
-	 * @emits MultiVP#error 
+	 * @emits MultiVP#error
 	 *
 	 * @private
 	 */
@@ -245,7 +249,7 @@ class MultiVP {
 		 * @event MultiVP#error
 		 * @type {Error}
 		 * @property {string} code - SimplePeer error code
-		 * 
+		 *
 		 */
 		this.multiVP.emit('error', error);
 	}
@@ -308,6 +312,7 @@ class MultiVP {
 	_peerClose() {
 		console.log(`peer ${this.id} closing`);
 		delete this.multiVP.remotePeers[this.id];
+		document.removeChild(this.audioEl);
 		if (this.multiVP.meshes[this.id]) {
 			this.multiVP.emit('remove', {
 				mesh: this.multiVP.meshes[this.id].mesh

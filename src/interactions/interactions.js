@@ -39,9 +39,11 @@ class Interactions {
 	 * Adds Interaction handlers to an emitter
 	 *
 	 * @param {Object} emitter - Object that emits events that Interactions needs to handle
+	 *
+	 * @returns {undefined}
 	 */
 	setUpEventListeners(emitter) {
-		emitter.on('trigger', this.selection.handleSelection);
+		emitter.on('trigger', this.selection.handleSelection.bind(this.selection));
 	}
 }
 

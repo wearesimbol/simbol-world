@@ -41,8 +41,6 @@ describe('PointerController', () => {
     describe('constructor', () => {
 
 		it('should set some properties', () => {
-			assert.equal(pointerController._phi, 0);
-			assert.equal(pointerController._theta, 0);
 			assert.equal(pointerController._canvas, canvas);
 		});
 
@@ -159,20 +157,14 @@ describe('PointerController', () => {
 		beforeEach(() => {
 			sinon.stub(pointerController, 'emit');
 
-			const event = {
-				movementX: 2,
-				movementY: 3
-			};
 			// Some bug in the tests keeps the rotation property
 			// from instance to instance of pointerController
 			pointerController.rotation = new THREE.Vector2();
 
-			pointerController._moveHandler(event);
-		});
-
-		it('should set rotation to the new rotation', () => {
-			assert.equal(pointerController.rotation.x, -2);
-			assert.equal(pointerController.rotation.y, -3);
+			pointerController._moveHandler({
+				movementX: 2,
+				movementY: 3
+			});
 		});
 
 		it('should emit orientation event', () => {

@@ -30,7 +30,7 @@ describe('Locomotion', () => {
 	});
 
 	it('should have a set of properties', () => {
-		assert.equal(Locomotion.prototype.velocity, 1.5);
+		assert.equal(Locomotion.prototype.velocity, 2);
 		assert.equal(Locomotion.prototype.angularVelocity, 1);
 		assert.deepEqual(Locomotion.prototype.orientation, {
 			quaternion: new THREE.Quaternion(),
@@ -166,6 +166,21 @@ describe('Locomotion', () => {
 			
 			it('should activate ray curve', () => {
 				assert.isTrue(locomotion.teleportation.resetTeleport.calledOnce);
+				assert.isFalse(locomotion._cancelTeleportation);
+			});
+		});
+
+		describe('cancel teleportation', () => {
+
+			beforeEach(() => {
+				locomotion._cancelTeleportation = true;
+
+				locomotion.teleport();
+			});
+			
+			it('should activate ray curve', () => {
+				assert.isTrue(locomotion.teleportation.resetTeleport.calledOnce);
+				assert.isFalse(locomotion._cancelTeleportation);
 			});
 		});
 	});
@@ -192,7 +207,9 @@ describe('Locomotion', () => {
 		beforeEach(() => {
 			sinon.spy(EventEmitter.prototype, 'on');
 			controllers = new EventEmitter();
-			interactions = new EventEmitter();
+			interactions = {
+				selection: new EventEmitter()
+			};
 
 			locomotion.setUpEventListeners(controllers, interactions);
 		});

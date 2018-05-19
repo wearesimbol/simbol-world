@@ -19,7 +19,6 @@ describe('Holonet', () => {
         sinon.stub(Locomotion.prototype, 'setUpEventListeners');
         sinon.stub(Interactions.prototype, 'setUpEventListeners');
         sinon.stub(Holonet.prototype, 'addListeners');
-        sinon.stub(Holonet.prototype, 'addAnimateFunctions');
     });
 
     afterEach(() => {
@@ -27,7 +26,6 @@ describe('Holonet', () => {
         Interactions.prototype.setUpEventListeners.restore();
 
         Holonet.prototype.addListeners.restore && Holonet.prototype.addListeners.restore();
-        Holonet.prototype.addAnimateFunctions.restore && Holonet.prototype.addAnimateFunctions.restore();
     });
 
     beforeEach(() => {
@@ -86,15 +84,12 @@ describe('Holonet', () => {
             assert.isTrue(holonet.addListeners.calledOnce);
             assert.isTrue(holonet.addListeners.calledWith(holonet.virtualPersona, holonet.controllers, holonet.interactions));
         });
-
-        it('should start main render function loop', () => {
-
-        });
     });
 
     describe('#init', () => {
 
         beforeEach((done) => {
+            sinon.stub(holonet, 'addAnimateFunctions');
             sinon.stub(holonet._scene, 'init').resolves();
             sinon.stub(holonet.virtualPersona, 'init').resolves();
             sinon.stub(holonet, 'addToScene');
@@ -117,6 +112,12 @@ describe('Holonet', () => {
             assert.deepEqual(holonet.addToScene.firstCall.args, [[1, 2, 3, 4]]);
             assert.isTrue(holonet.interactions.getMeshes.calledOnce);
             assert.isTrue(holonet.locomotion.getMeshes.calledOnce);
+        });
+
+        it('should add animate function', () => {
+            assert.isTrue(holonet.addAnimateFunctions.calledOnce);
+            assert.isArray(holonet.addAnimateFunctions.firstCall.args[0]);
+            assert.isFunction(holonet.addAnimateFunctions.firstCall.args[0][0]);
         });
     });
 
@@ -192,7 +193,6 @@ describe('Holonet', () => {
     describe('#addAnimateFunctions', () => {
 
         beforeEach(() => {
-            holonet.addAnimateFunctions.restore();
             sinon.stub(holonet._scene, 'addAnimateFunctions');
 
             holonet.addAnimateFunctions([1, 2]);

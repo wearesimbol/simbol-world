@@ -44175,7 +44175,7 @@ var holonet = (function (exports) {
 
 	}
 
-	var THREE = /*#__PURE__*/Object.freeze({
+	var THREE$1 = /*#__PURE__*/Object.freeze({
 		WebGLRenderTargetCube: WebGLRenderTargetCube,
 		WebGLRenderTarget: WebGLRenderTarget,
 		WebGLRenderer: WebGLRenderer,
@@ -54180,22 +54180,20 @@ var holonet = (function (exports) {
 		 * @private
 		*/
 		_moveHandler(event) {
-			const lol = new Vector2();
 			// Gets the new rotation vector
 			if (event.touches) {
 				if (event.touches.length > 1) {
 					return;
 				}
 
-				lol.set(event.touches[0].pageX, event.touches[0].pageY);
+				this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
 			} else {
-				lol.set(this.rotation.x - event.movementX,
+				this.rotation.set(this.rotation.x - event.movementX,
 					this.rotation.y - event.movementY);
 			}
 
-			this.rotation.copy(lol);
 			this.emit('orientation', {
-				rotation: lol
+				rotation: this.rotation
 			});
 		}
 
@@ -54830,9 +54828,11 @@ var holonet = (function (exports) {
 		 * Adds Interaction handlers to an emitter
 		 *
 		 * @param {Object} emitter - Object that emits events that Interactions needs to handle
+		 *
+		 * @returns {undefined}
 		 */
 		setUpEventListeners(emitter) {
-			emitter.on('trigger', this.selection.handleSelection);
+			emitter.on('trigger', this.selection.handleSelection.bind(this.selection));
 		}
 	}
 
@@ -55322,7 +55322,7 @@ var holonet = (function (exports) {
 		constructor() {
 			this._phi = 0;
 			this._theta = 0;
-		
+
 			this.teleportation = new Teleportation();
 		}
 
@@ -55399,7 +55399,8 @@ var holonet = (function (exports) {
 		}
 
 		teleport() {
-			if (this.teleportation.isRayCurveActive) {
+			if (this.teleportation.isRayCurveActive || this._cancelTeleportation) {
+				this._cancelTeleportation = false;
 				this.teleportation.resetTeleport();
 			} else {
 				this._handleTeleportation();
@@ -55416,7 +55417,7 @@ var holonet = (function (exports) {
 		_handleTeleportation() {
 			this.teleportation.setRayCurveState(true);
 		}
-		
+
 		setUpEventListeners(controllers, interactions) {
 			controllers.on('ztranslationstart', (event) => {
 				this.translateZ(event.direction * this.velocity);
@@ -55436,11 +55437,12 @@ var holonet = (function (exports) {
 
 			controllers.on('trigger', (event) => {
 				if (!event || !event.touch) {
+					console.log('teleporting');
 					this.teleport();
 				}
 			});
 
-			controllers.on('thumbpadpressed', (event) => {
+			controllers.on('thumbpadpressed', () => {
 				this.teleport();
 				if (!this.teleportation.isRayCurveActive) {
 					clearTimeout(this._thumbpadTouchedTimeout);
@@ -55448,7 +55450,7 @@ var holonet = (function (exports) {
 				}
 			});
 
-			controllers.on('thumbpadtouched', (event) => {
+			controllers.on('thumbpadtouched', () => {
 				if (!this.teleportation.isRayCurveActive) {
 					this._thumbpadTouchedTimeout = setTimeout(() => {
 						this.translateZ(-this.velocity);
@@ -55456,14 +55458,17 @@ var holonet = (function (exports) {
 				}
 			});
 
-			controllers.on('thumbpaduntouched', (event) => {
+			controllers.on('thumbpaduntouched', () => {
 				clearTimeout(this._thumbpadTouchedTimeout);
 				this.stopTranslateZ();
 			});
 
-			interactions.on('selected', () => {
+			interactions.selection.on('selected', () => {
+				console.log('stop teleportation', this.teleportation.isRayCurveActive);
 				if (this.teleportation.isRayCurveActive) {
 					this.teleportation.resetTeleport();
+				} else {
+					this._cancelTeleportation = true;
 				}
 			});
 		}
@@ -132660,7 +132665,7 @@ var holonet = (function (exports) {
 	  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isFastBuffer(obj.slice(0, 0))
 	}
 
-	var bufferEs6 = /*#__PURE__*/Object.freeze({
+	var buffer = /*#__PURE__*/Object.freeze({
 		INSPECT_MAX_BYTES: INSPECT_MAX_BYTES,
 		kMaxLength: _kMaxLength,
 		Buffer: Buffer,
@@ -133495,7 +133500,7 @@ var holonet = (function (exports) {
 	var safeBuffer = createCommonjsModule(function (module, exports) {
 	/* eslint-disable node/no-deprecated-api */
 
-	var Buffer = bufferEs6.Buffer;
+	var Buffer = buffer.Buffer;
 
 	// alternative to using Object.keys for old browsers
 	function copyProps (src, dst) {
@@ -133504,10 +133509,10 @@ var holonet = (function (exports) {
 	  }
 	}
 	if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-	  module.exports = bufferEs6;
+	  module.exports = buffer;
 	} else {
 	  // Copy properties from require('buffer')
-	  copyProps(bufferEs6, exports);
+	  copyProps(buffer, exports);
 	  exports.Buffer = SafeBuffer;
 	}
 
@@ -133553,7 +133558,7 @@ var holonet = (function (exports) {
 	  if (typeof size !== 'number') {
 	    throw new TypeError('Argument must be a number')
 	  }
-	  return bufferEs6.SlowBuffer(size)
+	  return buffer.SlowBuffer(size)
 	};
 	});
 	var safeBuffer_1 = safeBuffer.Buffer;
@@ -137330,17 +137335,11 @@ var holonet = (function (exports) {
 		 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
 		 *
 		 * @returns {undefined}
-		 * @emits MultiVP#error 
+		 * @emits MultiVP#error
 		 */
 		constructor(config = {}, vp) {
 			// Initializes EventEmitter
 			Object.setPrototypeOf(this.__proto__, new eventemitter3());
-
-			
-			this.audioEl = document.createElement('audio');
-			this.audioEl.autoplay = true;
-			this.audioEl.srcObject = new MediaStream();
-			document.body.appendChild(this.audioEl);
 
 			this.config = Object.assign({}, defaultConfig, config);
 			this.vp = vp;
@@ -137359,7 +137358,7 @@ var holonet = (function (exports) {
 					 *
 					 * @event MultiVP#error
 					 * @type {Error}
-					 * 
+					 *
 					 */
 					this.emit('error', error);
 				});
@@ -137414,7 +137413,7 @@ var holonet = (function (exports) {
 		 * @param {Object} error - Error event Object
 		 *
 		 * @returns {undefined}
-		 * @emits MultiVP#error 
+		 * @emits MultiVP#error
 		 *
 		 * @private
 		 */
@@ -137424,7 +137423,7 @@ var holonet = (function (exports) {
 			 *
 			 * @event MultiVP#error
 			 * @type {Error}
-			 * 
+			 *
 			 */
 			this.emit('error', error);
 		}
@@ -137474,7 +137473,7 @@ var holonet = (function (exports) {
 			this.config.peer.initiator = initiator;
 			this.config.peer.channelName = this.config.channelName;
 			this.config.peer.stream = stream;
-			
+
 			const peer = new simplePeer(this.config.peer);
 
 			peer.id = id;
@@ -137491,9 +137490,11 @@ var holonet = (function (exports) {
 		}
 
 		_peerStream(stream) {
-			for (const track of stream.getTracks()) {
-				this.multiVP.audioEl.srcObject.addTrack(track);
-			}
+			this.audioEl = document.createElement('audio');
+			this.audioEl.autoplay = true;
+			this.audioEl.srcObject = stream;
+			document.body.appendChild(this.audioEl);
+			this.audioEl.play();
 		}
 
 		/**
@@ -137520,7 +137521,7 @@ var holonet = (function (exports) {
 		 * @param {Object} error - Event object for an error handler
 		 *
 		 * @returns {undefined}
-		 * @emits MultiVP#error 
+		 * @emits MultiVP#error
 		 *
 		 * @private
 		 */
@@ -137531,7 +137532,7 @@ var holonet = (function (exports) {
 			 * @event MultiVP#error
 			 * @type {Error}
 			 * @property {string} code - SimplePeer error code
-			 * 
+			 *
 			 */
 			this.multiVP.emit('error', error);
 		}
@@ -137594,6 +137595,7 @@ var holonet = (function (exports) {
 		_peerClose() {
 			console.log(`peer ${this.id} closing`);
 			delete this.multiVP.remotePeers[this.id];
+			document.removeChild(this.audioEl);
 			if (this.multiVP.meshes[this.id]) {
 				this.multiVP.emit('remove', {
 					mesh: this.multiVP.meshes[this.id].mesh
@@ -137741,11 +137743,15 @@ var holonet = (function (exports) {
 		 * Constructs a VP instance and sets its properties
 		 *
 		 * @param {object} config - Configuration parameters for different elements
+		 * @param {boolean} signIn - Whether Holonet should attempt to sign in on init
+		 *
+		 * @returns {undefined}
 		*/
-		constructor(config = {}) {
+		constructor(config = { signIn: true }) {
 			// Initializes EventEmitter
 			Object.setPrototypeOf(this.__proto__, new eventemitter3());
 
+			this.config = config;
 			this._feetPosition = new Vector3();
 
 			// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
@@ -137788,7 +137794,7 @@ var holonet = (function (exports) {
 		init() {
 			return this.loadMesh(this.identity.avatarPath, true)
 				.then(() => {
-					if (!this.identity.signedIn) {
+					if (this.config.signIn && !this.identity.signedIn) {
 						return this.signIn();
 					} else {
 						return Promise.resolve();
@@ -137902,9 +137908,9 @@ var holonet = (function (exports) {
 		/**
 		 * Adjusts the floor height depending on the position
 		 *
-		 * @returns {undefined}
+		 * @param {Holonet.Scene} scene - Provide scene to adjust the floor height with respect to it
 		 *
-		 * @private
+		 * @returns {undefined}
 		 */
 		setFloorHeight(scene) {
 			this._feetPosition.copy(scene.camera.position);
@@ -138402,6 +138408,9 @@ var holonet = (function (exports) {
 
 	};
 
+	// TODO: Remove this hack to make THREE a global before three-bmfont-text is executed
+	Object.assign(window.THREE = {}, THREE$1);
+
 	/** Class for the scene that will */
 	class Scene$1 {
 
@@ -138489,10 +138498,15 @@ var holonet = (function (exports) {
 
 					this._setupMeshes(loadedScene);
 					this.scene = loadedScene;
+					if (this._meshesToAdd) {
+						for (const mesh of this._meshesToAdd) {
+							this.scene.add(mesh);
+						}
+					}
 					this.animate();
 
 					return Promise.resolve();
-				}, console.warn);
+				}, (error) => Promise.reject(error));
 		}
 
 		/**
@@ -138513,6 +138527,17 @@ var holonet = (function (exports) {
 				if (mesh.isObject3D && !mesh.isLight) {
 					this._setupMeshes(mesh, collidable, shadow);
 				}
+
+				if (!this.scene) {
+					if (this._meshesToAdd) {
+						this._meshesToAdd.push(mesh); 
+					} else {
+						this._meshesToAdd = [mesh];
+					}
+
+					return;
+				}
+
 				this.scene.add(mesh);
 			}
 		}
@@ -138613,7 +138638,2195 @@ var holonet = (function (exports) {
 		}
 	}
 
-	Object.assign(window.THREE = {}, THREE);
+	var win;
+
+	if (typeof window !== "undefined") {
+	    win = window;
+	} else if (typeof global$1 !== "undefined") {
+	    win = global$1;
+	} else if (typeof self !== "undefined"){
+	    win = self;
+	} else {
+	    win = {};
+	}
+
+	var window_1 = win;
+
+	var isFunction_1 = isFunction$1;
+
+	var toString$1 = Object.prototype.toString;
+
+	function isFunction$1 (fn) {
+	  var string = toString$1.call(fn);
+	  return string === '[object Function]' ||
+	    (typeof fn === 'function' && string !== '[object RegExp]') ||
+	    (typeof window !== 'undefined' &&
+	     // IE8 and below
+	     (fn === window.setTimeout ||
+	      fn === window.alert ||
+	      fn === window.confirm ||
+	      fn === window.prompt))
+	}
+
+	var trim_1 = createCommonjsModule(function (module, exports) {
+	exports = module.exports = trim;
+
+	function trim(str){
+	  return str.replace(/^\s*|\s*$/g, '');
+	}
+
+	exports.left = function(str){
+	  return str.replace(/^\s*/, '');
+	};
+
+	exports.right = function(str){
+	  return str.replace(/\s*$/, '');
+	};
+	});
+	var trim_2 = trim_1.left;
+	var trim_3 = trim_1.right;
+
+	var forEach_1 = forEach$1;
+
+	var toString$2 = Object.prototype.toString;
+	var hasOwnProperty$1 = Object.prototype.hasOwnProperty;
+
+	function forEach$1(list, iterator, context) {
+	    if (!isFunction_1(iterator)) {
+	        throw new TypeError('iterator must be a function')
+	    }
+
+	    if (arguments.length < 3) {
+	        context = this;
+	    }
+	    
+	    if (toString$2.call(list) === '[object Array]')
+	        forEachArray(list, iterator, context);
+	    else if (typeof list === 'string')
+	        forEachString(list, iterator, context);
+	    else
+	        forEachObject(list, iterator, context);
+	}
+
+	function forEachArray(array, iterator, context) {
+	    for (var i = 0, len = array.length; i < len; i++) {
+	        if (hasOwnProperty$1.call(array, i)) {
+	            iterator.call(context, array[i], i, array);
+	        }
+	    }
+	}
+
+	function forEachString(string, iterator, context) {
+	    for (var i = 0, len = string.length; i < len; i++) {
+	        // no such thing as a sparse string.
+	        iterator.call(context, string.charAt(i), i, string);
+	    }
+	}
+
+	function forEachObject(object, iterator, context) {
+	    for (var k in object) {
+	        if (hasOwnProperty$1.call(object, k)) {
+	            iterator.call(context, object[k], k, object);
+	        }
+	    }
+	}
+
+	var isArray$2 = function(arg) {
+	      return Object.prototype.toString.call(arg) === '[object Array]';
+	    };
+
+	var parseHeaders = function (headers) {
+	  if (!headers)
+	    return {}
+
+	  var result = {};
+
+	  forEach_1(
+	      trim_1(headers).split('\n')
+	    , function (row) {
+	        var index = row.indexOf(':')
+	          , key = trim_1(row.slice(0, index)).toLowerCase()
+	          , value = trim_1(row.slice(index + 1));
+
+	        if (typeof(result[key]) === 'undefined') {
+	          result[key] = value;
+	        } else if (isArray$2(result[key])) {
+	          result[key].push(value);
+	        } else {
+	          result[key] = [ result[key], value ];
+	        }
+	      }
+	  );
+
+	  return result
+	};
+
+	var immutable = extend;
+
+	var hasOwnProperty$2 = Object.prototype.hasOwnProperty;
+
+	function extend() {
+	    var target = {};
+
+	    for (var i = 0; i < arguments.length; i++) {
+	        var source = arguments[i];
+
+	        for (var key in source) {
+	            if (hasOwnProperty$2.call(source, key)) {
+	                target[key] = source[key];
+	            }
+	        }
+	    }
+
+	    return target
+	}
+
+	var xhr = createXHR;
+	createXHR.XMLHttpRequest = window_1.XMLHttpRequest || noop$2;
+	createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window_1.XDomainRequest;
+
+	forEachArray$1(["get", "put", "post", "patch", "head", "delete"], function(method) {
+	    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
+	        options = initParams(uri, options, callback);
+	        options.method = method.toUpperCase();
+	        return _createXHR(options)
+	    };
+	});
+
+	function forEachArray$1(array, iterator) {
+	    for (var i = 0; i < array.length; i++) {
+	        iterator(array[i]);
+	    }
+	}
+
+	function isEmpty(obj){
+	    for(var i in obj){
+	        if(obj.hasOwnProperty(i)) return false
+	    }
+	    return true
+	}
+
+	function initParams(uri, options, callback) {
+	    var params = uri;
+
+	    if (isFunction_1(options)) {
+	        callback = options;
+	        if (typeof uri === "string") {
+	            params = {uri:uri};
+	        }
+	    } else {
+	        params = immutable(options, {uri: uri});
+	    }
+
+	    params.callback = callback;
+	    return params
+	}
+
+	function createXHR(uri, options, callback) {
+	    options = initParams(uri, options, callback);
+	    return _createXHR(options)
+	}
+
+	function _createXHR(options) {
+	    if(typeof options.callback === "undefined"){
+	        throw new Error("callback argument missing")
+	    }
+
+	    var called = false;
+	    var callback = function cbOnce(err, response, body){
+	        if(!called){
+	            called = true;
+	            options.callback(err, response, body);
+	        }
+	    };
+
+	    function readystatechange() {
+	        if (xhr.readyState === 4) {
+	            setTimeout(loadFunc, 0);
+	        }
+	    }
+
+	    function getBody() {
+	        // Chrome with requestType=blob throws errors arround when even testing access to responseText
+	        var body = undefined;
+
+	        if (xhr.response) {
+	            body = xhr.response;
+	        } else {
+	            body = xhr.responseText || getXml(xhr);
+	        }
+
+	        if (isJson) {
+	            try {
+	                body = JSON.parse(body);
+	            } catch (e) {}
+	        }
+
+	        return body
+	    }
+
+	    function errorFunc(evt) {
+	        clearTimeout(timeoutTimer);
+	        if(!(evt instanceof Error)){
+	            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") );
+	        }
+	        evt.statusCode = 0;
+	        return callback(evt, failureResponse)
+	    }
+
+	    // will load the data & process the response in a special response object
+	    function loadFunc() {
+	        if (aborted) return
+	        var status;
+	        clearTimeout(timeoutTimer);
+	        if(options.useXDR && xhr.status===undefined) {
+	            //IE8 CORS GET successful response doesn't have a status field, but body is fine
+	            status = 200;
+	        } else {
+	            status = (xhr.status === 1223 ? 204 : xhr.status);
+	        }
+	        var response = failureResponse;
+	        var err = null;
+
+	        if (status !== 0){
+	            response = {
+	                body: getBody(),
+	                statusCode: status,
+	                method: method,
+	                headers: {},
+	                url: uri,
+	                rawRequest: xhr
+	            };
+	            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
+	                response.headers = parseHeaders(xhr.getAllResponseHeaders());
+	            }
+	        } else {
+	            err = new Error("Internal XMLHttpRequest Error");
+	        }
+	        return callback(err, response, response.body)
+	    }
+
+	    var xhr = options.xhr || null;
+
+	    if (!xhr) {
+	        if (options.cors || options.useXDR) {
+	            xhr = new createXHR.XDomainRequest();
+	        }else{
+	            xhr = new createXHR.XMLHttpRequest();
+	        }
+	    }
+
+	    var key;
+	    var aborted;
+	    var uri = xhr.url = options.uri || options.url;
+	    var method = xhr.method = options.method || "GET";
+	    var body = options.body || options.data;
+	    var headers = xhr.headers = options.headers || {};
+	    var sync = !!options.sync;
+	    var isJson = false;
+	    var timeoutTimer;
+	    var failureResponse = {
+	        body: undefined,
+	        headers: {},
+	        statusCode: 0,
+	        method: method,
+	        url: uri,
+	        rawRequest: xhr
+	    };
+
+	    if ("json" in options && options.json !== false) {
+	        isJson = true;
+	        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json"); //Don't override existing accept header declared by user
+	        if (method !== "GET" && method !== "HEAD") {
+	            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json"); //Don't override existing accept header declared by user
+	            body = JSON.stringify(options.json === true ? body : options.json);
+	        }
+	    }
+
+	    xhr.onreadystatechange = readystatechange;
+	    xhr.onload = loadFunc;
+	    xhr.onerror = errorFunc;
+	    // IE9 must have onprogress be set to a unique function.
+	    xhr.onprogress = function () {
+	        // IE must die
+	    };
+	    xhr.onabort = function(){
+	        aborted = true;
+	    };
+	    xhr.ontimeout = errorFunc;
+	    xhr.open(method, uri, !sync, options.username, options.password);
+	    //has to be after open
+	    if(!sync) {
+	        xhr.withCredentials = !!options.withCredentials;
+	    }
+	    // Cannot set timeout with sync request
+	    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
+	    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
+	    if (!sync && options.timeout > 0 ) {
+	        timeoutTimer = setTimeout(function(){
+	            if (aborted) return
+	            aborted = true;//IE9 may still call readystatechange
+	            xhr.abort("timeout");
+	            var e = new Error("XMLHttpRequest timeout");
+	            e.code = "ETIMEDOUT";
+	            errorFunc(e);
+	        }, options.timeout );
+	    }
+
+	    if (xhr.setRequestHeader) {
+	        for(key in headers){
+	            if(headers.hasOwnProperty(key)){
+	                xhr.setRequestHeader(key, headers[key]);
+	            }
+	        }
+	    } else if (options.headers && !isEmpty(options.headers)) {
+	        throw new Error("Headers cannot be set on an XDomainRequest object")
+	    }
+
+	    if ("responseType" in options) {
+	        xhr.responseType = options.responseType;
+	    }
+
+	    if ("beforeSend" in options &&
+	        typeof options.beforeSend === "function"
+	    ) {
+	        options.beforeSend(xhr);
+	    }
+
+	    // Microsoft Edge browser sends "undefined" when send is called with undefined value.
+	    // XMLHttpRequest spec says to pass null as body to indicate no body
+	    // See https://github.com/naugtur/xhr/issues/100.
+	    xhr.send(body || null);
+
+	    return xhr
+
+
+	}
+
+	function getXml(xhr) {
+	    // xhr.responseXML will throw Exception "InvalidStateError" or "DOMException"
+	    // See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseXML.
+	    try {
+	        if (xhr.responseType === "document") {
+	            return xhr.responseXML
+	        }
+	        var firefoxBugTakenEffect = xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror";
+	        if (xhr.responseType === "" && !firefoxBugTakenEffect) {
+	            return xhr.responseXML
+	        }
+	    } catch (e) {}
+
+	    return null
+	}
+
+	function noop$2() {}
+
+	var parseBmfontAscii = function parseBMFontAscii(data) {
+	  if (!data)
+	    throw new Error('no data provided')
+	  data = data.toString().trim();
+
+	  var output = {
+	    pages: [],
+	    chars: [],
+	    kernings: []
+	  };
+
+	  var lines = data.split(/\r\n?|\n/g);
+
+	  if (lines.length === 0)
+	    throw new Error('no data in BMFont file')
+
+	  for (var i = 0; i < lines.length; i++) {
+	    var lineData = splitLine(lines[i], i);
+	    if (!lineData) //skip empty lines
+	      continue
+
+	    if (lineData.key === 'page') {
+	      if (typeof lineData.data.id !== 'number')
+	        throw new Error('malformed file at line ' + i + ' -- needs page id=N')
+	      if (typeof lineData.data.file !== 'string')
+	        throw new Error('malformed file at line ' + i + ' -- needs page file="path"')
+	      output.pages[lineData.data.id] = lineData.data.file;
+	    } else if (lineData.key === 'chars' || lineData.key === 'kernings') ; else if (lineData.key === 'char') {
+	      output.chars.push(lineData.data);
+	    } else if (lineData.key === 'kerning') {
+	      output.kernings.push(lineData.data);
+	    } else {
+	      output[lineData.key] = lineData.data;
+	    }
+	  }
+
+	  return output
+	};
+
+	function splitLine(line, idx) {
+	  line = line.replace(/\t+/g, ' ').trim();
+	  if (!line)
+	    return null
+
+	  var space = line.indexOf(' ');
+	  if (space === -1) 
+	    throw new Error("no named row at line " + idx)
+
+	  var key = line.substring(0, space);
+
+	  line = line.substring(space + 1);
+	  //clear "letter" field as it is non-standard and
+	  //requires additional complexity to parse " / = symbols
+	  line = line.replace(/letter=[\'\"]\S+[\'\"]/gi, '');  
+	  line = line.split("=");
+	  line = line.map(function(str) {
+	    return str.trim().match((/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g))
+	  });
+
+	  var data = [];
+	  for (var i = 0; i < line.length; i++) {
+	    var dt = line[i];
+	    if (i === 0) {
+	      data.push({
+	        key: dt[0],
+	        data: ""
+	      });
+	    } else if (i === line.length - 1) {
+	      data[data.length - 1].data = parseData(dt[0]);
+	    } else {
+	      data[data.length - 1].data = parseData(dt[0]);
+	      data.push({
+	        key: dt[1],
+	        data: ""
+	      });
+	    }
+	  }
+
+	  var out = {
+	    key: key,
+	    data: {}
+	  };
+
+	  data.forEach(function(v) {
+	    out.data[v.key] = v.data;
+	  });
+
+	  return out
+	}
+
+	function parseData(data) {
+	  if (!data || data.length === 0)
+	    return ""
+
+	  if (data.indexOf('"') === 0 || data.indexOf("'") === 0)
+	    return data.substring(1, data.length - 1)
+	  if (data.indexOf(',') !== -1)
+	    return parseIntList(data)
+	  return parseInt(data, 10)
+	}
+
+	function parseIntList(data) {
+	  return data.split(',').map(function(val) {
+	    return parseInt(val, 10)
+	  })
+	}
+
+	//Some versions of GlyphDesigner have a typo
+	//that causes some bugs with parsing. 
+	//Need to confirm with recent version of the software
+	//to see whether this is still an issue or not.
+	var GLYPH_DESIGNER_ERROR = 'chasrset';
+
+	var parseAttribs = function parseAttributes(obj) {
+	  if (GLYPH_DESIGNER_ERROR in obj) {
+	    obj['charset'] = obj[GLYPH_DESIGNER_ERROR];
+	    delete obj[GLYPH_DESIGNER_ERROR];
+	  }
+
+	  for (var k in obj) {
+	    if (k === 'face' || k === 'charset') 
+	      continue
+	    else if (k === 'padding' || k === 'spacing')
+	      obj[k] = parseIntList$1(obj[k]);
+	    else
+	      obj[k] = parseInt(obj[k], 10); 
+	  }
+	  return obj
+	};
+
+	function parseIntList$1(data) {
+	  return data.split(',').map(function(val) {
+	    return parseInt(val, 10)
+	  })
+	}
+
+	var xmlParseFromString = (function xmlparser() {
+	  //common browsers
+	  if (typeof self.DOMParser !== 'undefined') {
+	    return function(str) {
+	      var parser = new self.DOMParser();
+	      return parser.parseFromString(str, 'application/xml')
+	    }
+	  } 
+
+	  //IE8 fallback
+	  if (typeof self.ActiveXObject !== 'undefined'
+	      && new self.ActiveXObject('Microsoft.XMLDOM')) {
+	    return function(str) {
+	      var xmlDoc = new self.ActiveXObject("Microsoft.XMLDOM");
+	      xmlDoc.async = "false";
+	      xmlDoc.loadXML(str);
+	      return xmlDoc
+	    }
+	  }
+
+	  //last resort fallback
+	  return function(str) {
+	    var div = document.createElement('div');
+	    div.innerHTML = str;
+	    return div
+	  }
+	})();
+
+	//In some cases element.attribute.nodeName can return
+	//all lowercase values.. so we need to map them to the correct 
+	//case
+	var NAME_MAP = {
+	  scaleh: 'scaleH',
+	  scalew: 'scaleW',
+	  stretchh: 'stretchH',
+	  lineheight: 'lineHeight',
+	  alphachnl: 'alphaChnl',
+	  redchnl: 'redChnl',
+	  greenchnl: 'greenChnl',
+	  bluechnl: 'blueChnl'
+	};
+
+	var browser$3 = function parse(data) {
+	  data = data.toString();
+	  
+	  var xmlRoot = xmlParseFromString(data);
+	  var output = {
+	    pages: [],
+	    chars: [],
+	    kernings: []
+	  }
+
+	  //get config settings
+	  ;['info', 'common'].forEach(function(key) {
+	    var element = xmlRoot.getElementsByTagName(key)[0];
+	    if (element)
+	      output[key] = parseAttribs(getAttribs(element));
+	  });
+
+	  //get page info
+	  var pageRoot = xmlRoot.getElementsByTagName('pages')[0];
+	  if (!pageRoot)
+	    throw new Error('malformed file -- no <pages> element')
+	  var pages = pageRoot.getElementsByTagName('page');
+	  for (var i=0; i<pages.length; i++) {
+	    var p = pages[i];
+	    var id = parseInt(p.getAttribute('id'), 10);
+	    var file = p.getAttribute('file');
+	    if (isNaN(id))
+	      throw new Error('malformed file -- page "id" attribute is NaN')
+	    if (!file)
+	      throw new Error('malformed file -- needs page "file" attribute')
+	    output.pages[parseInt(id, 10)] = file;
+	  }
+	['chars', 'kernings'].forEach(function(key) {
+	    var element = xmlRoot.getElementsByTagName(key)[0];
+	    if (!element)
+	      return
+	    var childTag = key.substring(0, key.length-1);
+	    var children = element.getElementsByTagName(childTag);
+	    for (var i=0; i<children.length; i++) {      
+	      var child = children[i];
+	      output[key].push(parseAttribs(getAttribs(child)));
+	    }
+	  });
+	  return output
+	};
+
+	function getAttribs(element) {
+	  var attribs = getAttribList(element);
+	  return attribs.reduce(function(dict, attrib) {
+	    var key = mapName(attrib.nodeName);
+	    dict[key] = attrib.nodeValue;
+	    return dict
+	  }, {})
+	}
+
+	function getAttribList(element) {
+	  //IE8+ and modern browsers
+	  var attribs = [];
+	  for (var i=0; i<element.attributes.length; i++)
+	    attribs.push(element.attributes[i]);
+	  return attribs
+	}
+
+	function mapName(nodeName) {
+	  return NAME_MAP[nodeName.toLowerCase()] || nodeName
+	}
+
+	var HEADER = [66, 77, 70];
+
+	var parseBmfontBinary = function readBMFontBinary(buf) {
+	  if (buf.length < 6)
+	    throw new Error('invalid buffer length for BMFont')
+
+	  var header = HEADER.every(function(byte, i) {
+	    return buf.readUInt8(i) === byte
+	  });
+
+	  if (!header)
+	    throw new Error('BMFont missing BMF byte header')
+
+	  var i = 3;
+	  var vers = buf.readUInt8(i++);
+	  if (vers > 3)
+	    throw new Error('Only supports BMFont Binary v3 (BMFont App v1.10)')
+	  
+	  var target = { kernings: [], chars: [] };
+	  for (var b=0; b<5; b++)
+	    i += readBlock(target, buf, i);
+	  return target
+	};
+
+	function readBlock(target, buf, i) {
+	  if (i > buf.length-1)
+	    return 0
+
+	  var blockID = buf.readUInt8(i++);
+	  var blockSize = buf.readInt32LE(i);
+	  i += 4;
+
+	  switch(blockID) {
+	    case 1: 
+	      target.info = readInfo(buf, i);
+	      break
+	    case 2:
+	      target.common = readCommon(buf, i);
+	      break
+	    case 3:
+	      target.pages = readPages(buf, i, blockSize);
+	      break
+	    case 4:
+	      target.chars = readChars(buf, i, blockSize);
+	      break
+	    case 5:
+	      target.kernings = readKernings(buf, i, blockSize);
+	      break
+	  }
+	  return 5 + blockSize
+	}
+
+	function readInfo(buf, i) {
+	  var info = {};
+	  info.size = buf.readInt16LE(i);
+
+	  var bitField = buf.readUInt8(i+2);
+	  info.smooth = (bitField >> 7) & 1;
+	  info.unicode = (bitField >> 6) & 1;
+	  info.italic = (bitField >> 5) & 1;
+	  info.bold = (bitField >> 4) & 1;
+	  
+	  //fixedHeight is only mentioned in binary spec 
+	  if ((bitField >> 3) & 1)
+	    info.fixedHeight = 1;
+	  
+	  info.charset = buf.readUInt8(i+3) || '';
+	  info.stretchH = buf.readUInt16LE(i+4);
+	  info.aa = buf.readUInt8(i+6);
+	  info.padding = [
+	    buf.readInt8(i+7),
+	    buf.readInt8(i+8),
+	    buf.readInt8(i+9),
+	    buf.readInt8(i+10)
+	  ];
+	  info.spacing = [
+	    buf.readInt8(i+11),
+	    buf.readInt8(i+12)
+	  ];
+	  info.outline = buf.readUInt8(i+13);
+	  info.face = readStringNT(buf, i+14);
+	  return info
+	}
+
+	function readCommon(buf, i) {
+	  var common = {};
+	  common.lineHeight = buf.readUInt16LE(i);
+	  common.base = buf.readUInt16LE(i+2);
+	  common.scaleW = buf.readUInt16LE(i+4);
+	  common.scaleH = buf.readUInt16LE(i+6);
+	  common.pages = buf.readUInt16LE(i+8);
+	  var bitField = buf.readUInt8(i+10);
+	  common.packed = 0;
+	  common.alphaChnl = buf.readUInt8(i+11);
+	  common.redChnl = buf.readUInt8(i+12);
+	  common.greenChnl = buf.readUInt8(i+13);
+	  common.blueChnl = buf.readUInt8(i+14);
+	  return common
+	}
+
+	function readPages(buf, i, size) {
+	  var pages = [];
+	  var text = readNameNT(buf, i);
+	  var len = text.length+1;
+	  var count = size / len;
+	  for (var c=0; c<count; c++) {
+	    pages[c] = buf.slice(i, i+text.length).toString('utf8');
+	    i += len;
+	  }
+	  return pages
+	}
+
+	function readChars(buf, i, blockSize) {
+	  var chars = [];
+
+	  var count = blockSize / 20;
+	  for (var c=0; c<count; c++) {
+	    var char = {};
+	    var off = c*20;
+	    char.id = buf.readUInt32LE(i + 0 + off);
+	    char.x = buf.readUInt16LE(i + 4 + off);
+	    char.y = buf.readUInt16LE(i + 6 + off);
+	    char.width = buf.readUInt16LE(i + 8 + off);
+	    char.height = buf.readUInt16LE(i + 10 + off);
+	    char.xoffset = buf.readInt16LE(i + 12 + off);
+	    char.yoffset = buf.readInt16LE(i + 14 + off);
+	    char.xadvance = buf.readInt16LE(i + 16 + off);
+	    char.page = buf.readUInt8(i + 18 + off);
+	    char.chnl = buf.readUInt8(i + 19 + off);
+	    chars[c] = char;
+	  }
+	  return chars
+	}
+
+	function readKernings(buf, i, blockSize) {
+	  var kernings = [];
+	  var count = blockSize / 10;
+	  for (var c=0; c<count; c++) {
+	    var kern = {};
+	    var off = c*10;
+	    kern.first = buf.readUInt32LE(i + 0 + off);
+	    kern.second = buf.readUInt32LE(i + 4 + off);
+	    kern.amount = buf.readInt16LE(i + 8 + off);
+	    kernings[c] = kern;
+	  }
+	  return kernings
+	}
+
+	function readNameNT(buf, offset) {
+	  var pos=offset;
+	  for (; pos<buf.length; pos++) {
+	    if (buf[pos] === 0x00) 
+	      break
+	  }
+	  return buf.slice(offset, pos)
+	}
+
+	function readStringNT(buf, offset) {
+	  return readNameNT(buf, offset).toString('utf8')
+	}
+
+	var Buffer$1 = buffer.Buffer; // for use with browserify
+
+	var bufferEqual = function (a, b) {
+	    if (!Buffer$1.isBuffer(a)) return undefined;
+	    if (!Buffer$1.isBuffer(b)) return undefined;
+	    if (typeof a.equals === 'function') return a.equals(b);
+	    if (a.length !== b.length) return false;
+	    
+	    for (var i = 0; i < a.length; i++) {
+	        if (a[i] !== b[i]) return false;
+	    }
+	    
+	    return true;
+	};
+
+	var HEADER$1 = new Buffer([66, 77, 70, 3]);
+
+	var isBinary = function(buf) {
+	  if (typeof buf === 'string')
+	    return buf.substring(0, 3) === 'BMF'
+	  return buf.length > 4 && bufferEqual(buf.slice(0, 4), HEADER$1)
+	};
+
+	var noop$3 = function(){};
+
+
+
+
+
+
+	var xml2 = (function hasXML2() {
+	  return self.XMLHttpRequest && "withCredentials" in new XMLHttpRequest
+	})();
+
+	var browser$4 = function(opt, cb) {
+	  cb = typeof cb === 'function' ? cb : noop$3;
+
+	  if (typeof opt === 'string')
+	    opt = { uri: opt };
+	  else if (!opt)
+	    opt = {};
+
+	  var expectBinary = opt.binary;
+	  if (expectBinary)
+	    opt = getBinaryOpts(opt);
+
+	  xhr(opt, function(err, res, body) {
+	    if (err)
+	      return cb(err)
+	    if (!/^2/.test(res.statusCode))
+	      return cb(new Error('http status code: '+res.statusCode))
+	    if (!body)
+	      return cb(new Error('no body result'))
+
+	    var binary = false; 
+
+	    //if the response type is an array buffer,
+	    //we need to convert it into a regular Buffer object
+	    if (isArrayBuffer(body)) {
+	      var array = new Uint8Array(body);
+	      body = new Buffer(array, 'binary');
+	    }
+
+	    //now check the string/Buffer response
+	    //and see if it has a binary BMF header
+	    if (isBinary(body)) {
+	      binary = true;
+	      //if we have a string, turn it into a Buffer
+	      if (typeof body === 'string') 
+	        body = new Buffer(body, 'binary');
+	    } 
+
+	    //we are not parsing a binary format, just ASCII/XML/etc
+	    if (!binary) {
+	      //might still be a buffer if responseType is 'arraybuffer'
+	      if (isBuffer(body))
+	        body = body.toString(opt.encoding);
+	      body = body.trim();
+	    }
+
+	    var result;
+	    try {
+	      var type = res.headers['content-type'];
+	      if (binary)
+	        result = parseBmfontBinary(body);
+	      else if (/json/.test(type) || body.charAt(0) === '{')
+	        result = JSON.parse(body);
+	      else if (/xml/.test(type)  || body.charAt(0) === '<')
+	        result = browser$3(body);
+	      else
+	        result = parseBmfontAscii(body);
+	    } catch (e) {
+	      cb(new Error('error parsing font '+e.message));
+	      cb = noop$3;
+	    }
+	    cb(null, result);
+	  });
+	};
+
+	function isArrayBuffer(arr) {
+	  var str = Object.prototype.toString;
+	  return str.call(arr) === '[object ArrayBuffer]'
+	}
+
+	function getBinaryOpts(opt) {
+	  //IE10+ and other modern browsers support array buffers
+	  if (xml2)
+	    return immutable(opt, { responseType: 'arraybuffer' })
+	  
+	  if (typeof self.XMLHttpRequest === 'undefined')
+	    throw new Error('your browser does not support XHR loading')
+
+	  //IE9 and XML1 browsers could still use an override
+	  var req = new self.XMLHttpRequest();
+	  req.overrideMimeType('text/plain; charset=x-user-defined');
+	  return immutable({
+	    xhr: req
+	  }, opt)
+	}
+
+	var wordWrapper = createCommonjsModule(function (module) {
+	var newline = /\n/;
+	var newlineChar = '\n';
+	var whitespace = /\s/;
+
+	module.exports = function(text, opt) {
+	    var lines = module.exports.lines(text, opt);
+	    return lines.map(function(line) {
+	        return text.substring(line.start, line.end)
+	    }).join('\n')
+	};
+
+	module.exports.lines = function wordwrap(text, opt) {
+	    opt = opt||{};
+
+	    //zero width results in nothing visible
+	    if (opt.width === 0 && opt.mode !== 'nowrap') 
+	        return []
+
+	    text = text||'';
+	    var width = typeof opt.width === 'number' ? opt.width : Number.MAX_VALUE;
+	    var start = Math.max(0, opt.start||0);
+	    var end = typeof opt.end === 'number' ? opt.end : text.length;
+	    var mode = opt.mode;
+
+	    var measure = opt.measure || monospace;
+	    if (mode === 'pre')
+	        return pre(measure, text, start, end, width)
+	    else
+	        return greedy(measure, text, start, end, width, mode)
+	};
+
+	function idxOf(text, chr, start, end) {
+	    var idx = text.indexOf(chr, start);
+	    if (idx === -1 || idx > end)
+	        return end
+	    return idx
+	}
+
+	function isWhitespace(chr) {
+	    return whitespace.test(chr)
+	}
+
+	function pre(measure, text, start, end, width) {
+	    var lines = [];
+	    var lineStart = start;
+	    for (var i=start; i<end && i<text.length; i++) {
+	        var chr = text.charAt(i);
+	        var isNewline = newline.test(chr);
+
+	        //If we've reached a newline, then step down a line
+	        //Or if we've reached the EOF
+	        if (isNewline || i===end-1) {
+	            var lineEnd = isNewline ? i : i+1;
+	            var measured = measure(text, lineStart, lineEnd, width);
+	            lines.push(measured);
+	            
+	            lineStart = i+1;
+	        }
+	    }
+	    return lines
+	}
+
+	function greedy(measure, text, start, end, width, mode) {
+	    //A greedy word wrapper based on LibGDX algorithm
+	    //https://github.com/libgdx/libgdx/blob/master/gdx/src/com/badlogic/gdx/graphics/g2d/BitmapFontCache.java
+	    var lines = [];
+
+	    var testWidth = width;
+	    //if 'nowrap' is specified, we only wrap on newline chars
+	    if (mode === 'nowrap')
+	        testWidth = Number.MAX_VALUE;
+
+	    while (start < end && start < text.length) {
+	        //get next newline position
+	        var newLine = idxOf(text, newlineChar, start, end);
+
+	        //eat whitespace at start of line
+	        while (start < newLine) {
+	            if (!isWhitespace( text.charAt(start) ))
+	                break
+	            start++;
+	        }
+
+	        //determine visible # of glyphs for the available width
+	        var measured = measure(text, start, newLine, testWidth);
+
+	        var lineEnd = start + (measured.end-measured.start);
+	        var nextStart = lineEnd + newlineChar.length;
+
+	        //if we had to cut the line before the next newline...
+	        if (lineEnd < newLine) {
+	            //find char to break on
+	            while (lineEnd > start) {
+	                if (isWhitespace(text.charAt(lineEnd)))
+	                    break
+	                lineEnd--;
+	            }
+	            if (lineEnd === start) {
+	                if (nextStart > start + newlineChar.length) nextStart--;
+	                lineEnd = nextStart; // If no characters to break, show all.
+	            } else {
+	                nextStart = lineEnd;
+	                //eat whitespace at end of line
+	                while (lineEnd > start) {
+	                    if (!isWhitespace(text.charAt(lineEnd - newlineChar.length)))
+	                        break
+	                    lineEnd--;
+	                }
+	            }
+	        }
+	        if (lineEnd >= start) {
+	            var result = measure(text, start, lineEnd, testWidth);
+	            lines.push(result);
+	        }
+	        start = nextStart;
+	    }
+	    return lines
+	}
+
+	//determines the visible number of glyphs within a given width
+	function monospace(text, start, end, width) {
+	    var glyphs = Math.min(width, end-start);
+	    return {
+	        start: start,
+	        end: start+glyphs
+	    }
+	}
+	});
+	var wordWrapper_1 = wordWrapper.lines;
+
+	var asNumber = function numtype(num, def) {
+		return typeof num === 'number'
+			? num 
+			: (typeof def === 'number' ? def : 0)
+	};
+
+	var X_HEIGHTS = ['x', 'e', 'a', 'o', 'n', 's', 'r', 'c', 'u', 'm', 'v', 'w', 'z'];
+	var M_WIDTHS = ['m', 'w'];
+	var CAP_HEIGHTS = ['H', 'I', 'N', 'E', 'F', 'K', 'L', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+
+
+	var TAB_ID = '\t'.charCodeAt(0);
+	var SPACE_ID = ' '.charCodeAt(0);
+	var ALIGN_LEFT = 0, 
+	    ALIGN_CENTER = 1, 
+	    ALIGN_RIGHT = 2;
+
+	var layoutBmfontText = function createLayout(opt) {
+	  return new TextLayout(opt)
+	};
+
+	function TextLayout(opt) {
+	  this.glyphs = [];
+	  this._measure = this.computeMetrics.bind(this);
+	  this.update(opt);
+	}
+
+	TextLayout.prototype.update = function(opt) {
+	  opt = immutable({
+	    measure: this._measure
+	  }, opt);
+	  this._opt = opt;
+	  this._opt.tabSize = asNumber(this._opt.tabSize, 4);
+
+	  if (!opt.font)
+	    throw new Error('must provide a valid bitmap font')
+
+	  var glyphs = this.glyphs;
+	  var text = opt.text||''; 
+	  var font = opt.font;
+	  this._setupSpaceGlyphs(font);
+	  
+	  var lines = wordWrapper.lines(text, opt);
+	  var minWidth = opt.width || 0;
+
+	  //clear glyphs
+	  glyphs.length = 0;
+
+	  //get max line width
+	  var maxLineWidth = lines.reduce(function(prev, line) {
+	    return Math.max(prev, line.width, minWidth)
+	  }, 0);
+
+	  //the pen position
+	  var x = 0;
+	  var y = 0;
+	  var lineHeight = asNumber(opt.lineHeight, font.common.lineHeight);
+	  var baseline = font.common.base;
+	  var descender = lineHeight-baseline;
+	  var letterSpacing = opt.letterSpacing || 0;
+	  var height = lineHeight * lines.length - descender;
+	  var align = getAlignType(this._opt.align);
+
+	  //draw text along baseline
+	  y -= height;
+	  
+	  //the metrics for this text layout
+	  this._width = maxLineWidth;
+	  this._height = height;
+	  this._descender = lineHeight - baseline;
+	  this._baseline = baseline;
+	  this._xHeight = getXHeight(font);
+	  this._capHeight = getCapHeight(font);
+	  this._lineHeight = lineHeight;
+	  this._ascender = lineHeight - descender - this._xHeight;
+	    
+	  //layout each glyph
+	  var self = this;
+	  lines.forEach(function(line, lineIndex) {
+	    var start = line.start;
+	    var end = line.end;
+	    var lineWidth = line.width;
+	    var lastGlyph;
+	    
+	    //for each glyph in that line...
+	    for (var i=start; i<end; i++) {
+	      var id = text.charCodeAt(i);
+	      var glyph = self.getGlyph(font, id);
+	      if (glyph) {
+	        if (lastGlyph) 
+	          x += getKerning(font, lastGlyph.id, glyph.id);
+
+	        var tx = x;
+	        if (align === ALIGN_CENTER) 
+	          tx += (maxLineWidth-lineWidth)/2;
+	        else if (align === ALIGN_RIGHT)
+	          tx += (maxLineWidth-lineWidth);
+
+	        glyphs.push({
+	          position: [tx, y],
+	          data: glyph,
+	          index: i,
+	          line: lineIndex
+	        });  
+
+	        //move pen forward
+	        x += glyph.xadvance + letterSpacing;
+	        lastGlyph = glyph;
+	      }
+	    }
+
+	    //next line down
+	    y += lineHeight;
+	    x = 0;
+	  });
+	  this._linesTotal = lines.length;
+	};
+
+	TextLayout.prototype._setupSpaceGlyphs = function(font) {
+	  //These are fallbacks, when the font doesn't include
+	  //' ' or '\t' glyphs
+	  this._fallbackSpaceGlyph = null;
+	  this._fallbackTabGlyph = null;
+
+	  if (!font.chars || font.chars.length === 0)
+	    return
+
+	  //try to get space glyph
+	  //then fall back to the 'm' or 'w' glyphs
+	  //then fall back to the first glyph available
+	  var space = getGlyphById(font, SPACE_ID) 
+	          || getMGlyph(font) 
+	          || font.chars[0];
+
+	  //and create a fallback for tab
+	  var tabWidth = this._opt.tabSize * space.xadvance;
+	  this._fallbackSpaceGlyph = space;
+	  this._fallbackTabGlyph = immutable(space, {
+	    x: 0, y: 0, xadvance: tabWidth, id: TAB_ID, 
+	    xoffset: 0, yoffset: 0, width: 0, height: 0
+	  });
+	};
+
+	TextLayout.prototype.getGlyph = function(font, id) {
+	  var glyph = getGlyphById(font, id);
+	  if (glyph)
+	    return glyph
+	  else if (id === TAB_ID) 
+	    return this._fallbackTabGlyph
+	  else if (id === SPACE_ID) 
+	    return this._fallbackSpaceGlyph
+	  return null
+	};
+
+	TextLayout.prototype.computeMetrics = function(text, start, end, width) {
+	  var letterSpacing = this._opt.letterSpacing || 0;
+	  var font = this._opt.font;
+	  var curPen = 0;
+	  var curWidth = 0;
+	  var count = 0;
+	  var glyph;
+	  var lastGlyph;
+
+	  if (!font.chars || font.chars.length === 0) {
+	    return {
+	      start: start,
+	      end: start,
+	      width: 0
+	    }
+	  }
+
+	  end = Math.min(text.length, end);
+	  for (var i=start; i < end; i++) {
+	    var id = text.charCodeAt(i);
+	    var glyph = this.getGlyph(font, id);
+
+	    if (glyph) {
+	      //move pen forward
+	      var xoff = glyph.xoffset;
+	      var kern = lastGlyph ? getKerning(font, lastGlyph.id, glyph.id) : 0;
+	      curPen += kern;
+
+	      var nextPen = curPen + glyph.xadvance + letterSpacing;
+	      var nextWidth = curPen + glyph.width;
+
+	      //we've hit our limit; we can't move onto the next glyph
+	      if (nextWidth >= width || nextPen >= width)
+	        break
+
+	      //otherwise continue along our line
+	      curPen = nextPen;
+	      curWidth = nextWidth;
+	      lastGlyph = glyph;
+	    }
+	    count++;
+	  }
+	  
+	  //make sure rightmost edge lines up with rendered glyphs
+	  if (lastGlyph)
+	    curWidth += lastGlyph.xoffset;
+
+	  return {
+	    start: start,
+	    end: start + count,
+	    width: curWidth
+	  }
+	}
+
+	//getters for the private vars
+	;['width', 'height', 
+	  'descender', 'ascender',
+	  'xHeight', 'baseline',
+	  'capHeight',
+	  'lineHeight' ].forEach(addGetter);
+
+	function addGetter(name) {
+	  Object.defineProperty(TextLayout.prototype, name, {
+	    get: wrapper(name),
+	    configurable: true
+	  });
+	}
+
+	//create lookups for private vars
+	function wrapper(name) {
+	  return (new Function([
+	    'return function '+name+'() {',
+	    '  return this._'+name,
+	    '}'
+	  ].join('\n')))()
+	}
+
+	function getGlyphById(font, id) {
+	  if (!font.chars || font.chars.length === 0)
+	    return null
+
+	  var glyphIdx = findChar(font.chars, id);
+	  if (glyphIdx >= 0)
+	    return font.chars[glyphIdx]
+	  return null
+	}
+
+	function getXHeight(font) {
+	  for (var i=0; i<X_HEIGHTS.length; i++) {
+	    var id = X_HEIGHTS[i].charCodeAt(0);
+	    var idx = findChar(font.chars, id);
+	    if (idx >= 0) 
+	      return font.chars[idx].height
+	  }
+	  return 0
+	}
+
+	function getMGlyph(font) {
+	  for (var i=0; i<M_WIDTHS.length; i++) {
+	    var id = M_WIDTHS[i].charCodeAt(0);
+	    var idx = findChar(font.chars, id);
+	    if (idx >= 0) 
+	      return font.chars[idx]
+	  }
+	  return 0
+	}
+
+	function getCapHeight(font) {
+	  for (var i=0; i<CAP_HEIGHTS.length; i++) {
+	    var id = CAP_HEIGHTS[i].charCodeAt(0);
+	    var idx = findChar(font.chars, id);
+	    if (idx >= 0) 
+	      return font.chars[idx].height
+	  }
+	  return 0
+	}
+
+	function getKerning(font, left, right) {
+	  if (!font.kernings || font.kernings.length === 0)
+	    return 0
+
+	  var table = font.kernings;
+	  for (var i=0; i<table.length; i++) {
+	    var kern = table[i];
+	    if (kern.first === left && kern.second === right)
+	      return kern.amount
+	  }
+	  return 0
+	}
+
+	function getAlignType(align) {
+	  if (align === 'center')
+	    return ALIGN_CENTER
+	  else if (align === 'right')
+	    return ALIGN_RIGHT
+	  return ALIGN_LEFT
+	}
+
+	function findChar (array, value, start) {
+	  start = start || 0;
+	  for (var i = start; i < array.length; i++) {
+	    if (array[i].id === value) {
+	      return i
+	    }
+	  }
+	  return -1
+	}
+
+	var dtype = function(dtype) {
+	  switch (dtype) {
+	    case 'int8':
+	      return Int8Array
+	    case 'int16':
+	      return Int16Array
+	    case 'int32':
+	      return Int32Array
+	    case 'uint8':
+	      return Uint8Array
+	    case 'uint16':
+	      return Uint16Array
+	    case 'uint32':
+	      return Uint32Array
+	    case 'float32':
+	      return Float32Array
+	    case 'float64':
+	      return Float64Array
+	    case 'array':
+	      return Array
+	    case 'uint8_clamped':
+	      return Uint8ClampedArray
+	  }
+	};
+
+	var str = Object.prototype.toString;
+
+	var anArray_1 = anArray;
+
+	function anArray(arr) {
+	  return (
+	       arr.BYTES_PER_ELEMENT
+	    && str.call(arr.buffer) === '[object ArrayBuffer]'
+	    || Array.isArray(arr)
+	  )
+	}
+
+	/*!
+	 * Determine if an object is a Buffer
+	 *
+	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+	 * @license  MIT
+	 */
+
+	// The _isBuffer check is for Safari 5-7 support, because it's missing
+	// Object.prototype.constructor. Remove this eventually
+	var isBuffer_1 = function (obj) {
+	  return obj != null && (isBuffer$2(obj) || isSlowBuffer$1(obj) || !!obj._isBuffer)
+	};
+
+	function isBuffer$2 (obj) {
+	  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+	}
+
+	// For Node v0.10 support. Remove this eventually.
+	function isSlowBuffer$1 (obj) {
+	  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer$2(obj.slice(0, 0))
+	}
+
+	var CW = [0, 2, 3];
+	var CCW = [2, 1, 3];
+
+	var quadIndices = function createQuadElements(array, opt) {
+	    //if user didn't specify an output array
+	    if (!array || !(anArray_1(array) || isBuffer_1(array))) {
+	        opt = array || {};
+	        array = null;
+	    }
+
+	    if (typeof opt === 'number') //backwards-compatible
+	        opt = { count: opt };
+	    else
+	        opt = opt || {};
+
+	    var type = typeof opt.type === 'string' ? opt.type : 'uint16';
+	    var count = typeof opt.count === 'number' ? opt.count : 1;
+	    var start = (opt.start || 0); 
+
+	    var dir = opt.clockwise !== false ? CW : CCW,
+	        a = dir[0], 
+	        b = dir[1],
+	        c = dir[2];
+
+	    var numIndices = count * 6;
+
+	    var indices = array || new (dtype(type))(numIndices);
+	    for (var i = 0, j = 0; i < numIndices; i += 6, j += 4) {
+	        var x = i + start;
+	        indices[x + 0] = j + 0;
+	        indices[x + 1] = j + 1;
+	        indices[x + 2] = j + 2;
+	        indices[x + 3] = j + a;
+	        indices[x + 4] = j + b;
+	        indices[x + 5] = j + c;
+	    }
+	    return indices
+	};
+
+	/*eslint new-cap:0*/
+
+
+	var flattenVertexData_1 = flattenVertexData;
+
+	function flattenVertexData (data, output, offset) {
+	  if (!data) throw new TypeError('must specify data as first parameter')
+	  offset = +(offset || 0) | 0;
+
+	  if (Array.isArray(data) && (data[0] && typeof data[0][0] === 'number')) {
+	    var dim = data[0].length;
+	    var length = data.length * dim;
+	    var i, j, k, l;
+
+	    // no output specified, create a new typed array
+	    if (!output || typeof output === 'string') {
+	      output = new (dtype(output || 'float32'))(length + offset);
+	    }
+
+	    var dstLength = output.length - offset;
+	    if (length !== dstLength) {
+	      throw new Error('source length ' + length + ' (' + dim + 'x' + data.length + ')' +
+	        ' does not match destination length ' + dstLength)
+	    }
+
+	    for (i = 0, k = offset; i < data.length; i++) {
+	      for (j = 0; j < dim; j++) {
+	        output[k++] = data[i][j] === null ? NaN : data[i][j];
+	      }
+	    }
+	  } else {
+	    if (!output || typeof output === 'string') {
+	      // no output, create a new one
+	      var Ctor = dtype(output || 'float32');
+
+	      // handle arrays separately due to possible nulls
+	      if (Array.isArray(data) || output === 'array') {
+	        output = new Ctor(data.length + offset);
+	        for (i = 0, k = offset, l = output.length; k < l; k++, i++) {
+	          output[k] = data[i] === null ? NaN : data[i];
+	        }
+	      } else {
+	        if (offset === 0) {
+	          output = new Ctor(data);
+	        } else {
+	          output = new Ctor(data.length + offset);
+
+	          output.set(data, offset);
+	        }
+	      }
+	    } else {
+	      // store output in existing array
+	      output.set(data, offset);
+	    }
+	  }
+
+	  return output
+	}
+
+	var warned = false;
+
+	var attr = setAttribute;
+	var index = setIndex;
+
+	function setIndex (geometry, data, itemSize, dtype) {
+	  if (typeof itemSize !== 'number') itemSize = 1;
+	  if (typeof dtype !== 'string') dtype = 'uint16';
+
+	  var isR69 = !geometry.index && typeof geometry.setIndex !== 'function';
+	  var attrib = isR69 ? geometry.getAttribute('index') : geometry.index;
+	  var newAttrib = updateAttribute(attrib, data, itemSize, dtype);
+	  if (newAttrib) {
+	    if (isR69) geometry.addAttribute('index', newAttrib);
+	    else geometry.index = newAttrib;
+	  }
+	}
+
+	function setAttribute (geometry, key, data, itemSize, dtype) {
+	  if (typeof itemSize !== 'number') itemSize = 3;
+	  if (typeof dtype !== 'string') dtype = 'float32';
+	  if (Array.isArray(data) &&
+	    Array.isArray(data[0]) &&
+	    data[0].length !== itemSize) {
+	    throw new Error('Nested vertex array has unexpected size; expected ' +
+	      itemSize + ' but found ' + data[0].length)
+	  }
+
+	  var attrib = geometry.getAttribute(key);
+	  var newAttrib = updateAttribute(attrib, data, itemSize, dtype);
+	  if (newAttrib) {
+	    geometry.addAttribute(key, newAttrib);
+	  }
+	}
+
+	function updateAttribute (attrib, data, itemSize, dtype) {
+	  data = data || [];
+	  if (!attrib || rebuildAttribute(attrib, data, itemSize)) {
+	    // create a new array with desired type
+	    data = flattenVertexData_1(data, dtype);
+
+	    var needsNewBuffer = attrib && typeof attrib.setArray !== 'function';
+	    if (!attrib || needsNewBuffer) {
+	      // We are on an old version of ThreeJS which can't
+	      // support growing / shrinking buffers, so we need
+	      // to build a new buffer
+	      if (needsNewBuffer && !warned) {
+	        warned = true;
+	        console.warn([
+	          'A WebGL buffer is being updated with a new size or itemSize, ',
+	          'however this version of ThreeJS only supports fixed-size buffers.',
+	          '\nThe old buffer may still be kept in memory.\n',
+	          'To avoid memory leaks, it is recommended that you dispose ',
+	          'your geometries and create new ones, or update to ThreeJS r82 or newer.\n',
+	          'See here for discussion:\n',
+	          'https://github.com/mrdoob/three.js/pull/9631'
+	        ].join(''));
+	      }
+
+	      // Build a new attribute
+	      attrib = new THREE.BufferAttribute(data, itemSize);
+	    }
+
+	    attrib.itemSize = itemSize;
+	    attrib.needsUpdate = true;
+
+	    // New versions of ThreeJS suggest using setArray
+	    // to change the data. It will use bufferData internally,
+	    // so you can change the array size without any issues
+	    if (typeof attrib.setArray === 'function') {
+	      attrib.setArray(data);
+	    }
+
+	    return attrib
+	  } else {
+	    // copy data into the existing array
+	    flattenVertexData_1(data, attrib.array);
+	    attrib.needsUpdate = true;
+	    return null
+	  }
+	}
+
+	// Test whether the attribute needs to be re-created,
+	// returns false if we can re-use it as-is.
+	function rebuildAttribute (attrib, data, itemSize) {
+	  if (attrib.itemSize !== itemSize) return true
+	  if (!attrib.array) return true
+	  var attribLength = attrib.array.length;
+	  if (Array.isArray(data) && Array.isArray(data[0])) {
+	    // [ [ x, y, z ] ]
+	    return attribLength !== data.length * itemSize
+	  } else {
+	    // [ x, y, z ]
+	    return attribLength !== data.length
+	  }
+	  return false
+	}
+
+	var threeBufferVertexData = {
+		attr: attr,
+		index: index
+	};
+
+	/*
+	object-assign
+	(c) Sindre Sorhus
+	@license MIT
+	*/
+	/* eslint-disable no-unused-vars */
+	var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+	var hasOwnProperty$3 = Object.prototype.hasOwnProperty;
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function toObject(val) {
+		if (val === null || val === undefined) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function shouldUseNative() {
+		try {
+			if (!Object.assign) {
+				return false;
+			}
+
+			// Detect buggy property enumeration order in older V8 versions.
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=4118
+			var test1 = new String('abc');  // eslint-disable-line no-new-wrappers
+			test1[5] = 'de';
+			if (Object.getOwnPropertyNames(test1)[0] === '5') {
+				return false;
+			}
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+			var test2 = {};
+			for (var i = 0; i < 10; i++) {
+				test2['_' + String.fromCharCode(i)] = i;
+			}
+			var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+				return test2[n];
+			});
+			if (order2.join('') !== '0123456789') {
+				return false;
+			}
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+			var test3 = {};
+			'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+				test3[letter] = letter;
+			});
+			if (Object.keys(Object.assign({}, test3)).join('') !==
+					'abcdefghijklmnopqrst') {
+				return false;
+			}
+
+			return true;
+		} catch (err) {
+			// We don't expect any of the above to throw, but better to be safe.
+			return false;
+		}
+	}
+
+	var objectAssign = shouldUseNative() ? Object.assign : function (target, source) {
+		var from;
+		var to = toObject(target);
+		var symbols;
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = Object(arguments[s]);
+
+			for (var key in from) {
+				if (hasOwnProperty$3.call(from, key)) {
+					to[key] = from[key];
+				}
+			}
+
+			if (getOwnPropertySymbols) {
+				symbols = getOwnPropertySymbols(from);
+				for (var i = 0; i < symbols.length; i++) {
+					if (propIsEnumerable.call(from, symbols[i])) {
+						to[symbols[i]] = from[symbols[i]];
+					}
+				}
+			}
+		}
+
+		return to;
+	};
+
+	var pages = function pages (glyphs) {
+	  var pages = new Float32Array(glyphs.length * 4 * 1);
+	  var i = 0;
+	  glyphs.forEach(function (glyph) {
+	    var id = glyph.data.page || 0;
+	    pages[i++] = id;
+	    pages[i++] = id;
+	    pages[i++] = id;
+	    pages[i++] = id;
+	  });
+	  return pages
+	};
+
+	var uvs = function uvs (glyphs, texWidth, texHeight, flipY) {
+	  var uvs = new Float32Array(glyphs.length * 4 * 2);
+	  var i = 0;
+	  glyphs.forEach(function (glyph) {
+	    var bitmap = glyph.data;
+	    var bw = (bitmap.x + bitmap.width);
+	    var bh = (bitmap.y + bitmap.height);
+
+	    // top left position
+	    var u0 = bitmap.x / texWidth;
+	    var v1 = bitmap.y / texHeight;
+	    var u1 = bw / texWidth;
+	    var v0 = bh / texHeight;
+
+	    if (flipY) {
+	      v1 = (texHeight - bitmap.y) / texHeight;
+	      v0 = (texHeight - bh) / texHeight;
+	    }
+
+	    // BL
+	    uvs[i++] = u0;
+	    uvs[i++] = v1;
+	    // TL
+	    uvs[i++] = u0;
+	    uvs[i++] = v0;
+	    // TR
+	    uvs[i++] = u1;
+	    uvs[i++] = v0;
+	    // BR
+	    uvs[i++] = u1;
+	    uvs[i++] = v1;
+	  });
+	  return uvs
+	};
+
+	var positions = function positions (glyphs) {
+	  var positions = new Float32Array(glyphs.length * 4 * 2);
+	  var i = 0;
+	  glyphs.forEach(function (glyph) {
+	    var bitmap = glyph.data;
+
+	    // bottom left position
+	    var x = glyph.position[0] + bitmap.xoffset;
+	    var y = glyph.position[1] + bitmap.yoffset;
+
+	    // quad size
+	    var w = bitmap.width;
+	    var h = bitmap.height;
+
+	    // BL
+	    positions[i++] = x;
+	    positions[i++] = y;
+	    // TL
+	    positions[i++] = x;
+	    positions[i++] = y + h;
+	    // TR
+	    positions[i++] = x + w;
+	    positions[i++] = y + h;
+	    // BR
+	    positions[i++] = x + w;
+	    positions[i++] = y;
+	  });
+	  return positions
+	};
+
+	var vertices = {
+		pages: pages,
+		uvs: uvs,
+		positions: positions
+	};
+
+	var itemSize = 2;
+	var box = { min: [0, 0], max: [0, 0] };
+
+	function bounds (positions) {
+	  var count = positions.length / itemSize;
+	  box.min[0] = positions[0];
+	  box.min[1] = positions[1];
+	  box.max[0] = positions[0];
+	  box.max[1] = positions[1];
+
+	  for (var i = 0; i < count; i++) {
+	    var x = positions[i * itemSize + 0];
+	    var y = positions[i * itemSize + 1];
+	    box.min[0] = Math.min(x, box.min[0]);
+	    box.min[1] = Math.min(y, box.min[1]);
+	    box.max[0] = Math.max(x, box.max[0]);
+	    box.max[1] = Math.max(y, box.max[1]);
+	  }
+	}
+
+	var computeBox = function (positions, output) {
+	  bounds(positions);
+	  output.min.set(box.min[0], box.min[1], 0);
+	  output.max.set(box.max[0], box.max[1], 0);
+	};
+
+	var computeSphere = function (positions, output) {
+	  bounds(positions);
+	  var minX = box.min[0];
+	  var minY = box.min[1];
+	  var maxX = box.max[0];
+	  var maxY = box.max[1];
+	  var width = maxX - minX;
+	  var height = maxY - minY;
+	  var length = Math.sqrt(width * width + height * height);
+	  output.center.set(minX + width / 2, minY + height / 2, 0);
+	  output.radius = length / 2;
+	};
+
+	var utils = {
+		computeBox: computeBox,
+		computeSphere: computeSphere
+	};
+
+	var Base = THREE.BufferGeometry;
+
+	var threeBmfontText = function createTextGeometry (opt) {
+	  return new TextGeometry$1(opt)
+	};
+
+	function TextGeometry$1 (opt) {
+	  Base.call(this);
+
+	  if (typeof opt === 'string') {
+	    opt = { text: opt };
+	  }
+
+	  // use these as default values for any subsequent
+	  // calls to update()
+	  this._opt = objectAssign({}, opt);
+
+	  // also do an initial setup...
+	  if (opt) this.update(opt);
+	}
+
+	inherits_browser(TextGeometry$1, Base);
+
+	TextGeometry$1.prototype.update = function (opt) {
+	  if (typeof opt === 'string') {
+	    opt = { text: opt };
+	  }
+
+	  // use constructor defaults
+	  opt = objectAssign({}, this._opt, opt);
+
+	  if (!opt.font) {
+	    throw new TypeError('must specify a { font } in options')
+	  }
+
+	  this.layout = layoutBmfontText(opt);
+
+	  // get vec2 texcoords
+	  var flipY = opt.flipY !== false;
+
+	  // the desired BMFont data
+	  var font = opt.font;
+
+	  // determine texture size from font file
+	  var texWidth = font.common.scaleW;
+	  var texHeight = font.common.scaleH;
+
+	  // get visible glyphs
+	  var glyphs = this.layout.glyphs.filter(function (glyph) {
+	    var bitmap = glyph.data;
+	    return bitmap.width * bitmap.height > 0
+	  });
+
+	  // provide visible glyphs for convenience
+	  this.visibleGlyphs = glyphs;
+
+	  // get common vertex data
+	  var positions = vertices.positions(glyphs);
+	  var uvs = vertices.uvs(glyphs, texWidth, texHeight, flipY);
+	  var indices = quadIndices({
+	    clockwise: true,
+	    type: 'uint16',
+	    count: glyphs.length
+	  });
+
+	  // update vertex data
+	  threeBufferVertexData.index(this, indices, 1, 'uint16');
+	  threeBufferVertexData.attr(this, 'position', positions, 2);
+	  threeBufferVertexData.attr(this, 'uv', uvs, 2);
+
+	  // update multipage data
+	  if (!opt.multipage && 'page' in this.attributes) {
+	    // disable multipage rendering
+	    this.removeAttribute('page');
+	  } else if (opt.multipage) {
+	    var pages = vertices.pages(glyphs);
+	    // enable multipage rendering
+	    threeBufferVertexData.attr(this, 'page', pages, 1);
+	  }
+	};
+
+	TextGeometry$1.prototype.computeBoundingSphere = function () {
+	  if (this.boundingSphere === null) {
+	    this.boundingSphere = new THREE.Sphere();
+	  }
+
+	  var positions = this.attributes.position.array;
+	  var itemSize = this.attributes.position.itemSize;
+	  if (!positions || !itemSize || positions.length < 2) {
+	    this.boundingSphere.radius = 0;
+	    this.boundingSphere.center.set(0, 0, 0);
+	    return
+	  }
+	  utils.computeSphere(positions, this.boundingSphere);
+	  if (isNaN(this.boundingSphere.radius)) {
+	    console.error('THREE.BufferGeometry.computeBoundingSphere(): ' +
+	      'Computed radius is NaN. The ' +
+	      '"position" attribute is likely to have NaN values.');
+	  }
+	};
+
+	TextGeometry$1.prototype.computeBoundingBox = function () {
+	  if (this.boundingBox === null) {
+	    this.boundingBox = new THREE.Box3();
+	  }
+
+	  var bbox = this.boundingBox;
+	  var positions = this.attributes.position.array;
+	  var itemSize = this.attributes.position.itemSize;
+	  if (!positions || !itemSize || positions.length < 2) {
+	    bbox.makeEmpty();
+	    return
+	  }
+	  utils.computeBox(positions, bbox);
+	};
+
+	/* eslint-disable */
+
+	// https://github.com/soimy/msdf-bmfont-xml/blob/master/test/createMSDFShader.js
+
+	var createMSDFShader = function createMSDFShader(opt) {
+		const { fgColor, bgColor, msdf, precision } = opt || {};
+		
+	  
+		return {
+		  uniforms: {
+			msdf: { type: "t", value: msdf || new THREE.Texture() },
+			bgColor: { type: "v4", value: fgColor || new THREE.Vector4() },
+			fgColor: { type: "v4", value: bgColor || new THREE.Vector4() }
+		  },
+		  vertexShader: `
+		attribute vec2 uv;
+		attribute vec4 position;
+		uniform mat4 projectionMatrix;
+		uniform mat4 modelViewMatrix;
+		varying vec2 vUv;
+		void main() {
+		  vUv = uv;
+		  gl_Position = projectionMatrix * modelViewMatrix * position;
+		}
+	  `,
+		  fragmentShader: `
+		#ifdef GL_OES_standard_derivatives
+		  #extension GL_OES_standard_derivatives : enable
+		#endif
+		precision ${precision || 'highp'} float;
+		uniform sampler2D msdf;
+		uniform vec4 bgColor;
+		uniform vec4 fgColor;
+		varying vec2 vUv;
+		float median(float r, float g, float b) {
+		  return max(min(r, g), min(max(r, g), b));
+		}
+		void main() {
+		  vec3 sample = texture2D(msdf, vUv).rgb;
+		  float sigDist = median(sample.r, sample.g, sample.b) - 0.5;
+		  float opacity = clamp(sigDist/fwidth(sigDist) + 0.5, 0.0, 1.0);
+		  gl_FragColor = mix(fgColor, bgColor, opacity);
+		}`
+		};
+	  };
+
+	class NodeElement extends eventemitter3 {
+
+		/** @property {array} children - List of child nodes */
+		get children() {
+			if (typeof this._children === 'undefined') {
+				this._children = [];
+			}
+			return this._children;
+		}
+
+		set children(children) {
+			this._children = children;
+		}
+
+		/** @property {number} parent - Parent node */
+		get parent() {
+			return this._parent;
+		}
+
+		set parent(parent) {
+			this._parent = parent;
+		}
+
+		/** @property {number} mesh - Parent node */
+		get mesh() {
+			if (typeof this._mesh === 'undefined') {
+				this._mesh = new Group();
+			}
+			return this._mesh;
+		}
+
+		set mesh(mesh) {
+			if (this.parent) {
+				this.parent.mesh.remove(this._mesh);
+				this.parent.mesh.add(mesh);
+			}
+
+			this._mesh = mesh;
+		}
+
+		constructor() {
+			super();
+		}
+
+		add(node) {
+			if (!(node instanceof NodeElement)) {
+				return;
+			}
+			this.children.push(node);
+			node.parent = this;
+			if (node.mesh) {
+				this.mesh.add(node.mesh);
+			}
+		}
+
+		remove(node) {
+			const index = this.children.indexOf(node);
+			if (index !== -1) {
+				this.children.splice(index, 1);
+				this.mesh.remove(node.mesh);
+				node.parent = undefined;
+			}
+		}
+	}
+
+	class TextElement extends NodeElement {
+
+		/** @property {number} font - Saved font once it's loaded the first time */
+		static get font() {
+			return this._font;
+		}
+
+		static set font(font) {
+			this._font = font;
+		}
+
+		/** @property {number} texture - Saved texture once it's loaded the first time */
+		static get texture() {
+			return this._texture;
+		}
+
+		static set texture(texture) {
+			this._texture = texture;
+		}
+
+		/** @property {number} mesh - Parent node */
+		get mesh() {
+			return this._mesh;
+		}
+
+		set mesh(mesh) {
+			if (this.parent) {
+				this.parent.mesh.remove(this._mesh);
+				this.parent.mesh.add(mesh);
+			}
+
+			this._mesh = mesh;
+		}
+
+		constructor(config = {}) {
+			super();
+
+			this.constructMesh(config.text, config.bold, config.position)
+				.then((mesh) => {
+					this.mesh = mesh;
+				})
+				.catch((error) => {
+					this.emit('error', error);
+				});
+		}
+
+		/**
+		 * Consturcts a 3D MSDF based text geometry from a string
+		 *
+		 * @param {string} text - String to be converted to a 3D geometry
+		 * @param {boolean} bold - Whether it should use the bold font
+		 * @param {array} position - Where the mesh should be positioned
+		 *
+		 * @return {Promise<THREE.Mesh>} promise - Resolves with the Text mesh
+		 */
+		constructMesh(text, bold, position) {
+			return new Promise((resolve, reject) => {
+				const fontPath = `https://holonet.one/assets/fonts/Roboto-${bold ? 'Bold' : 'Regular'}`;
+				let font;
+				let texture;
+				this._loadFont(fontPath)
+					.then((loadedFont) => {
+						font = loadedFont;
+						return this._loadTexture(fontPath);
+					})
+					.then((loadedTexture) => {
+						texture = loadedTexture;
+
+						const geometry = threeBmfontText({
+							width: 500,
+							align: 'left',
+							font: font,
+							text: text
+						});
+
+						const shaderConfig = Object.assign(
+							createMSDFShader({
+								msdf: texture,
+								bgColor: new Vector4(1, 1, 1, 0),
+								// #4B606D in rgba is 75, 96, 109, then divided by 255
+								fgColor: new Vector4(0.295, 0.376, 0.427, 1)
+							}),
+							{
+								transparent: true,
+								side: DoubleSide
+							}
+						);
+
+						const material = new RawShaderMaterial(shaderConfig);
+
+						const mesh = new Mesh(geometry, material);
+						const scale = bold ? 0.015 : 0.006;
+						mesh.scale.set(scale, -scale, scale);
+						mesh.position.set(...position);
+
+						resolve(mesh);
+					})
+					.catch((error) => {
+						reject(error);
+					});
+			});
+		}
+
+		_loadFont(path) {
+			return new Promise((resolve, reject) => {
+				if (TextElement.font) {
+					resolve(TextElement.font);
+				} else {
+					browser$4(`${path}.json`, (error, font) => {
+						if (error) {
+							reject(error);
+						}
+
+						TextElement.font = font;
+						resolve(font);
+					});
+				}
+			});
+		}
+
+		_loadTexture(path) {
+			return new Promise((resolve, reject) => {
+				if (TextElement.texture) {
+					resolve(TextElement.texture);
+				} else {
+					const textureLoader = new TextureLoader();
+					textureLoader.load(`${path}.png`, (texture) => {
+						TextElement.texture = texture;
+						resolve(texture);
+					}, undefined, (error) => {
+						reject(error);
+					});
+				}
+			});
+		}
+	}
+
+	const Elements = {
+		TextElement,
+		NodeElement
+	};
+
+	Object.assign(window.THREE = {}, THREE$1);
 
 	if (!navigator.getVRDisplays) {
 		InitializeWebVRPolyfill(); // eslint-disable-line
@@ -138666,9 +140879,7 @@ var holonet = (function (exports) {
 
 					return Promise.resolve();
 				})
-				.catch((error) => {
-					return Promise.reject(error);
-				});
+				.catch((error) => Promise.reject(error));
 		}
 
 		/**
@@ -138687,13 +140898,12 @@ var holonet = (function (exports) {
 				component.on('remove', (event) => {
 					this.removeFromScene(event.mesh);
 				});
-				
+
 				component.on('addanimatefunctions', (event) => {
 					this.addAnimateFunctions(event.functions);
 				});
 
 				component.on('error', (event) => {
-					console.log('holonet', event);
 					this.emit('error', event);
 				});
 			}
@@ -138882,6 +141092,7 @@ var holonet = (function (exports) {
 	exports.Utils = Utils;
 	exports.Loader = Loader$1;
 	exports.Link = Link;
+	exports.Elements = Elements;
 
 	return exports;
 

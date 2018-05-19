@@ -61,6 +61,7 @@ describe('VirtualPersona', () => {
 			assert.instanceOf(vp.identity, Identity);
 			assert.instanceOf(vp.multiVP, MultiVP);
 			assert.equal(vp.multiVP.vp, vp);
+			assert.deepEqual(vp.config, {signIn: true});
 			assert.equal(EventEmitter.prototype.on.callCount, 5);
 			assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('add'));
@@ -143,7 +144,23 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should not sign in', () => {
-				assert.isFalse(vp.loadMesh.calledOnce);
+				assert.isFalse(vp.signIn.calledOnce);
+			});			
+		});
+
+		describe('config.signIn is false', () => {
+
+			beforeEach((done) => {
+				sinon.stub(vp, 'loadMesh').returns(Promise.resolve());
+				sinon.stub(vp, 'signIn').resolves();
+				vp.identity.signedIn = false;
+				vp.config.signIn = false;
+	
+				vp.init().then(done);
+			});
+
+			it('should not sign in', () => {
+				assert.isFalse(vp.signIn.calledOnce);
 			});			
 		});
 
@@ -158,7 +175,7 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should not sign in', () => {
-				assert.isTrue(vp.loadMesh.calledOnce);
+				assert.isTrue(vp.signIn.calledOnce);
 			});	
 		});
 	});
@@ -292,10 +309,10 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should add mesh to the scene', () => {
-				// Called in constructor via MultiVP and in getIdentity
-				assert.equal(EventEmitter.prototype.emit.callCount, 3);
+				// Called in getIdentity
+				assert.equal(EventEmitter.prototype.emit.callCount, 2);
 				assert.isTrue(EventEmitter.prototype.emit.calledWith('add'));
-				assert.deepEqual(EventEmitter.prototype.emit.thirdCall.args[1], {
+				assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {
 					mesh: mesh
 				});
 			});
@@ -309,10 +326,10 @@ describe('VirtualPersona', () => {
 			});
 
 			it('should remove saved mesh', () => {
-				// Called in constructor via MultiVP and in getIdentity
-				assert.equal(EventEmitter.prototype.emit.callCount, 4);
+				// Called in getIdentity
+				assert.equal(EventEmitter.prototype.emit.callCount, 3);
 				assert.isTrue(EventEmitter.prototype.emit.calledWith('remove'));
-				assert.deepEqual(EventEmitter.prototype.emit.thirdCall.args[1], {
+				assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {
 					mesh: true
 				});
 			});
@@ -406,7 +423,7 @@ describe('VirtualPersona', () => {
 		});
 	});
 
-	describe('#_setFloorHeight', () => {
+	describe('#setFloorHeight', () => {
 
 		beforeEach(() => {
 			sinon.stub(Physics, 'checkRayCollision');
@@ -424,12 +441,14 @@ describe('VirtualPersona', () => {
 				camera: {
 					position: {
 						y: 1
-					}
+					},
+					getWorldDirection: sinon.stub().returns(new THREE.Vector3())
 				},
 				scene: 1
 			};
 
 			vp._feetPosition = {
+				add: sinon.stub(),
 				copy: sinon.stub(),
 				setY: sinon.stub(),
 				y: 1.7

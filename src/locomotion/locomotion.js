@@ -87,7 +87,7 @@ class Locomotion {
 	constructor() {
 		this._phi = 0;
 		this._theta = 0;
-	
+
 		this.teleportation = new Teleportation();
 	}
 
@@ -164,7 +164,8 @@ class Locomotion {
 	}
 
 	teleport() {
-		if (this.teleportation.isRayCurveActive) {
+		if (this.teleportation.isRayCurveActive || this._cancelTeleportation) {
+			this._cancelTeleportation = false;
 			this.teleportation.resetTeleport();
 		} else {
 			this._handleTeleportation();
@@ -181,7 +182,7 @@ class Locomotion {
 	_handleTeleportation() {
 		this.teleportation.setRayCurveState(true);
 	}
-	
+
 	setUpEventListeners(controllers, interactions) {
 		controllers.on('ztranslationstart', (event) => {
 			this.translateZ(event.direction * this.velocity);
@@ -205,7 +206,7 @@ class Locomotion {
 			}
 		});
 
-		controllers.on('thumbpadpressed', (event) => {
+		controllers.on('thumbpadpressed', () => {
 			this.teleport();
 			if (!this.teleportation.isRayCurveActive) {
 				clearTimeout(this._thumbpadTouchedTimeout);
@@ -213,7 +214,7 @@ class Locomotion {
 			}
 		});
 
-		controllers.on('thumbpadtouched', (event) => {
+		controllers.on('thumbpadtouched', () => {
 			if (!this.teleportation.isRayCurveActive) {
 				this._thumbpadTouchedTimeout = setTimeout(() => {
 					this.translateZ(-this.velocity);
@@ -221,14 +222,16 @@ class Locomotion {
 			}
 		});
 
-		controllers.on('thumbpaduntouched', (event) => {
+		controllers.on('thumbpaduntouched', () => {
 			clearTimeout(this._thumbpadTouchedTimeout);
 			this.stopTranslateZ();
 		});
 
-		interactions.on('selected', () => {
+		interactions.selection.on('selected', () => {
 			if (this.teleportation.isRayCurveActive) {
 				this.teleportation.resetTeleport();
+			} else {
+				this._cancelTeleportation = true;
 			}
 		});
 	}

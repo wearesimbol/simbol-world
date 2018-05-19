@@ -86,9 +86,9 @@ describe('Interactions', () => {
 			interactions.setUpEventListeners(emitter);
 		});
 
-		it('should add event listeners to ', () => {
+		it('should add event listeners to emitter', () => {
 			assert.isTrue(emitter.on.calledOnce);
-			assert.isTrue(emitter.on.calledWith('trigger', interactions.selection.handleSelection));
+			assert.isTrue(emitter.on.calledWith('trigger'));
 		});
 	});
 });
