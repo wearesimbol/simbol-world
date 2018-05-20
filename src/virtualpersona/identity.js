@@ -65,9 +65,9 @@ class Identity extends EventEmitter {
 			return Promise.resolve();
 		}, (error) => {
 			if (error.message === 'Request Cancelled') {
-				return Promise.resolve(error)
+				return Promise.resolve(error);
 			}
-			return Promise.reject(error)
+			return Promise.reject(error);
 		});
 	}
 

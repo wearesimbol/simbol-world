@@ -107,9 +107,7 @@ class VirtualPersona extends EventEmitter {
 					return Promise.resolve();
 				}
 			})
-			.catch((error) => {
-				return Promise.reject(error);
-			});
+			.catch((error) => Promise.reject(error));
 	}
 
 	/**
@@ -132,9 +130,7 @@ class VirtualPersona extends EventEmitter {
 
 				return Promise.resolve(mesh);
 			})
-			.catch((error) => {
-				return Promise.reject(error)
-			});
+			.catch((error) => Promise.reject(error));
 	}
 
 	/**
@@ -194,9 +190,7 @@ class VirtualPersona extends EventEmitter {
 	signIn() {
 		return this.identity.signIn()
 			.then(() => this.loadMesh(this.identity.avatarPath, true))
-			.catch((error) => {
-				return Promise.reject(error)
-			});
+			.catch((error) => Promise.reject(error));
 	}
 
 	/**
@@ -207,9 +201,7 @@ class VirtualPersona extends EventEmitter {
 	signOut() {
 		this.identity.signOut();
 		return this.loadMesh(this.identity.avatarPath, true)
-			.catch((error) => {
-				return Promise.reject(error)
-			});
+			.catch((error) => Promise.reject(error));
 	}
 
 	/**

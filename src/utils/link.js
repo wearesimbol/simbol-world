@@ -49,7 +49,7 @@ class Link {
 	 * @param {string} path - Where the link will point to
 	 * @param {array} position - 3 element array indicating the x, y and z position of the link in the scene
 	 */
-	constructor(path, position, scene) {
+	constructor(path, position) {
 		this.path = path;
 		this.position = position;
 

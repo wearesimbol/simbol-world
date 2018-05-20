@@ -174,6 +174,10 @@ class PoseController extends EventEmitter {
 	 * It applies an arm model if it's a 3DOF controller
 	 * It also applies the handlers for different buttons
 	 *
+	 * @param {THREE.Camera} camera - Scene camera
+	 * @param {number} userHeight - The user's set height
+	 * @param {array} standingMatrix - The standingMatrix from WebVR
+	 *
 	 * @return {undefined}
 	 */
 	update(camera, userHeight, standingMatrix) {

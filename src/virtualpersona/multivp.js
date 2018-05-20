@@ -408,9 +408,7 @@ class MultiVP extends EventEmitter {
 				};
 				return Promise.resolve(loadedMesh);
 			})
-			.catch((error) => {
-				return Promise.reject(error);
-			});
+			.catch((error) => Promise.reject(error));
 	}
 }
 
