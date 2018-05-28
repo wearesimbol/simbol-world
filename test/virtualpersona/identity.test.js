@@ -30,7 +30,7 @@ describe('Identity', () => {
 
 	it('should have a set of properties', () => {
 		assert.equal(Identity.prototype.signedIn, false);
-		assert.equal(Identity.prototype.avatarPath, 'https://holonet.one/assets/models/AnonymousVP.gltf');
+		assert.equal(Identity.prototype.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
 	});
 
 	describe('#constructor', () => {
@@ -41,7 +41,7 @@ describe('Identity', () => {
 
 		it('should configure uPort', () => {
 			assert.equal(identity.uPort.clientId, '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ');
-			assert.equal(identity.uPort.appName, 'Holonet');
+			assert.equal(identity.uPort.appName, 'Simbol');
 			assert.equal(identity.uPort.network.id, '0x4')
 		});
 
@@ -78,7 +78,7 @@ describe('Identity', () => {
 				assert.isTrue(identity.uPort.requestCredentials.calledOnce);
 				assert.deepEqual(identity.uPort.requestCredentials.firstCall.args[0], {
 					requested: ['information', 'moreinfo'],
-					verified: ['HolonetConfig'],
+					verified: ['SimbolConfig'],
 					notifications: true
 				});
 			});
@@ -125,7 +125,7 @@ describe('Identity', () => {
 		it('should reset the instance and remove identity data', () => {
 			assert.isTrue(localStorage.removeItem.calledOnce);
 			assert.isTrue(localStorage.removeItem.calledWith('currentIdentity'));
-			assert.equal(identity.avatarPath, 'https://holonet.one/assets/models/AnonymousVP.gltf');
+			assert.equal(identity.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
 			assert.isUndefined(identity.uPortData);
 			assert.isFalse(identity.signedIn);
 		});
@@ -205,7 +205,7 @@ describe('Identity', () => {
 		
 		beforeEach(() => {
 			sinon.stub(localStorage, 'setItem');
-			creds = {HolonetConfig: true};
+			creds = {SimbolConfig: true};
 
 			identity.setUPortData(creds, true);
 		});
@@ -216,7 +216,7 @@ describe('Identity', () => {
 
 		it('should save identity data', () => {
 			assert.isTrue(localStorage.setItem.calledOnce);
-			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"HolonetConfig":true}'));
+			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"SimbolConfig":true}'));
 			assert.equal(identity.avatarPath, Identity.prototype.avatarPath);
 			assert.equal(identity.uPortData, creds);
 		});

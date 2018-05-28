@@ -51,7 +51,7 @@ class VirtualPersona extends EventEmitter {
 	 * Constructs a VP instance and sets its properties
 	 *
 	 * @param {object} config - Configuration parameters for different elements
-	 * @param {boolean} signIn - Whether Holonet should attempt to sign in on init
+	 * @param {boolean} signIn - Whether Simbol should attempt to sign in on init
 	 *
 	 * @returns {undefined}
 	*/
@@ -141,7 +141,7 @@ class VirtualPersona extends EventEmitter {
 	 * @returns {THREE.Mesh} mesh
 	 */
 	_setUpMesh(mesh) {
-		mesh.name = 'HolonetVirtualPersona';
+		mesh.name = 'SimbolVirtualPersona';
 		mesh.scale.set(1, 1, 1);
 		mesh.position.set(0, 0, 0);
 		if (mesh.children.length) {
@@ -207,7 +207,7 @@ class VirtualPersona extends EventEmitter {
 	/**
 	 * Adjusts the floor height depending on the position
 	 *
-	 * @param {Holonet.Scene} scene - Provide scene to adjust the floor height with respect to it
+	 * @param {Simbol.Scene} scene - Provide scene to adjust the floor height with respect to it
 	 *
 	 * @returns {undefined}
 	 */

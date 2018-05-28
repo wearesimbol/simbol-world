@@ -39,31 +39,31 @@ gulp.task('js', () => {
 	}).then((bundle) => {
 		return Promise.all([
 			bundle.write({
-				name: 'holonet',
+				name: 'simbol',
 				format: 'iife',
 				sourcemap: true,
 				exports: 'named',
-				file: 'build/holonet.script.js'
+				file: 'build/simbol.script.js'
 			}),
 			bundle.write({
-				name: 'holonet',
+				name: 'simbol',
 				format: 'umd',
 				sourcemap: true,
 				exports: 'named',
-				file: 'build/holonet.umd.js'
+				file: 'build/simbol.umd.js'
 			}),
 			bundle.write({
 				format: 'es',
 				sourcemap: true,
 				exports: 'named',
-				file: 'build/holonet.js'
+				file: 'build/simbol.js'
 			})
 		]);
 	}).catch(console.log);
 });
 
 gulp.task('minify', () => {
-	return gulp.src(['./build/holonet.js', './build/holonet.script.js', './build/holonet.umd.js'])
+	return gulp.src(['./build/simbol.js', './build/simbol.script.js', './build/simbol.umd.js'])
 		.pipe(uglify())
 		.on('error', console.error)
 		.pipe(rename({

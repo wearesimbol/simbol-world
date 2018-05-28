@@ -4,32 +4,32 @@ import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
 import {Utils} from '../src/utils/utils';
 import {Scene} from '../src/scene/scene';
-import Holonet from '../src/main';
+import Simbol from '../src/main';
 import { Controllers } from '../src/controllers/controllers';
 import { Locomotion } from '../src/locomotion/locomotion';
 import { Interactions } from '../src/interactions/interactions';
 import { VirtualPersona } from '../src/virtualpersona/virtualpersona';
 import { Physics } from '../src/physics/physics';
 
-describe('Holonet', () => {
+describe('Simbol', () => {
 
-    let holonet;
+    let simbol;
 
     beforeEach(() => {
         sinon.stub(Locomotion.prototype, 'setUpEventListeners');
         sinon.stub(Interactions.prototype, 'setUpEventListeners');
-        sinon.stub(Holonet.prototype, 'addListeners');
+        sinon.stub(Simbol.prototype, 'addListeners');
     });
 
     afterEach(() => {
         Locomotion.prototype.setUpEventListeners.restore();
         Interactions.prototype.setUpEventListeners.restore();
 
-        Holonet.prototype.addListeners.restore && Holonet.prototype.addListeners.restore();
+        Simbol.prototype.addListeners.restore && Simbol.prototype.addListeners.restore();
     });
 
     beforeEach(() => {
-        holonet = new Holonet({
+        simbol = new Simbol({
             scene: {
                 render: true,
                 canvas: document.createElement('canvas')
@@ -38,86 +38,86 @@ describe('Holonet', () => {
     });
 
     it('should be a class', () => {
-        assert.isFunction(Holonet);
+        assert.isFunction(Simbol);
     });
 
     it('should have a ser of methods', () => {
-        assert.isFunction(Holonet.prototype.init);
-        assert.isFunction(Holonet.prototype.addListeners);
-        assert.isFunction(Holonet.prototype.addToScene);
-        assert.isFunction(Holonet.prototype.removeFromScene);
-        assert.isFunction(Holonet.prototype.addAnimateFunctions);
-        assert.isFunction(Holonet.prototype.startPresenting);
-        assert.isFunction(Holonet.prototype.stopPresenting);
-        assert.isFunction(Holonet.prototype.animate);
+        assert.isFunction(Simbol.prototype.init);
+        assert.isFunction(Simbol.prototype.addListeners);
+        assert.isFunction(Simbol.prototype.addToScene);
+        assert.isFunction(Simbol.prototype.removeFromScene);
+        assert.isFunction(Simbol.prototype.addAnimateFunctions);
+        assert.isFunction(Simbol.prototype.startPresenting);
+        assert.isFunction(Simbol.prototype.stopPresenting);
+        assert.isFunction(Simbol.prototype.animate);
     });
 
     describe('#constructor', () => {
 
         it('should extend EventEmitter', () => {
-            assert.instanceOf(holonet, EventEmitter);
+            assert.instanceOf(simbol, EventEmitter);
         });
 
         it('should initialise a Scene', () => {
-            assert.instanceOf(holonet._scene, Scene);
+            assert.instanceOf(simbol._scene, Scene);
         });
 
         it('should initialise a Virtual Persona', () => {
-            assert.instanceOf(holonet.virtualPersona, VirtualPersona);
+            assert.instanceOf(simbol.virtualPersona, VirtualPersona);
         });
 
         it('should initialise Controllers', () => {
-            assert.instanceOf(holonet.controllers, Controllers);
+            assert.instanceOf(simbol.controllers, Controllers);
         });
 
         it('should initialise Locomotion', () => {
-            assert.instanceOf(holonet.locomotion, Locomotion);
+            assert.instanceOf(simbol.locomotion, Locomotion);
             assert.isTrue(Locomotion.prototype.setUpEventListeners.calledOnce);
         });
 
         it('should initialise Interactions', () => {
-            assert.instanceOf(holonet.interactions, Interactions);
+            assert.instanceOf(simbol.interactions, Interactions);
             assert.isTrue(Interactions.prototype.setUpEventListeners.calledOnce);
         });
 
         it('should add common listeners', () => {
-            assert.isTrue(holonet.addListeners.calledOnce);
-            assert.isTrue(holonet.addListeners.calledWith(holonet.virtualPersona, holonet.controllers, holonet.interactions));
+            assert.isTrue(simbol.addListeners.calledOnce);
+            assert.isTrue(simbol.addListeners.calledWith(simbol.virtualPersona, simbol.controllers, simbol.interactions));
         });
     });
 
     describe('#init', () => {
 
         beforeEach((done) => {
-            sinon.stub(holonet, 'addAnimateFunctions');
-            sinon.stub(holonet._scene, 'init').resolves();
-            sinon.stub(holonet.virtualPersona, 'init').resolves();
-            sinon.stub(holonet, 'addToScene');
-            sinon.stub(holonet.interactions, 'getMeshes').returns([1, 2]);
-            sinon.stub(holonet.locomotion, 'getMeshes').returns([3, 4]);
+            sinon.stub(simbol, 'addAnimateFunctions');
+            sinon.stub(simbol._scene, 'init').resolves();
+            sinon.stub(simbol.virtualPersona, 'init').resolves();
+            sinon.stub(simbol, 'addToScene');
+            sinon.stub(simbol.interactions, 'getMeshes').returns([1, 2]);
+            sinon.stub(simbol.locomotion, 'getMeshes').returns([3, 4]);
 
-            holonet.init().then(done);
+            simbol.init().then(done);
         });
 
         it('should initialise scene', () => {
-            assert.isTrue(holonet._scene.init.calledOnce);
+            assert.isTrue(simbol._scene.init.calledOnce);
         });
 
         it('should initialise VirtualPersona', () => {
-            assert.isTrue(holonet.virtualPersona.init.calledOnce);
+            assert.isTrue(simbol.virtualPersona.init.calledOnce);
         });
 
         it('should add interactions and locomotion meshes into the scene', () => {
-            assert.isTrue(holonet.addToScene.calledOnce);
-            assert.deepEqual(holonet.addToScene.firstCall.args, [[1, 2, 3, 4]]);
-            assert.isTrue(holonet.interactions.getMeshes.calledOnce);
-            assert.isTrue(holonet.locomotion.getMeshes.calledOnce);
+            assert.isTrue(simbol.addToScene.calledOnce);
+            assert.deepEqual(simbol.addToScene.firstCall.args, [[1, 2, 3, 4]]);
+            assert.isTrue(simbol.interactions.getMeshes.calledOnce);
+            assert.isTrue(simbol.locomotion.getMeshes.calledOnce);
         });
 
         it('should add animate function', () => {
-            assert.isTrue(holonet.addAnimateFunctions.calledOnce);
-            assert.isArray(holonet.addAnimateFunctions.firstCall.args[0]);
-            assert.isFunction(holonet.addAnimateFunctions.firstCall.args[0][0]);
+            assert.isTrue(simbol.addAnimateFunctions.calledOnce);
+            assert.isArray(simbol.addAnimateFunctions.firstCall.args[0]);
+            assert.isFunction(simbol.addAnimateFunctions.firstCall.args[0][0]);
         });
     });
 
@@ -127,14 +127,14 @@ describe('Holonet', () => {
         let component2;
 
         beforeEach(() => {
-            holonet.addListeners.restore();
+            simbol.addListeners.restore();
             component1 = new EventEmitter();
             sinon.spy(component1, 'on');
             component2 = {
                 on: sinon.stub()
             };
 
-            holonet.addListeners(component1, component2);
+            simbol.addListeners(component1, component2);
         });
 
         it('should add all listeners to all components', () => {
@@ -152,7 +152,7 @@ describe('Holonet', () => {
 
         it('should forward error', (done) => {
             const event = {};
-            holonet.on('error', (fwdevent) => {
+            simbol.on('error', (fwdevent) => {
                 assert.equal(fwdevent, event);
                 done();
             });
@@ -163,57 +163,57 @@ describe('Holonet', () => {
     describe('#addToScene', () => {
 
         beforeEach(() => {
-            sinon.stub(holonet._scene, 'addToScene');
+            sinon.stub(simbol._scene, 'addToScene');
 
-            holonet.addToScene([1, 2]);
+            simbol.addToScene([1, 2]);
         });
 
         it('should wrap Scene.prototype.addToScene', () => {
-            assert.isTrue(holonet._scene.addToScene.calledOnce);
-            assert.isTrue(holonet._scene.addToScene.calledWith());
+            assert.isTrue(simbol._scene.addToScene.calledOnce);
+            assert.isTrue(simbol._scene.addToScene.calledWith());
         });
     });
 
     describe('#removeFromeScene', () => {
 
         beforeEach(() => {
-            holonet._scene.scene = {
+            simbol._scene.scene = {
                 remove: sinon.stub()
             };
 
-            holonet.removeFromScene(1);
+            simbol.removeFromScene(1);
         });
 
         it('should remove mesh from scene', () => {
-            assert.isTrue(holonet._scene.scene.remove.calledOnce);
-            assert.isTrue(holonet._scene.scene.remove.calledWith(1));
+            assert.isTrue(simbol._scene.scene.remove.calledOnce);
+            assert.isTrue(simbol._scene.scene.remove.calledWith(1));
         });
     });
 
     describe('#addAnimateFunctions', () => {
 
         beforeEach(() => {
-            sinon.stub(holonet._scene, 'addAnimateFunctions');
+            sinon.stub(simbol._scene, 'addAnimateFunctions');
 
-            holonet.addAnimateFunctions([1, 2]);
+            simbol.addAnimateFunctions([1, 2]);
         });
 
         it('should wrap Scene.prototype.addAnimateFunctions', () => {
-            assert.isTrue(holonet._scene.addAnimateFunctions.calledOnce);
-            assert.isTrue(holonet._scene.addAnimateFunctions.calledWith(1, 2));
+            assert.isTrue(simbol._scene.addAnimateFunctions.calledOnce);
+            assert.isTrue(simbol._scene.addAnimateFunctions.calledWith(1, 2));
         });
     });
 
     describe('#startPresenting', () => {
 
         beforeEach(() => {
-            sinon.stub(holonet._scene.vrEffect, 'requestPresent');
+            sinon.stub(simbol._scene.vrEffect, 'requestPresent');
 
-            holonet.startPresenting();
+            simbol.startPresenting();
         });
 
         it('should wrap VREffect.prototype.requestPresent', () => {
-            assert.isTrue(holonet._scene.vrEffect.requestPresent.calledOnce);
+            assert.isTrue(simbol._scene.vrEffect.requestPresent.calledOnce);
         });
 
         it('should set Utils.isPresenting', () => {
@@ -224,13 +224,13 @@ describe('Holonet', () => {
     describe('#stopPresenting', () => {
 
         beforeEach(() => {
-            sinon.stub(holonet._scene.vrEffect, 'exitPresent');
+            sinon.stub(simbol._scene.vrEffect, 'exitPresent');
 
-            holonet.stopPresenting();
+            simbol.stopPresenting();
         });
 
         it('should wrap VREffect.prototype.exitPresent', () => {
-            assert.isTrue(holonet._scene.vrEffect.exitPresent.calledOnce);
+            assert.isTrue(simbol._scene.vrEffect.exitPresent.calledOnce);
         });
 
         it('should set Utils.isPresenting', () => {
@@ -246,7 +246,7 @@ describe('Holonet', () => {
 			sinon.stub(Physics, 'checkMeshCollision').returns(false);
 			// sinon.stub(Physics, 'checkRayCollision').returns(true);
 
-			holonet.locomotion = {
+			simbol.locomotion = {
 				phi: 1,
 				theta: 1,
 				translatingZ: 1,
@@ -271,7 +271,7 @@ describe('Holonet', () => {
 				}
             };
             
-            holonet.controllers = {
+            simbol.controllers = {
                 currentControllers: {
                     'Test Controller': {
                         update: sinon.stub()
@@ -283,20 +283,20 @@ describe('Holonet', () => {
                 }
             }
 
-			holonet.virtualPersona.vrControls = {
+			simbol.virtualPersona.vrControls = {
                 update: sinon.stub(),
                 getStandingMatrix: sinon.stub()
             };
 
-			holonet.virtualPersona.fakeCamera = {
+			simbol.virtualPersona.fakeCamera = {
 				quaternion: 2,
 				position: {
 					applyQuaternion: sinon.stub()
 				}
 			};
-			holonet.virtualPersona.fakeCamera.position.applyQuaternion.returns(new THREE.Quaternion());
+			simbol.virtualPersona.fakeCamera.position.applyQuaternion.returns(new THREE.Quaternion());
 
-			holonet._scene = {
+			simbol._scene = {
 				camera: {
 					rotation: {
 						set: sinon.stub(),
@@ -328,15 +328,15 @@ describe('Holonet', () => {
                 }
 			};
 
-			holonet.interactions = {
+			simbol.interactions = {
 				update: sinon.stub()
 			};
 
-			holonet.virtualPersona.multiVP = {
+			simbol.virtualPersona.multiVP = {
 				sendData: sinon.stub()
 			}
 
-			holonet.virtualPersona.mesh = {
+			simbol.virtualPersona.mesh = {
 				rotation: {
 					y: 0
 				},
@@ -346,15 +346,15 @@ describe('Holonet', () => {
                 },
                 children: []
 			};
-			holonet.virtualPersona.mesh.position.copy.returns(holonet.virtualPersona.mesh.position);
-			holonet.virtualPersona.headMesh = {
+			simbol.virtualPersona.mesh.position.copy.returns(simbol.virtualPersona.mesh.position);
+			simbol.virtualPersona.headMesh = {
 				position: {
 					y: 0
 				}
 			};
-			holonet.virtualPersona.floorHeight = 0;
+			simbol.virtualPersona.floorHeight = 0;
 
-			holonet.virtualPersona.setFloorHeight = sinon.stub();
+			simbol.virtualPersona.setFloorHeight = sinon.stub();
 		});
 
 		afterEach(() => {
@@ -366,80 +366,80 @@ describe('Holonet', () => {
 		describe('general', () => {
 
 			beforeEach(() => {
-				holonet.animate(1000);
+				simbol.animate(1000);
 			});
 
 			it('should handle position', () => {
-				assert.isTrue(holonet._scene.camera.position.copy.calledOnce);
+				assert.isTrue(simbol._scene.camera.position.copy.calledOnce);
 			});
 			
 			it('should update the camera\'s position', () => {
-				assert.isTrue(holonet._scene.camera.translateZ.calledOnce);
-				assert.isTrue(holonet._scene.camera.translateZ.calledWith(0));
+				assert.isTrue(simbol._scene.camera.translateZ.calledOnce);
+				assert.isTrue(simbol._scene.camera.translateZ.calledWith(0));
 	
-				assert.isTrue(holonet._scene.camera.translateX.calledOnce);
-				assert.isTrue(holonet._scene.camera.translateX.calledWith(0));
+				assert.isTrue(simbol._scene.camera.translateX.calledOnce);
+				assert.isTrue(simbol._scene.camera.translateX.calledWith(0));
 			});
 
 			it('should handle collisions', () => {
 				assert.isTrue(Physics.checkMeshCollision.calledOnce);
-				assert.equal(Physics.checkMeshCollision.firstCall.args[0], holonet.virtualPersona.mesh);
+				assert.equal(Physics.checkMeshCollision.firstCall.args[0], simbol.virtualPersona.mesh);
 			});
 
 			it('should handle the teleportation ray curve', () => {
-				assert.isTrue(holonet.locomotion.teleportation.updateRayCurve.calledOnce);
-				assert.isTrue(holonet.locomotion.teleportation.updateRayCurve.calledWith(holonet._scene.camera));
+				assert.isTrue(simbol.locomotion.teleportation.updateRayCurve.calledOnce);
+				assert.isTrue(simbol.locomotion.teleportation.updateRayCurve.calledWith(simbol._scene.camera));
 			});
 
 			it('should handle teleportation', () => {
-				assert.isTrue(holonet._scene.camera.position.setX.calledOnce);
-				assert.isTrue(holonet._scene.camera.position.setY.calledTwice);
-				assert.isTrue(holonet._scene.camera.position.setZ.calledOnce);
-				assert.isTrue(holonet._scene.camera.position.setX.calledWith(1));
-				assert.isTrue(holonet._scene.camera.position.setY.calledWith(1.7));
-				assert.isTrue(holonet._scene.camera.position.setZ.calledWith(2));
-				assert.isTrue(holonet.locomotion.teleportation.resetTeleport.calledOnce);
+				assert.isTrue(simbol._scene.camera.position.setX.calledOnce);
+				assert.isTrue(simbol._scene.camera.position.setY.calledTwice);
+				assert.isTrue(simbol._scene.camera.position.setZ.calledOnce);
+				assert.isTrue(simbol._scene.camera.position.setX.calledWith(1));
+				assert.isTrue(simbol._scene.camera.position.setY.calledWith(1.7));
+				assert.isTrue(simbol._scene.camera.position.setZ.calledWith(2));
+				assert.isTrue(simbol.locomotion.teleportation.resetTeleport.calledOnce);
 			});
 
 			it('should set floor height', () => {
-				assert.isTrue(holonet.virtualPersona.setFloorHeight.calledOnce);
+				assert.isTrue(simbol.virtualPersona.setFloorHeight.calledOnce);
 			});
 
 			it('should fix the camera\'s height', () => {
-				assert.isTrue(holonet._scene.camera.position.setY.calledTwice);
-				assert.isTrue(holonet._scene.camera.position.setY.calledWith(1.7));
+				assert.isTrue(simbol._scene.camera.position.setY.calledTwice);
+				assert.isTrue(simbol._scene.camera.position.setY.calledWith(1.7));
 			});
 			
 			it('should set the camera\'s rotation', () => {
-				assert.isTrue(holonet._scene.camera.rotation.copy.calledOnce);
-				assert.isTrue(holonet._scene.camera.rotation.copy.calledWith(holonet.locomotion.orientation.euler));
+				assert.isTrue(simbol._scene.camera.rotation.copy.calledOnce);
+				assert.isTrue(simbol._scene.camera.rotation.copy.calledWith(simbol.locomotion.orientation.euler));
 			});
 
 			it('should set the mesh\'s rotation', () => {
-				assert.equal(holonet.virtualPersona.mesh.rotation.y, Math.PI + 1);
+				assert.equal(simbol.virtualPersona.mesh.rotation.y, Math.PI + 1);
 			});
 
 			it('should set the mesh\'s position', () => {
-				assert.isTrue(holonet.virtualPersona.mesh.position.copy.calledOnce);
-				assert.isTrue(holonet.virtualPersona.mesh.position.copy.calledWith(holonet._scene.camera.position));
+				assert.isTrue(simbol.virtualPersona.mesh.position.copy.calledOnce);
+				assert.isTrue(simbol.virtualPersona.mesh.position.copy.calledWith(simbol._scene.camera.position));
 
-				assert.isTrue(holonet.virtualPersona.mesh.position.setY.calledOnce);
-				assert.isTrue(holonet.virtualPersona.mesh.position.setY.calledWith(0));
+				assert.isTrue(simbol.virtualPersona.mesh.position.setY.calledOnce);
+				assert.isTrue(simbol.virtualPersona.mesh.position.setY.calledWith(0));
 			});
 
 			it('should send data via multiVP', () => {
-				assert.isTrue(holonet.virtualPersona.multiVP.sendData.calledOnce);
-				assert.isTrue(holonet.virtualPersona.multiVP.sendData.calledWith(holonet.virtualPersona.mesh));
+				assert.isTrue(simbol.virtualPersona.multiVP.sendData.calledOnce);
+				assert.isTrue(simbol.virtualPersona.multiVP.sendData.calledWith(simbol.virtualPersona.mesh));
 			});
 
 			it('should update interactions', () => {
-				assert.isTrue(holonet.interactions.update.calledOnce);
-				assert.isTrue(holonet.interactions.update.calledWith(holonet._scene.camera.position, holonet._scene.camera.quaternion));
+				assert.isTrue(simbol.interactions.update.calledOnce);
+				assert.isTrue(simbol.interactions.update.calledWith(simbol._scene.camera.position, simbol._scene.camera.quaternion));
 			});
 
 			it('should update controllers', () => {
-				assert.isTrue(holonet.controllers.currentControllers['Test Controller'].update.calledOnce);
-				assert.isTrue(holonet.controllers.currentControllers['Test Controller 2'].update.calledOnce);
+				assert.isTrue(simbol.controllers.currentControllers['Test Controller'].update.calledOnce);
+				assert.isTrue(simbol.controllers.currentControllers['Test Controller 2'].update.calledOnce);
 			});
 		});
 
@@ -448,22 +448,22 @@ describe('Holonet', () => {
 			beforeEach(() => {
 				Utils.isPresenting = true;
 
-				holonet.animate(1000);
+				simbol.animate(1000);
 			});
 			
 			it('should update VRControls', () => {
-				assert.isTrue(holonet.virtualPersona.vrControls.update.calledOnce);
+				assert.isTrue(simbol.virtualPersona.vrControls.update.calledOnce);
 			});
 
 			it('should set the camera\'s rotation', () => {
-				assert.isTrue(holonet._scene.camera.position.add.calledOnce);
-				assert.deepEqual(holonet._scene.camera.position.add.firstCall.args[0], new THREE.Quaternion());
-				assert.isTrue(holonet._scene.camera.quaternion.multiply.calledOnce);
-				assert.isTrue(holonet._scene.camera.quaternion.multiply.calledWith(2));
+				assert.isTrue(simbol._scene.camera.position.add.calledOnce);
+				assert.deepEqual(simbol._scene.camera.position.add.firstCall.args[0], new THREE.Quaternion());
+				assert.isTrue(simbol._scene.camera.quaternion.multiply.calledOnce);
+				assert.isTrue(simbol._scene.camera.quaternion.multiply.calledWith(2));
 			});
 
 			it('should set the mesh\'s rotation', () => {
-				assert.equal(holonet.virtualPersona.mesh.rotation.y, Math.PI + 1);
+				assert.equal(simbol.virtualPersona.mesh.rotation.y, Math.PI + 1);
 			});
 		});
 	});

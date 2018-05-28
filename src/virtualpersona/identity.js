@@ -1,7 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import uport from '../libs/uport-connect';
 
-const ANONYMOUS_AVATAR_PATH = 'https://holonet.one/assets/models/AnonymousVP.gltf';
+const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.gltf';
 
 class Identity extends EventEmitter {
 
@@ -37,7 +37,7 @@ class Identity extends EventEmitter {
 	constructor() {
 		super();
 
-		this.uPort = new uport.Connect('Holonet', {
+		this.uPort = new uport.Connect('Simbol', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
 			network: 'rinkeby',
 			signer: uport.SimpleSigner('12856cfa7d87eca683cbccf3617c82c615b8cac4347db20b1874884c2bc6453d') // eslint-disable-line new-cap
@@ -57,7 +57,7 @@ class Identity extends EventEmitter {
 	signIn(...information) {
 		return this.uPort.requestCredentials({
 			requested: information,
-			verified: ['HolonetConfig'],
+			verified: ['SimbolConfig'],
 			notifications: true // We want this if we want to receive credentials
 		}).then((credentials) => {
 			this.setUPortData(credentials, true);
@@ -128,8 +128,8 @@ class Identity extends EventEmitter {
 	 */
 	setUPortData(credentials, save) {
 		this.uPortData = credentials;
-		if (credentials.HolonetConfig) {
-			const config = JSON.parse(credentials.HolonetConfig);
+		if (credentials.SimbolConfig) {
+			const config = JSON.parse(credentials.SimbolConfig);
 			this.avatarPath = config.avatar3D ||
 								ANONYMOUS_AVATAR_PATH;
 		}

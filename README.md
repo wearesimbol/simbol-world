@@ -1,4 +1,4 @@
-# holonet
+# simbol
 
 Create social virtual worlds that anyone can interact with using Virtual Personas, a self-sovereign identity.
 
@@ -7,16 +7,16 @@ Create social virtual worlds that anyone can interact with using Virtual Persona
 Install via [npm](https://npmjs.com) or [yarn](https://yarnpkg.com)
 
 ```
-npm install --save holonet
-yarn add holonet
+npm install --save simbol
+yarn add simbol
 ```
 
 And then import it using ES2015 Modules, CommonJS or with a `<script>` tag:
 
 ```
-import * as holonet from 'holonet';
-const holonet = require('holonet');
-<script src="./node_modules/holonet/build/holonet.script.js"></script>
+import * as simbol from 'simbol';
+const simbol = require('simbol');
+<script src="./node_modules/simbol/build/simbol.script.js"></script>
 ```
 
 ## Entities
@@ -39,11 +39,11 @@ Possible small physics library
 
 ## API
 
-You can check out the API in our [JSDoc](https://holonet.one/docs)
+You can check out the API in our [JSDoc](https://simbol.io/docs)
 
 ## Third party libraries
 
-Currently, [holonet](https://holonet.one) is dependent on several third party libraries:
+Currently, [simbol](https://simbol.io) is dependent on several third party libraries:
 
 * [Three.js](https://threejs.org): Most used WebGL library
 * [Three.VRControls](https://github.com/mrdoob/three.js/blob/dev/examples/js/controls/VRControls.js): VR Controls helper from Three.JS

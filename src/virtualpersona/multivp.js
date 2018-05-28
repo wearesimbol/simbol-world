@@ -41,7 +41,7 @@ class MultiVP extends EventEmitter {
 	 * Initializes a MultiVP instance
 	 *
 	 * @param {Object} config - Configuration parameters
-	 * @param {Holonet.VirtualPersona} vp - Holonet Virtual Persona associated with the local human running the site
+	 * @param {Simbol.VirtualPersona} vp - Simbol Virtual Persona associated with the local human running the site
 	 *
 	 * @returns {undefined}
 	 * @emits MultiVP#error

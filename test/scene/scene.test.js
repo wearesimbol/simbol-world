@@ -87,7 +87,7 @@ describe('Scene', () => {
 
 		it('should load scene', () => {
 			assert.isTrue(scene._sceneLoader.load.calledOnce);
-			assert.equal(mesh.name, 'HolonetMainScene');
+			assert.equal(mesh.name, 'SimbolMainScene');
 			assert.equal(scene.scene, mesh);
 			assert.isTrue(scene._setupMeshes.calledOnce);
 			assert.isTrue(scene._setupMeshes.calledWith(mesh));

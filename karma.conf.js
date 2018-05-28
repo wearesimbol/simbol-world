@@ -100,7 +100,7 @@ module.exports = function(config) {
 				sourcemap: true,
 				// will help to prevent conflicts between different tests entries
 				format: 'iife',
-				name: 'holonet'
+				name: 'simbol'
 			},
 		}
 	});

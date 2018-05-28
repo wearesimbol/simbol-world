@@ -77,7 +77,7 @@ class Link {
 	/**
 	 * Adds the link mesh to the scene
 	 *
-	 * @param {Holonet.Scene} scene - Holonet scene instance to be used to add the link object to it
+	 * @param {Simbol.Scene} scene - Simbol scene instance to be used to add the link object to it
 	 *
 	 * @returns {undefined}
 	*/

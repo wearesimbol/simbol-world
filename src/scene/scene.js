@@ -33,15 +33,15 @@ class Scene {
 
 	/**
 	 * Initialises and renders a provided scene.
-	 * You can either uses Holonet to create a three.js Renderer and camera and load the scene
+	 * You can either uses Simbol to create a three.js Renderer and camera and load the scene
 	 * or provide it with a previously created renderer and camera to work with
 	 *
 	 * @param {object} config - Configuration object
 	 * @param {boolean} config.render - Whether it needs to render to the canvas
 	 * @param {string|THREE.Scene} config.sceneToLoad - Either a THREE.Scene to be added, or a path to the .gltf or .json file containing the scene
 	 * @param {HTMLCanvasElement} config.canvas - Canvas element where the scene will be rendered
-	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Holonet needs access to your renderer
-	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Holonet needs access to your camera
+	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Simbol needs access to your renderer
+	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Simbol needs access to your camera
 	 *
 	 * @returns {Scene} scene
 	 */
@@ -87,7 +87,7 @@ class Scene {
 	init() {
 		return this._sceneLoader.load()
 			.then((loadedScene) => {
-				loadedScene.name = 'HolonetMainScene';
+				loadedScene.name = 'SimbolMainScene';
 
 				this._setupMeshes(loadedScene);
 				this.scene = loadedScene;

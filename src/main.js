@@ -15,14 +15,14 @@ if (!navigator.getVRDisplays) {
 	InitializeWebVRPolyfill(); // eslint-disable-line
 }
 
-/**  Main class for Holonet */
-class Holonet extends EventEmitter {
+/**  Main class for Simbol */
+class Simbol extends EventEmitter {
 
 	/**
-	 * Creates a Holonet instance
+	 * Creates a Simbol instance
 	 *
 	 * @param {object} config - Config object
-	 * @param {object} config.scene - Configuration object for a Holonet scene
+	 * @param {object} config.scene - Configuration object for a Simbol scene
 	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
 	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
 	 */
@@ -44,7 +44,7 @@ class Holonet extends EventEmitter {
 	}
 
 	/**
-	 * Initialises Holonet by initialising its different components
+	 * Initialises Simbol by initialising its different components
 	 * and adding all necessary meshes into the scene
 	 *
 	 * @returns {Promise} promise - Signals that all components have been initiated
@@ -65,9 +65,9 @@ class Holonet extends EventEmitter {
 	}
 
 	/**
-	 * Listens to a set of common events from different Holonet components
+	 * Listens to a set of common events from different Simbol components
 	 *
-	 * @param {Object} components - List of Holonet components that fire common events
+	 * @param {Object} components - List of Simbol components that fire common events
 	 *
 	 * @returns {undefined}
 	 */
@@ -92,7 +92,7 @@ class Holonet extends EventEmitter {
 	}
 
 	/**
-	 * Helper function that wraps Holonet.Scene.prototype.addToScene
+	 * Helper function that wraps Simbol.Scene.prototype.addToScene
 	 *
 	 * @param {array} meshes - Meshes to add to the scene
 	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
@@ -116,7 +116,7 @@ class Holonet extends EventEmitter {
 	}
 
 	/**
-	 * Helper function that wraps Holonet.Scene.prototype.addAnimateFunctions
+	 * Helper function that wraps Simbol.Scene.prototype.addAnimateFunctions
 	 *
 	 * @param {array} functions - Array of functions to add to the animation loop
 	 *
@@ -157,7 +157,7 @@ class Holonet extends EventEmitter {
 *
 * @returns {undefined}
 */
-Holonet.prototype.animate = (function() {
+Simbol.prototype.animate = (function() {
 	const rotatedPosition = new THREE.Quaternion();
 	const previousCameraPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
@@ -270,6 +270,6 @@ Holonet.prototype.animate = (function() {
 	};
 }());
 
-export default Holonet;
+export default Simbol;
 export {Utils, Loader, Link};
-export {Elements} from './elements/elements';
+export {Simbols} from './simbols/simbols';

@@ -129,7 +129,7 @@ describe('VirtualPersona', () => {
 
 			it('should load mesh', () => {
 				assert.isTrue(vp.loadMesh.calledOnce);
-				assert.isTrue(vp.loadMesh.calledWith('https://holonet.one/assets/models/AnonymousVP.gltf', true));
+				assert.isTrue(vp.loadMesh.calledWith('https://simbol.io/assets/models/AnonymousVP.gltf', true));
 			});
 		});
 
@@ -261,7 +261,7 @@ describe('VirtualPersona', () => {
 		});
 
 		it('should set some properties', () => {
-			assert.equal(mesh.name, 'HolonetVirtualPersona');
+			assert.equal(mesh.name, 'SimbolVirtualPersona');
 			assert.deepEqual(mesh.scale, new THREE.Vector3(1, 1, 1));
 			assert.deepEqual(mesh.position, new THREE.Vector3(0, 0, 0));
 		});

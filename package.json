@@ -1,19 +1,19 @@
 {
-  "name": "holonet",
+  "name": "simbol",
   "version": "1.0.0-alpha.2",
   "description": "Easily create 3D WebXR compatible sites with a global self-sovereign identity system",
-  "main": "build/holonet.umd.js",
-  "module": "build/holonet.js",
+  "main": "build/simbol.umd.js",
+  "module": "build/simbol.js",
   "repository": {
-    "url": "https://github.com/holonet/holonet.git",
+    "url": "https://github.com/simbol/simbol.git",
     "type": "git"
   },
   "author": "Alberto Elias <hi@albertoelias.me>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/holonet/holonet/issues"
+    "url": "https://github.com/simbol/simbol/issues"
   },
-  "homepage": "https://holonet.one",
+  "homepage": "https://simbol.io",
   "engines": {
     "node": "^8.0.0"
   },
@@ -21,7 +21,7 @@
     "eventemitter3": "^3.0.0",
     "load-bmfont": "^1.3.0",
     "simple-peer": "^8.1.1",
-    "three": "^0.87.0",
+    "three": "^0.92.0",
     "three-bmfont-text": "^2.2.1",
     "uport-connect": "^0.7.0",
     "webvr-polyfill": "^0.9.25"
