@@ -56564,7 +56564,7 @@
 					this.emit('add', {
 						mesh: model
 					});
-					this._configureControllerModel(gamepad.id, modelRootPath);
+					this._configureControllerModel(gamepad.id);
 				});
 			});
 		}
@@ -56573,24 +56573,17 @@
 		 * Configures the controller model depending on the controller
 		 *
 		 * @param {string} id - The controller's id
-		 * @param {string} modelRootPath - Path for a specific controller's model
 		 *
 		 * @return {undefined}
 		 */
-		_configureControllerModel(id, modelRootPath) {
+		_configureControllerModel(id) {
 			const textureLoader = new TextureLoader();
 			textureLoader.crossOrigin = '';
 			switch(id) {
 			case 'Daydream Controller':
-				this.model.position.copy(this.locomotion.scene.camera.position).setY(0.5);
 				this.model.scale.multiplyScalar(2.5);
 				this.armModel = true;
 				this.offset = new Vector3();
-				break;
-			case 'OpenVR Gamepad':
-				this.model.material.map = textureLoader.load(`${modelRootPath}onepointfive_texture.png`);
-				this.model.material.specularMap = textureLoader.load(`${modelRootPath}onepointfive_spec.png`);
-				this.model.material.color = new Color(1, 1, 1);
 				break;
 			}
 		}
@@ -56663,11 +56656,11 @@
 		 *
 		 * @param {THREE.Camera} camera - Scene camera
 		 * @param {number} userHeight - The user's set height
-		 * @param {array} standingMatrix - The standingMatrix from WebVR
+		 * @param {number} floorHeight - The current height where the floor is
 		 *
 		 * @return {undefined}
 		 */
-		update(camera, userHeight, standingMatrix) {
+		update(camera, userHeight, floorHeight) {
 			const gamepad = Controllers.getGamepad(this.id);
 
 			if (!gamepad) {
@@ -56677,6 +56670,23 @@
 					hand: this.hand
 				});
 				return;
+			}
+
+			for (const buttonName of Object.keys(ControllerButtons)) {
+				const buttonId = ControllerButtons[buttonName];
+				const button = gamepad.buttons[buttonId];
+				if (button) {
+					// As all functions follow the same naming pattern, we can avoid a switch clause
+					if (button.pressed && !this.pressedButtons[buttonId]) {
+						this[`handle${buttonName}Pressed`](button.pressed);
+					}
+
+					this.pressedButtons[buttonId] = button.pressed;
+
+					if (buttonName === 'Thumbpad') {
+						this[`handle${buttonName}Touched`](button.touched);
+					}
+				}
 			}
 
 			if (gamepad.pose.orientation) {
@@ -56716,32 +56726,13 @@
 				this.model.position.copy(this.position);
 			} else if (this.model) {
 				this.model.quaternion.copy(this.quaternion);
-				this.model.position.copy(this.position);
-			}
+				this.model.position.copy(camera.position);
+				this.model.position.add(this.position);
 
-			if (this.model) {
-				this.model.matrixAutoUpdate = false;
-				this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-				this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-				this.model.matrixWorldNeedsUpdate = true;
-				this.model.position.y += userHeight;
-			}
+				this.model.position.y = this.position.y +
+					floorHeight +
+					userHeight;
 
-			for (const buttonName of Object.keys(ControllerButtons)) {
-				const buttonId = ControllerButtons[buttonName];
-				const button = gamepad.buttons[buttonId];
-				if (button) {
-					// As all functions follow the same naming pattern, we can avoid a switch clause
-					if (button.pressed && !this.pressedButtons[buttonId]) {
-						this[`handle${buttonName}Pressed`](button.pressed);
-					}
-
-					this.pressedButtons[buttonId] = button.pressed;
-
-					if (buttonName === 'Thumbpad') {
-						this[`handle${buttonName}Touched`](button.touched);
-					}
-				}
 			}
 		}
 	}
@@ -140557,6 +140548,7 @@
 
 			// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 			const fakeCamera = new Object3D();
+			fakeCamera.rotation.order = 'YXZ';
 			this.vrControls = new VRControls(fakeCamera, (event) => {
 				this.emit('error', event);
 			});
@@ -143811,7 +143803,6 @@
 	* @returns {undefined}
 	*/
 	Simbol.prototype.animate = (function() {
-		const rotatedPosition = new Quaternion();
 		const previousCameraPosition = new Vector3();
 		const previousControllerQuaternion = new Quaternion();
 		previousControllerQuaternion.initialised = false;
@@ -143881,19 +143872,18 @@
 			previousCameraPosition.copy(camera.position);
 			previousControllerQuaternion.copy(controller.quaternion);
 
-			// Handle rotation
-			camera.rotation.copy(this.locomotion.orientation.euler);
-
 			if (Utils.isPresenting) {
 				this.virtualPersona.vrControls.update();
 
-				rotatedPosition.copy(this.virtualPersona.fakeCamera.position.applyQuaternion(camera.quaternion));
-				camera.position.add(rotatedPosition);
-				camera.quaternion.multiply(this.virtualPersona.fakeCamera.quaternion);
+				camera.rotation.order = 'YXZ';
+				camera.position.add(this.fakeCamera.position);
+				camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
 
 				this.virtualPersona.mesh.rotation.y = camera.rotation.y + Math.PI;
 			} else {
+				camera.rotation.order = 'XYZ';
 				this.virtualPersona.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+				camera.rotation.copy(this.locomotion.orientation.euler);
 			}
 
 			// Adjust vertical position
@@ -143918,7 +143908,8 @@
 				const controller = this.controllers.currentControllers[controllerId];
 				controller.update && controller.update(camera,
 					this.virtualPersona.userHeight,
-					this.virtualPersona.vrControls.getStandingMatrix());
+					this.virtualPersona.floorHeight
+				);
 			}
 		};
 	}());

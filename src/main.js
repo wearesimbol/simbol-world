@@ -158,7 +158,6 @@ class Simbol extends EventEmitter {
 * @returns {undefined}
 */
 Simbol.prototype.animate = (function() {
-	const rotatedPosition = new THREE.Quaternion();
 	const previousCameraPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
 	previousControllerQuaternion.initialised = false;
@@ -228,19 +227,18 @@ Simbol.prototype.animate = (function() {
 		previousCameraPosition.copy(camera.position);
 		previousControllerQuaternion.copy(controller.quaternion);
 
-		// Handle rotation
-		camera.rotation.copy(this.locomotion.orientation.euler);
-
 		if (Utils.isPresenting) {
 			this.virtualPersona.vrControls.update();
 
-			rotatedPosition.copy(this.virtualPersona.fakeCamera.position.applyQuaternion(camera.quaternion));
-			camera.position.add(rotatedPosition);
-			camera.quaternion.multiply(this.virtualPersona.fakeCamera.quaternion);
+			camera.rotation.order = 'YXZ';
+			camera.position.add(this.virtualPersona.fakeCamera.position);
+			camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
 
 			this.virtualPersona.mesh.rotation.y = camera.rotation.y + Math.PI;
 		} else {
 			this.virtualPersona.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+			camera.rotation.order = 'XYZ';
+			camera.rotation.copy(this.locomotion.orientation.euler);
 		}
 
 		// Adjust vertical position
@@ -265,7 +263,8 @@ Simbol.prototype.animate = (function() {
 			const controller = this.controllers.currentControllers[controllerId];
 			controller.update && controller.update(camera,
 				this.virtualPersona.userHeight,
-				this.virtualPersona.vrControls.getStandingMatrix());
+				this.virtualPersona.floorHeight
+			);
 		}
 	};
 }());

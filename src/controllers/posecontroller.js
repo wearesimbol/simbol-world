@@ -75,7 +75,7 @@ class PoseController extends EventEmitter {
 				this.emit('add', {
 					mesh: model
 				});
-				this._configureControllerModel(gamepad.id, modelRootPath);
+				this._configureControllerModel(gamepad.id);
 			});
 		});
 	}
@@ -84,24 +84,17 @@ class PoseController extends EventEmitter {
 	 * Configures the controller model depending on the controller
 	 *
 	 * @param {string} id - The controller's id
-	 * @param {string} modelRootPath - Path for a specific controller's model
 	 *
 	 * @return {undefined}
 	 */
-	_configureControllerModel(id, modelRootPath) {
+	_configureControllerModel(id) {
 		const textureLoader = new THREE.TextureLoader();
 		textureLoader.crossOrigin = '';
 		switch(id) {
 		case 'Daydream Controller':
-			this.model.position.copy(this.locomotion.scene.camera.position).setY(0.5);
 			this.model.scale.multiplyScalar(2.5);
 			this.armModel = true;
 			this.offset = new THREE.Vector3();
-			break;
-		case 'OpenVR Gamepad':
-			this.model.material.map = textureLoader.load(`${modelRootPath}onepointfive_texture.png`);
-			this.model.material.specularMap = textureLoader.load(`${modelRootPath}onepointfive_spec.png`);
-			this.model.material.color = new THREE.Color(1, 1, 1);
 			break;
 		}
 	}
@@ -176,11 +169,11 @@ class PoseController extends EventEmitter {
 	 *
 	 * @param {THREE.Camera} camera - Scene camera
 	 * @param {number} userHeight - The user's set height
-	 * @param {array} standingMatrix - The standingMatrix from WebVR
+	 * @param {number} floorHeight - The current height where the floor is
 	 *
 	 * @return {undefined}
 	 */
-	update(camera, userHeight, standingMatrix) {
+	update(camera, userHeight, floorHeight) {
 		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
@@ -190,6 +183,23 @@ class PoseController extends EventEmitter {
 				hand: this.hand
 			});
 			return;
+		}
+
+		for (const buttonName of Object.keys(ControllerButtons)) {
+			const buttonId = ControllerButtons[buttonName];
+			const button = gamepad.buttons[buttonId];
+			if (button) {
+				// As all functions follow the same naming pattern, we can avoid a switch clause
+				if (button.pressed && !this.pressedButtons[buttonId]) {
+					this[`handle${buttonName}Pressed`](button.pressed);
+				}
+
+				this.pressedButtons[buttonId] = button.pressed;
+
+				if (buttonName === 'Thumbpad') {
+					this[`handle${buttonName}Touched`](button.touched);
+				}
+			}
 		}
 
 		if (gamepad.pose.orientation) {
@@ -229,32 +239,13 @@ class PoseController extends EventEmitter {
 			this.model.position.copy(this.position);
 		} else if (this.model) {
 			this.model.quaternion.copy(this.quaternion);
-			this.model.position.copy(this.position);
-		}
+			this.model.position.copy(camera.position);
+			this.model.position.add(this.position);
 
-		if (this.model) {
-			this.model.matrixAutoUpdate = false;
-			this.model.matrix.compose(this.model.position, this.model.quaternion, this.model.scale);
-			this.model.matrix.multiplyMatrices(standingMatrix, this.model.matrix);
-			this.model.matrixWorldNeedsUpdate = true;
-			this.model.position.y += userHeight;
-		}
+			this.model.position.y = this.position.y +
+				floorHeight +
+				userHeight;
 
-		for (const buttonName of Object.keys(ControllerButtons)) {
-			const buttonId = ControllerButtons[buttonName];
-			const button = gamepad.buttons[buttonId];
-			if (button) {
-				// As all functions follow the same naming pattern, we can avoid a switch clause
-				if (button.pressed && !this.pressedButtons[buttonId]) {
-					this[`handle${buttonName}Pressed`](button.pressed);
-				}
-
-				this.pressedButtons[buttonId] = button.pressed;
-
-				if (buttonName === 'Thumbpad') {
-					this[`handle${buttonName}Touched`](button.touched);
-				}
-			}
 		}
 	}
 }

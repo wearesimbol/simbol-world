@@ -1,17 +1,17 @@
 {
   "name": "simbol",
   "version": "1.0.0-alpha.2",
-  "description": "Easily create 3D WebXR compatible sites with a global self-sovereign identity system",
+  "description": "Simple Immersive Communication for everyone. Easily create a social XR experience with a self-sovereign identity system",
   "main": "build/simbol.umd.js",
   "module": "build/simbol.js",
   "repository": {
-    "url": "https://github.com/simbol/simbol.git",
+    "url": "https://github.com/wearesimbol/simbol.git",
     "type": "git"
   },
   "author": "Alberto Elias <hi@albertoelias.me>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/simbol/simbol/issues"
+    "url": "https://github.com/wearesimbol/simbol/issues"
   },
   "homepage": "https://simbol.io",
   "engines": {

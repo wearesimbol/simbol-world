@@ -284,8 +284,7 @@ describe('Simbol', () => {
             }
 
 			simbol.virtualPersona.vrControls = {
-                update: sinon.stub(),
-                getStandingMatrix: sinon.stub()
+                update: sinon.stub()
             };
 
 			simbol.virtualPersona.fakeCamera = {
@@ -457,9 +456,9 @@ describe('Simbol', () => {
 
 			it('should set the camera\'s rotation', () => {
 				assert.isTrue(simbol._scene.camera.position.add.calledOnce);
-				assert.deepEqual(simbol._scene.camera.position.add.firstCall.args[0], new THREE.Quaternion());
-				assert.isTrue(simbol._scene.camera.quaternion.multiply.calledOnce);
-				assert.isTrue(simbol._scene.camera.quaternion.multiply.calledWith(2));
+				assert.deepEqual(simbol._scene.camera.position.add.firstCall.args[0], simbol.virtualPersona.fakeCamera.position);
+				assert.isTrue(simbol._scene.camera.quaternion.copy.calledOnce);
+				assert.isTrue(simbol._scene.camera.quaternion.copy.calledWith(2));
 			});
 
 			it('should set the mesh\'s rotation', () => {

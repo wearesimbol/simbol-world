@@ -63,6 +63,7 @@ class VirtualPersona extends EventEmitter {
 
 		// Passes in a fake camera to VRControls that will capture the locomotion of the HMD
 		const fakeCamera = new THREE.Object3D();
+		fakeCamera.rotation.order = 'YXZ';
 		this.vrControls = new VRControls(fakeCamera, (event) => {
 			this.emit('error', event);
 		});
