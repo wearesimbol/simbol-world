@@ -7,31 +7,25 @@ import {Loader} from '../../src/utils/loader';
 describe('Loader', () => {
 
 	let loader;
+	let meshToLoad;
 
 	beforeEach(() => {
-		loader = Object.create(Loader);
+		meshToLoad = 'myscene.json';
+
+		loader = new Loader(meshToLoad);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Loader);
+	it('should be a class', () => {
+		assert.isFunction(Loader);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Loader.init);
-		assert.isFunction(Loader._loadGLTF);
-		assert.isFunction(Loader._loadObj);
-		assert.isFunction(Loader.load);
+		assert.isFunction(Loader.prototype._loadGLTF);
+		assert.isFunction(Loader.prototype._loadObj);
+		assert.isFunction(Loader.prototype.load);
 	});
 
-	describe('#init', () => {
-
-		let meshToLoad;
-
-		beforeEach(() => {
-			meshToLoad = 'myscene.json';
-
-			loader.init(meshToLoad);
-		});
+	describe('#constructor', () => {
 
 		it('should set some properties', () => {
 			assert.equal(loader.meshToLoad, meshToLoad);
@@ -42,7 +36,7 @@ describe('Loader', () => {
 			beforeEach(() => {
 				meshToLoad = 'myscene.gltf';
 
-				loader.init(meshToLoad);
+				loader = new Loader(meshToLoad);
 			});
 
 			it('should set the type to GLTF', () => {
@@ -51,12 +45,6 @@ describe('Loader', () => {
 		});
 
 		describe('OBJ scene', () => {
-
-			beforeEach(() => {
-				meshToLoad = 'myscene.json';
-
-				loader.init(meshToLoad);
-			});
 
 			it('should set the type to OBJ', () => {
 				assert.equal(loader.type, 'OBJ');
@@ -68,7 +56,7 @@ describe('Loader', () => {
 			beforeEach(() => {
 				meshToLoad = new THREE.Object3D();
 
-				loader.init(meshToLoad);
+				loader = new Loader(meshToLoad);
 			});
 
 			it('should set the type to Object3D', () => {
@@ -149,18 +137,19 @@ describe('Loader', () => {
 		let returnedScene;
 		let error;
 
-		beforeEach((done) => {
-			loader.load().then((scene) => {
-				returnedScene = scene;
-				done();
-			}, (e) => {
-				error = e;
-				done();
-			});
-		});
+		describe('error', () => {
 
-		it('should throw an error if type is incorrect', () => {
-			assert.equal(error, 'Invalid mesh provided');
+			beforeEach((done) => {
+				loader = new Loader();
+				loader.load().then(done, (e) => {
+					error = e;
+					done();
+				});
+			});
+	
+			it('should throw an error if type is incorrect', () => {
+				assert.equal(error, 'Invalid mesh provided');
+			});
 		});
 
 		describe('load GLTF', () => {

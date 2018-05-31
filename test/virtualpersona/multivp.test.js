@@ -1,6 +1,7 @@
 'use strict';
 
 import * as THREE from 'three';
+import EventEmitter from 'eventemitter3';
 import Peer from 'simple-peer';
 import {VirtualPersona} from '../../src/virtualpersona/virtualpersona';
 import {MultiVP} from '../../src/virtualpersona/multivp';
@@ -8,57 +9,58 @@ import {MultiVP} from '../../src/virtualpersona/multivp';
 describe('MultiVP', () => {
 
 	let multiVP;
+	let config;
+	let vp;
 
-	beforeEach(() => {
-		multiVP = Object.create(MultiVP);
+	beforeEach((done) => {
+		sinon.stub(EventEmitter.prototype, 'emit');
+		config = {
+			test: false
+		};
+		sinon.stub(MultiVP.prototype, 'getStream').resolves(1);
+		sinon.stub(MultiVP.prototype, 'createSocket').callsFake(() => done());
+
+		multiVP = new MultiVP(config, vp);
 	});
 
-	it('should be an object', () => {
-		assert.isObject(MultiVP);
+	afterEach(() => {
+		EventEmitter.prototype.emit.restore();
+		MultiVP.prototype.createSocket.restore && MultiVP.prototype.createSocket.restore();
+		MultiVP.prototype.getStream.restore && MultiVP.prototype.getStream.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(MultiVP);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(MultiVP.init);
-		assert.isFunction(MultiVP.animate);
-		assert.isFunction(MultiVP.createSocket);
-		assert.isFunction(MultiVP._socketError);
-		assert.isFunction(MultiVP._socketMessage);
-		assert.isFunction(MultiVP.createPeer);
-		assert.isFunction(MultiVP._peerSignal);
-		assert.isFunction(MultiVP._peerError);
-		assert.isFunction(MultiVP._peerConnect);
-		assert.isFunction(MultiVP._peerData);
-		assert.isFunction(MultiVP._peerClose);
-		assert.isFunction(MultiVP.sendData);
-		assert.isFunction(MultiVP.update);
-		assert.isFunction(MultiVP._decodeBuffer);
-		assert.isFunction(MultiVP._loadAvatar);
+		assert.isFunction(MultiVP.prototype.getStream);
+		assert.isFunction(MultiVP.prototype.animate);
+		assert.isFunction(MultiVP.prototype.createSocket);
+		assert.isFunction(MultiVP.prototype._socketError);
+		assert.isFunction(MultiVP.prototype._socketMessage);
+		assert.isFunction(MultiVP.prototype.createPeer);
+		assert.isFunction(MultiVP.prototype._peerStream);
+		assert.isFunction(MultiVP.prototype._peerSignal);
+		assert.isFunction(MultiVP.prototype._peerError);
+		assert.isFunction(MultiVP.prototype._peerConnect);
+		assert.isFunction(MultiVP.prototype._peerData);
+		assert.isFunction(MultiVP.prototype._peerClose);
+		assert.isFunction(MultiVP.prototype.sendData);
+		assert.isFunction(MultiVP.prototype.update);
+		assert.isFunction(MultiVP.prototype._decodeBuffer);
+		assert.isFunction(MultiVP.prototype._loadAvatar);
 	});
 
 	it('should have a set of properties', () => {
-		assert.deepEqual(MultiVP.meshes, {});
-		assert.deepEqual(MultiVP.remotePeers, {});
+		assert.deepEqual(MultiVP.prototype.meshes, {});
+		assert.deepEqual(MultiVP.prototype.remotePeers, {});
 	});
 	
-	describe('#init', () => {
+	describe('#constructor', () => {
 
-		let config;
-		let scene;
-		let vp;
-
-		beforeEach(() => {
-			config = {
-				test: false
-			};
-			scene = {
-				addAnimateFunctions: sinon.stub()
-			};
-			vp = {
-				scene: scene
-			};
-			sinon.stub(multiVP, 'createSocket').returns(1);
-
-			multiVP.init(config, vp);
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(multiVP, EventEmitter);
 		});
 
 		it('should set properties', () => {
@@ -72,9 +74,43 @@ describe('MultiVP', () => {
 					objectMode: false
 				}
 			});
-			assert.equal(multiVP.socket, 1);
+			assert.equal(multiVP.stream, 1);
 			assert.equal(multiVP.vp, vp);
-			assert.equal(multiVP.scene, scene);
+		});
+
+		it('should add animate functions', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledOnce);
+			assert.isTrue(EventEmitter.prototype.emit.calledWith('addanimatefunctions'));
+			assert.isArray(EventEmitter.prototype.emit.firstCall.args[1].functions);
+			assert.isFunction(EventEmitter.prototype.emit.firstCall.args[1].functions[0]);
+		});
+	});
+
+	describe('#getStream', () => {
+		
+		let stream;
+		let originalGetUserMedia;
+
+		beforeEach((done) => {
+			MultiVP.prototype.getStream.restore();
+			originalGetUserMedia = navigator.mediaDevices.getUserMedia;
+			navigator.mediaDevices.getUserMedia = sinon.stub().resolves(1);
+
+			multiVP.getStream()
+				.then((s) => {
+					stream = s;
+					done();
+				});
+		});
+
+		afterEach(() => {
+			navigator.mediaDevices.getUserMedia = originalGetUserMedia;
+		});
+
+		it('should get stream', () => {
+			assert.isTrue(navigator.mediaDevices.getUserMedia.calledOnce);
+			assert.deepEqual(navigator.mediaDevices.getUserMedia.firstCall.args[0], {audio: true});
+			assert.equal(stream, 1);
 		});
 	});
 
@@ -112,6 +148,8 @@ describe('MultiVP', () => {
 		let socket;
 
 		beforeEach(() => {
+			MultiVP.prototype.createSocket.restore();
+
 			currentWebSocket = window.WebSocket;
 			const websocket = function(url) {
 				this.url = url;
@@ -144,7 +182,15 @@ describe('MultiVP', () => {
 	});
 		
 	describe('#_socketError', () => {
-		// Currently only logs the error
+		
+		beforeEach(() => {
+			multiVP._socketError('error');
+		});
+
+		it('should emit socker errors', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('error', 'error'));
+		});
 	});
 	
 	describe('#_socketMessage', () => {
@@ -189,7 +235,7 @@ describe('MultiVP', () => {
 			
 			it('should handle message', () => {
 				assert.isTrue(multiVP.createPeer.calledOnce);
-				assert.isTrue(multiVP.createPeer.calledWith(true, 0));
+				assert.isTrue(multiVP.createPeer.calledWith(true, 0, 1));
 				assert.equal(multiVP.remotePeers[0], peer);
 			});
 		});
@@ -237,6 +283,7 @@ describe('MultiVP', () => {
 	describe('#createPeer', () => {
 
 		let peer;
+		const stream = new MediaStream();
 
 		beforeEach(() => {
 			multiVP.config = {
@@ -246,7 +293,7 @@ describe('MultiVP', () => {
 			sinon.stub(Peer, 'constructor');
 			sinon.stub(Peer.prototype, 'on');
 
-			peer = multiVP.createPeer(true, 1);
+			peer = multiVP.createPeer(true, 1, stream);
 		});
 
 		afterEach(() => {
@@ -258,6 +305,7 @@ describe('MultiVP', () => {
 			assert.instanceOf(peer, Peer);
 			assert.isTrue(peer.initiator);
 			assert.equal(peer.channelName, 'test');
+			assert.deepEqual(peer.stream, stream);
 		});
 
 		it('should set some properties', () => {
@@ -267,12 +315,43 @@ describe('MultiVP', () => {
 
 		it('should set some event handlers', () => {
 			// Simple-Peer already calls on twice
-			assert.equal(peer.on.callCount, 7);
-			assert.isTrue(peer.on.getCall(2).calledWith('signal'));
-			assert.isTrue(peer.on.getCall(3).calledWith('error'));
-			assert.isTrue(peer.on.getCall(4).calledWith('connect'));
-			assert.isTrue(peer.on.getCall(5).calledWith('data'));
-			assert.isTrue(peer.on.getCall(6).calledWith('close'));
+			assert.equal(peer.on.callCount, 8);
+			assert.isTrue(peer.on.getCall(2).calledWith('stream'));
+			assert.isTrue(peer.on.getCall(3).calledWith('signal'));
+			assert.isTrue(peer.on.getCall(4).calledWith('error'));
+			assert.isTrue(peer.on.getCall(5).calledWith('connect'));
+			assert.isTrue(peer.on.getCall(6).calledWith('data'));
+			assert.isTrue(peer.on.getCall(7).calledWith('close'));
+		});
+	});
+
+	describe('#_peerStream', () => {
+		
+		let stream;
+
+		beforeEach(() => {
+			sinon.stub(document.body, 'appendChild');
+			sinon.stub(HTMLMediaElement.prototype, 'play');
+			stream = new MediaStream();
+
+			multiVP._peerStream(stream);
+		});
+
+		afterEach(() => {
+			document.body.appendChild.restore();
+			HTMLMediaElement.prototype.play.restore();
+		});
+
+		it('should create audio element', () => {
+			assert.instanceOf(multiVP.audioEl, HTMLAudioElement);
+			assert.isTrue(multiVP.audioEl.autoplay);
+			assert.equal(multiVP.audioEl.srcObject, stream);
+		});
+
+		it('should add audio element', () => {
+			assert.isTrue(document.body.appendChild.calledOnce);
+			assert.isTrue(document.body.appendChild.calledWith(multiVP.audioEl));
+			assert.isTrue(HTMLMediaElement.prototype.play.calledOnce);
 		});
 	});
 
@@ -304,7 +383,16 @@ describe('MultiVP', () => {
 	});
 
 	describe('#_peerError', () => {
-		// Currently just logs
+		
+		beforeEach(() => {
+			multiVP.multiVP = multiVP;
+			multiVP._peerError('error');
+		});
+
+		it('should emit peer errors', () => {
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('error', 'error'));
+		});
 	});
 
 	describe('#_peerConnect', () => {
@@ -374,9 +462,6 @@ describe('MultiVP', () => {
 				multiVP._decodeBuffer.returns(JSON.stringify(data));
 				mesh = {};
 				sinon.stub(multiVP, '_loadAvatar').resolves(mesh);
-				multiVP.scene = {
-					addToScene: sinon.stub()
-				};
 
 				multiVP._peerData(data);
 			});
@@ -387,7 +472,6 @@ describe('MultiVP', () => {
 				assert.isTrue(true);
 			});
 		});
-
 		describe('mesh data', () => {
 
 			let mesh;
@@ -411,6 +495,8 @@ describe('MultiVP', () => {
 	describe('#_peerClose', () => {
 
 		beforeEach(() => {
+			sinon.stub(document, 'removeChild');
+
 			multiVP.id = 1;
 			multiVP.remotePeers[1] = true;
 			multiVP.meshes = {
@@ -418,26 +504,33 @@ describe('MultiVP', () => {
 					mesh: 1
 				}
 			};
-			multiVP.scene = {
-				scene: {
-					remove: sinon.stub()
-				}
-			};
 			multiVP.multiVP = multiVP;
+			multiVP.audioEl = 1;
 
 			multiVP._peerClose();
+		});
+
+		afterEach(() => {
+			document.removeChild.restore();
 		});
 
 		it('should delete peer', () => {
 			assert.isUndefined(multiVP.remotePeers[1]);
 		});
 
+		it('should delete audio element', () => {
+			assert.isTrue(document.removeChild.calledOnce);
+			assert.isTrue(document.removeChild.calledWith(1));
+		});
+
 		it('should delete mesh', () => {
 			assert.isUndefined(multiVP.meshes[1]);
-			assert.isTrue(multiVP.scene.scene.remove.calledOnce);
-			assert.isTrue(multiVP.scene.scene.remove.calledWith(1));
+
+			assert.isTrue(EventEmitter.prototype.emit.calledTwice);
+			assert.isTrue(EventEmitter.prototype.emit.secondCall.calledWith('remove'));
+			assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {mesh: 1});
 		});
-	})
+	});
 
 	describe('#sendData', () => {
 
@@ -542,31 +635,54 @@ describe('MultiVP', () => {
 
 	describe('#_loadAvatar', () => {
 
-		let mesh;
+		describe('resolves', () => {
+
+			let mesh;
+
+			beforeEach((done) => {
+				mesh = {};
+	
+				multiVP.vp = {
+					loadMesh: sinon.stub().resolves(mesh)
+				};
+	
+				multiVP._loadAvatar('test', 0).then(() => { done(); });
+			});
+	
+			it('should load the avatar', () => {
+				assert.isTrue(multiVP.vp.loadMesh.calledOnce);
+				assert.isTrue(multiVP.vp.loadMesh.calledWith('test'));
+			});
+	
+			it('should set the name', () => {
+				assert.equal(mesh.name, 0);
+			});
+	
+			it('should save the mesh', () => {
+				assert.equal(multiVP.meshes[0].mesh, mesh);
+				assert.deepEqual(multiVP.meshes[0].position, []);
+				assert.equal(multiVP.meshes[0].rotation, 0);
+			});
+		});
+	});
+
+	describe('rejects', () => {
+
+		let caughtError;
 
 		beforeEach((done) => {
-			mesh = {};
-
 			multiVP.vp = {
-				loadMesh: sinon.stub().resolves(mesh)
+				loadMesh: sinon.stub().rejects('error')
 			};
 
-			multiVP._loadAvatar('test', 0).then(() => { done(); });
+			multiVP._loadAvatar().catch((error) => {
+				caughtError = error;
+				done();
+			});
 		});
 
-		it('should load the avatar', () => {
-			assert.isTrue(multiVP.vp.loadMesh.calledOnce);
-			assert.isTrue(multiVP.vp.loadMesh.calledWith('test'));
-		});
-
-		it('should set the name', () => {
-			assert.equal(mesh.name, 0);
-		});
-
-		it('should save the mesh', () => {
-			assert.equal(multiVP.meshes[0].mesh, mesh);
-			assert.deepEqual(multiVP.meshes[0].position, []);
-			assert.equal(multiVP.meshes[0].rotation, 0);
+		it('should reject errors', () => {
+			assert.equal(caughtError, 'error');
 		});
 	});
 });

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -58603,7 +58605,7 @@ var introModalDisplay = function introModalDisplay(appName) {
     content += '\n              <span>Login Into</span>\n              <span> </span>\n              <span style="' + uportAppName + '">' + appName + '</span>';
     content += '\n            </p><p style="' + uportQRTextWithAppName + '">If you have never configured your Virtual Persona:';
     content += '\n            </p><p style="' + uportQRTextWithAppName + '">1. Download uPort';
-    content += '\n            </p><p style="' + uportQRTextWithAppName + '">2. Visit <a href="https://holonet.one/identity" target="_blank">https://holonet.one/identity</a>'
+    content += '\n            </p><p style="' + uportQRTextWithAppName + '">2. Visit <a href="https://simbol.io/identity" target="_blank">https://simbol.io/identity</a>'
     content += '\n            </p><p style="' + uportQRTextWithAppName + '">3. Come back!';
   } else {
     content += '<span>Login</span>';

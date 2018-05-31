@@ -1,26 +1,28 @@
 {
-  "name": "holonet",
-  "version": "1.0.0-alpha.0",
-  "description": "Easily create 3D WebXR compatible sites with a global self-sovereign identity system",
-  "main": "build/holonet.umd.js",
-  "module": "build/holonet.js",
+  "name": "simbol",
+  "version": "1.0.0-alpha.2",
+  "description": "Simple Immersive Communication for everyone. Easily create a social XR experience with a self-sovereign identity system",
+  "main": "build/simbol.umd.js",
+  "module": "build/simbol.js",
   "repository": {
-    "url": "https://github.com/holonet/holonet.git",
+    "url": "https://github.com/wearesimbol/simbol.git",
     "type": "git"
   },
   "author": "Alberto Elias <hi@albertoelias.me>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/holonet/holonet/issues"
+    "url": "https://github.com/wearesimbol/simbol/issues"
   },
-  "homepage": "https://holonet.one",
+  "homepage": "https://simbol.io",
   "engines": {
     "node": "^8.0.0"
   },
   "dependencies": {
     "eventemitter3": "^3.0.0",
+    "load-bmfont": "^1.3.0",
     "simple-peer": "^8.1.1",
-    "three": "^0.87.0",
+    "three": "^0.92.0",
+    "three-bmfont-text": "^2.2.1",
     "uport-connect": "^0.7.0",
     "webvr-polyfill": "^0.9.25"
   },
@@ -39,9 +41,9 @@
     "karma-rollup-preprocessor": "^5.0.0",
     "karma-sinon": "^1.0.5",
     "mocha": "^4.0.0",
-    "rollup": "^0.54.0",
-    "rollup-plugin-commonjs": "^8.1.1",
-    "rollup-plugin-json": "^2.3.0",
+    "rollup": "^0.58.0",
+    "rollup-plugin-commonjs": "^9.1.1",
+    "rollup-plugin-json": "^2.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.1.0",
     "rollup-plugin-node-resolve": "^3.0.0",

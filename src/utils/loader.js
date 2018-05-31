@@ -1,20 +1,15 @@
 import * as THREE from 'three';
 import {GLTFLoader} from '../libs/GLTFLoader';
 
-/**
- * Loader
- * @namespace
- */
-const Loader = {
+/** Class for a Loader util */
+class Loader {
 
 	/**
-	 * Initialises the Loader
+	 * Constructs a Loader instance
 	 *
-	 * @param {string|THREE.Mesh} meshToLoad - Either a THREE.Mesh to be added, or a path to the .gltf or .json file containing the mesh
-	 *
-	 * @returns {undefined};
+	 * @param {string|THREE.Mesh} meshToLoad - Either a THREE.Mesh to be added, or a path to the .gltf/.glb or .json file containing the mesh
 	 */
-	init(meshToLoad) {
+	constructor(meshToLoad) {
 		this.meshToLoad = meshToLoad;
 		if (typeof meshToLoad === 'string') {
 			if (meshToLoad.includes('gltf') || meshToLoad.includes('glb')) {
@@ -25,7 +20,7 @@ const Loader = {
 		} else if (meshToLoad instanceof THREE.Object3D) {
 			this.type = 'Object3D';
 		}
-	},
+	}
 
 	/**
 	 * Loads a GLTF model
@@ -42,7 +37,7 @@ const Loader = {
 				resolve(data.scene);
 			}, undefined, reject);
 		});
-	},
+	}
 
 	/**
 	 * Loads a JSON model
@@ -57,12 +52,12 @@ const Loader = {
 			objWorldLoader.setCrossOrigin('');
 			objWorldLoader.load(this.meshToLoad, resolve, undefined, reject);
 		});
-	},
+	}
 
 	/**
 	 * Loads a model depending on its type
 	 *
-	 * @return {Promise} promise - Resolves to the loaded mesh
+	 * @returns {Promise} promise - Resolves to the loaded mesh
 	 */
 	load() {
 		return new Promise((resolve, reject) => {
@@ -81,7 +76,6 @@ const Loader = {
 			}
 		});
 	}
-
-};
+}
 
 export {Loader};

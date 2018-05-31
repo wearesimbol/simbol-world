@@ -1,13 +1,29 @@
 import * as THREE from 'three';
 
-/**
- * Utils
- * @namespace
- */
-const Utils = {
+/** Class for all Utils */
+class Utils {
 
 	/** @property {number} eps - Floating point precision for quaternion rotation comparison */
-	eps: 0.00005,
+	static get eps() {
+		return this._eps || 0.00005;
+	}
+
+	static set eps(eps) {
+		this._eps = eps;
+	}
+
+	/** @property {boolean} isPresenting - Whether the page is in an immersive exclusive session */
+	static get isPresenting() {
+		if (typeof this._isPresenting === 'undefined') {
+			this._isPresenting = false;
+		}
+
+		return this._isPresenting;
+	}
+
+	static set isPresenting(isPresenting) {
+		this._isPresenting = isPresenting;
+	}
 
 	/**
 	 *  Debounces function so it is only called after n milliseconds without it not being called
@@ -17,7 +33,7 @@ const Utils = {
 	 *
 	 * @returns {Function} debouncedFunc - Debounced function
 	 */
-	debounce(func, delay) {
+	static debounce(func, delay) {
 		const debouncedFunc = function(...args) {
 			const later = () => {
 				debouncedFunc.id = null;
@@ -27,7 +43,7 @@ const Utils = {
 			debouncedFunc.id = setTimeout(later, delay);
 		};
 		return debouncedFunc;
-	},
+	}
 
 	/**
 	 * Compare both quaternions, and if the difference is big enough, activateTeleport
@@ -37,22 +53,15 @@ const Utils = {
 	 *
 	 * @returns {boolean} difference - Whether the difference is big enough
 	 */
-	areQuaternionsEqual(quaternion1, quaternion2) {
+	static areQuaternionsEqual(quaternion1, quaternion2) {
 		if (!THREE.Quaternion.prototype.isPrototypeOf(quaternion1) || !THREE.Quaternion.prototype.isPrototypeOf(quaternion2)) {
 			return false;
 		}
 		const difference = Math.abs(1 - quaternion1.dot(quaternion2));
 		return difference < this.eps;
-	},
-
-	isMobile() {
-
-	},
-
-	isIOS() {
-
 	}
-};
+}
 
 export {Utils};
 export {Loader} from './loader';
+export {Link} from './link';

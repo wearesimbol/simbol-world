@@ -1,5 +1,6 @@
 'use strict';
 
+import EventEmitter from 'eventemitter3';
 import {Identity} from '../../src/virtualpersona/identity';
 import uPort from '../../src/libs/uport-connect';
 
@@ -8,41 +9,44 @@ describe('Identity', () => {
 	let identity;
 
 	beforeEach(() => {
-		identity = Object.create(Identity);
+		sinon.stub(Identity.prototype, 'getIdentity').returns(true);
+		identity = new Identity();
 	});
 
-	it('should be an object', () => {
-		assert.isObject(Identity);
+	afterEach(() => {
+		Identity.prototype.getIdentity.restore && Identity.prototype.getIdentity.restore();
+	});
+
+	it('should be a class', () => {
+		assert.isFunction(Identity);
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(Identity.init);
-		assert.isFunction(Identity.signIn);
-		assert.isFunction(Identity.signOut);
-		assert.isFunction(Identity.getIdentity);
-		assert.isFunction(Identity.setUPortData);
+		assert.isFunction(Identity.prototype.signIn);
+		assert.isFunction(Identity.prototype.signOut);
+		assert.isFunction(Identity.prototype.getIdentity);
+		assert.isFunction(Identity.prototype.setUPortData);
 	});
 
 	it('should have a set of properties', () => {
-		assert.equal(Identity.signedIn, false);
-		assert.equal(Identity.avatarPath, 'assets/models/AnonymousVP.gltf');
+		assert.equal(Identity.prototype.signedIn, false);
+		assert.equal(Identity.prototype.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
 	});
 
-	describe('#init', () => {
+	describe('#constructor', () => {
 
-		beforeEach(() => {
-			sinon.stub(identity, 'getIdentity').returns(true);
-
-			identity.init();
+		it('should extend EventEmitter', () => {
+			assert.instanceOf(identity, EventEmitter);
 		});
 
 		it('should configure uPort', () => {
 			assert.equal(identity.uPort.clientId, '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ');
-			assert.equal(identity.uPort.appName, 'Holonet');
+			assert.equal(identity.uPort.appName, 'Simbol');
 			assert.equal(identity.uPort.network.id, '0x4')
 		});
 
 		it('should set signedIn', () => {
+			assert.isTrue(identity.getIdentity.calledOnce);
 			assert.isTrue(identity.signedIn);
 		});
 	});
@@ -74,7 +78,7 @@ describe('Identity', () => {
 				assert.isTrue(identity.uPort.requestCredentials.calledOnce);
 				assert.deepEqual(identity.uPort.requestCredentials.firstCall.args[0], {
 					requested: ['information', 'moreinfo'],
-					verified: ['HolonetConfig'],
+					verified: ['SimbolConfig'],
 					notifications: true
 				});
 			});
@@ -121,7 +125,7 @@ describe('Identity', () => {
 		it('should reset the instance and remove identity data', () => {
 			assert.isTrue(localStorage.removeItem.calledOnce);
 			assert.isTrue(localStorage.removeItem.calledWith('currentIdentity'));
-			assert.equal(identity.avatarPath, 'assets/models/AnonymousVP.gltf');
+			assert.equal(identity.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
 			assert.isUndefined(identity.uPortData);
 			assert.isFalse(identity.signedIn);
 		});
@@ -131,6 +135,10 @@ describe('Identity', () => {
 
 		const data = {};
 		let returnedData;
+
+		beforeEach(() => {
+			Identity.prototype.getIdentity.restore();
+		});
 
 		describe('instance data', () => {
 			
@@ -167,6 +175,28 @@ describe('Identity', () => {
 				assert.isTrue(identity.setUPortData.calledWith(returnedData));
 			});
 		});
+
+		describe('error', () => {
+
+			let caughtError;
+
+			beforeEach((done) => {
+				identity.on('error', (error) => {
+					caughtError = error;
+					done();
+				});
+				sinon.stub(localStorage, 'getItem').returns('{a:a}');
+				sinon.spy(identity, 'emit');
+
+				identity.getIdentity();
+			});
+
+			it('should emit error', () => {
+				assert.isTrue(identity.emit.calledOnce);
+				assert.isTrue(identity.emit.calledWith('error', caughtError));
+				assert.instanceOf(caughtError, Error);
+			});
+		});
 	});
 
 	describe('#setUPortData', () => {
@@ -175,7 +205,7 @@ describe('Identity', () => {
 		
 		beforeEach(() => {
 			sinon.stub(localStorage, 'setItem');
-			creds = {HolonetConfig: true};
+			creds = {SimbolConfig: true};
 
 			identity.setUPortData(creds, true);
 		});
@@ -186,8 +216,8 @@ describe('Identity', () => {
 
 		it('should save identity data', () => {
 			assert.isTrue(localStorage.setItem.calledOnce);
-			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"HolonetConfig":true}'));
-			assert.equal(identity.avatarPath, Identity.avatarPath);
+			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"SimbolConfig":true}'));
+			assert.equal(identity.avatarPath, Identity.prototype.avatarPath);
 			assert.equal(identity.uPortData, creds);
 		});
 	});

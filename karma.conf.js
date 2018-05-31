@@ -63,7 +63,7 @@ module.exports = function(config) {
 
 		// start these browsers
 		// available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-		browsers: ['ChromeHeadless', 'ChromeHeadlessNoSandbox'],
+		browsers: ['ChromeHeadlessNoSandbox'],
 
 		customLaunchers: {
 			ChromeHeadlessNoSandbox: {
@@ -97,10 +97,10 @@ module.exports = function(config) {
 				})
 			],
 			output: {
-				sourcemap: 'inline',
+				sourcemap: true,
 				// will help to prevent conflicts between different tests entries
 				format: 'iife',
-				name: 'holonet'
+				name: 'simbol'
 			},
 		}
 	});
