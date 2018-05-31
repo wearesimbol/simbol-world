@@ -313,9 +313,7 @@ class MultiVP extends EventEmitter {
 		delete this.multiVP.remotePeers[this.id];
 		document.removeChild(this.audioEl);
 		if (this.multiVP.meshes[this.id]) {
-			this.multiVP.emit('remove', {
-				mesh: this.multiVP.meshes[this.id].mesh
-			});
+			this.multiVP.emit('remove', this.multiVP.meshes[this.id].mesh);
 			delete this.multiVP.meshes[this.id];
 		}
 	}

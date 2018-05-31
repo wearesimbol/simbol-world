@@ -140392,9 +140392,7 @@
 			delete this.multiVP.remotePeers[this.id];
 			document.removeChild(this.audioEl);
 			if (this.multiVP.meshes[this.id]) {
-				this.multiVP.emit('remove', {
-					mesh: this.multiVP.meshes[this.id].mesh
-				});
+				this.multiVP.emit('remove', this.multiVP.meshes[this.id].mesh);
 				delete this.multiVP.meshes[this.id];
 			}
 		}
@@ -143876,13 +143874,13 @@
 				this.virtualPersona.vrControls.update();
 
 				camera.rotation.order = 'YXZ';
-				camera.position.add(this.fakeCamera.position);
+				camera.position.add(this.virtualPersona.fakeCamera.position);
 				camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
 
 				this.virtualPersona.mesh.rotation.y = camera.rotation.y + Math.PI;
 			} else {
-				camera.rotation.order = 'XYZ';
 				this.virtualPersona.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+				camera.rotation.order = 'XYZ';
 				camera.rotation.copy(this.locomotion.orientation.euler);
 			}
 
