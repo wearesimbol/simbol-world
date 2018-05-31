@@ -140387,9 +140387,10 @@ var simbol = (function (exports) {
 		_peerClose() {
 			console.log(`peer ${this.id} closing`);
 			delete this.multiVP.remotePeers[this.id];
-			document.removeChild(this.audioEl);
+			document.body.removeChild(this.audioEl);
 			if (this.multiVP.meshes[this.id]) {
-				this.multiVP.emit('remove', this.multiVP.meshes[this.id].mesh);
+				const mesh = this.multiVP.meshes[this.id].mesh;
+				this.multiVP.emit('remove', {mesh});
 				delete this.multiVP.meshes[this.id];
 			}
 		}
