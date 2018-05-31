@@ -1,6 +1,6 @@
 {
   "name": "simbol",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Simple Immersive Communication for everyone. Easily create a social XR experience with a self-sovereign identity system",
   "main": "build/simbol.umd.js",
   "module": "build/simbol.js",
