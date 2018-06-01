@@ -56933,7 +56933,9 @@ class PointerController extends eventemitter3 {
 			return;
 		}
 
-		this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
+		this.emit('currentorientation', {
+			rotation: [event.touches[0].pageX, event.touches[0].pageY]
+		});
 
 		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
 		if (timeDelta < 250 || Utils.isPresenting) {
@@ -57108,6 +57110,10 @@ class Controllers extends eventemitter3 {
 
 			emitter.on('orientation', (event) => {
 				this.emit('orientation', event);
+			});
+
+			emitter.on('currentorientation', (event) => {
+				this.emit('currentorientation', event);
 			});
 
 			emitter.on('trigger', (event) => {
@@ -58216,6 +58222,10 @@ class Locomotion {
 
 		controllers.on('orientation', (event) => {
 			this.orient(event.rotation);
+		});
+
+		controllers.on('currentorientation', (event) => {
+			this.currentRotation.set(...event.rotation);
 		});
 
 		controllers.on('trigger', (event) => {

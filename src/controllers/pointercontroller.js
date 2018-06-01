@@ -53,7 +53,9 @@ class PointerController extends EventEmitter {
 			return;
 		}
 
-		this.rotation.set(event.touches[0].pageX, event.touches[0].pageY);
+		this.emit('currentorientation', {
+			rotation: [event.touches[0].pageX, event.touches[0].pageY]
+		});
 
 		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
 		if (timeDelta < 250 || Utils.isPresenting) {

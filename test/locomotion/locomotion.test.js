@@ -219,17 +219,18 @@ describe('Locomotion', () => {
 		});
 
 		it('should handle all events', () => {
-			assert.equal(EventEmitter.prototype.on.callCount, 10);
+			assert.equal(EventEmitter.prototype.on.callCount, 11);
 			assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('ztranslationstart'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('xtranslationstart'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('ztranslationend'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('xtranslationend'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('orientation'));
-			assert.isTrue(EventEmitter.prototype.on.getCall(5).calledWith('trigger'));
-			assert.isTrue(EventEmitter.prototype.on.getCall(6).calledWith('thumbpadpressed'));
-			assert.isTrue(EventEmitter.prototype.on.getCall(7).calledWith('thumbpadtouched'));
-			assert.isTrue(EventEmitter.prototype.on.getCall(8).calledWith('thumbpaduntouched'));
-			assert.isTrue(EventEmitter.prototype.on.getCall(9).calledWith('selected'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(5).calledWith('currentorientation'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(6).calledWith('trigger'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(7).calledWith('thumbpadpressed'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(8).calledWith('thumbpadtouched'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(9).calledWith('thumbpaduntouched'));
+			assert.isTrue(EventEmitter.prototype.on.getCall(10).calledWith('selected'));
 		});
 	});
 });

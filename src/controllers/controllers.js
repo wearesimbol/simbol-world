@@ -91,6 +91,10 @@ class Controllers extends EventEmitter {
 				this.emit('orientation', event);
 			});
 
+			emitter.on('currentorientation', (event) => {
+				this.emit('currentorientation', event);
+			});
+
 			emitter.on('trigger', (event) => {
 				this.emit('trigger', event);
 			});

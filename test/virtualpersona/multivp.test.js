@@ -495,7 +495,7 @@ describe('MultiVP', () => {
 	describe('#_peerClose', () => {
 
 		beforeEach(() => {
-			sinon.stub(document, 'removeChild');
+			sinon.stub(document.body, 'removeChild');
 
 			multiVP.id = 1;
 			multiVP.remotePeers[1] = true;
@@ -511,7 +511,7 @@ describe('MultiVP', () => {
 		});
 
 		afterEach(() => {
-			document.removeChild.restore();
+			document.body.removeChild.restore();
 		});
 
 		it('should delete peer', () => {
@@ -519,8 +519,8 @@ describe('MultiVP', () => {
 		});
 
 		it('should delete audio element', () => {
-			assert.isTrue(document.removeChild.calledOnce);
-			assert.isTrue(document.removeChild.calledWith(1));
+			assert.isTrue(document.body.removeChild.calledOnce);
+			assert.isTrue(document.body.removeChild.calledWith(1));
 		});
 
 		it('should delete mesh', () => {

@@ -106,15 +106,15 @@ describe('PointerController', () => {
 					pointerController._handleTouchStart(event);
 				});
 
-				it('should set rotation', () => {
-					assert.isTrue(pointerController.rotation.set.calledOnce);
-					assert.isTrue(pointerController.rotation.set.calledWith(1, 2));
+				it('should emit rotation', () => {
+					assert.equal(pointerController.emit.firstCall.args[0], 'currentorientation');
+					assert.deepEqual(pointerController.emit.firstCall.args[1], {rotation: [1, 2]});
 				});
 
 				it('should emit ztranslationstart', () => {
-					assert.isTrue(pointerController.emit.calledOnce);
-					assert.equal(pointerController.emit.firstCall.args[0], 'ztranslationstart');
-					assert.deepEqual(pointerController.emit.firstCall.args[1], {direction: -1});
+					assert.isTrue(pointerController.emit.calledTwice);
+					assert.equal(pointerController.emit.secondCall.args[0], 'ztranslationstart');
+					assert.deepEqual(pointerController.emit.secondCall.args[1], {direction: -1});
 				});
 			});
 
@@ -131,9 +131,9 @@ describe('PointerController', () => {
 				});
 
 				it('should emit ztranslationstart', () => {
-					assert.isTrue(pointerController.emit.calledOnce);
-					assert.equal(pointerController.emit.firstCall.args[0], 'ztranslationstart');
-					assert.deepEqual(pointerController.emit.firstCall.args[1], {direction: -1});
+					assert.isTrue(pointerController.emit.calledTwice);
+					assert.equal(pointerController.emit.secondCall.args[0], 'ztranslationstart');
+					assert.deepEqual(pointerController.emit.secondCall.args[1], {direction: -1});
 				});
 			});
 

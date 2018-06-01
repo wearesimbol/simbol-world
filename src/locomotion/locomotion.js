@@ -200,6 +200,10 @@ class Locomotion {
 			this.orient(event.rotation);
 		});
 
+		controllers.on('currentorientation', (event) => {
+			this.currentRotation.set(...event.rotation);
+		});
+
 		controllers.on('trigger', (event) => {
 			if (!event || !event.touch) {
 				this.teleport();

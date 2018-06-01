@@ -144,11 +144,12 @@ describe('Controllers', () => {
 			});
 
 			it('should add all event handlers', () => {
-				assert.equal(EventEmitter.prototype.on.callCount, 4);
+				assert.equal(EventEmitter.prototype.on.callCount, 5);
 				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('ztranslationstart'));
 				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('ztranslationend'));
 				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('orientation'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('trigger'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('currentorientation'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('trigger'));
 			});
 
 			it('should forward ztranslationstart', (done) => {
