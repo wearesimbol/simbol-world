@@ -211,7 +211,7 @@ describe('PointerController', () => {
 
 			it('should emit trigger', () => {
 				assert.isTrue(pointerController.emit.calledOnce);
-				assert.isTrue(pointerController.emit.calledWith('trigger'));
+				assert.isTrue(pointerController.emit.calledWith('triggerpressed'));
 			});
 		});
 	});

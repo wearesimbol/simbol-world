@@ -52,7 +52,7 @@ describe('GamepadController', () => {
 
 		it('should emit trigger event', () => {
 			assert.isTrue(gamepadController.emit.calledOnce);
-			assert.isTrue(gamepadController.emit.calledWith('trigger'));
+			assert.isTrue(gamepadController.emit.calledWith('triggerpressed'));
 		})
 	});
 	

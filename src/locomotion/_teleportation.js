@@ -354,7 +354,7 @@ class Teleportation {
 		this.rayCurve.material.color.set(this.missColor);
 
 		controller = controller.model || controller;
-		const quaternion = controller.getWorldQuaternion();
+		const quaternion = controller.getWorldQuaternion(new THREE.Quaternion());
 		const direction = this._shootAxis.clone().applyQuaternion(quaternion).normalize();
 		this._setDirection(direction);
 		const position = controller.position.clone();

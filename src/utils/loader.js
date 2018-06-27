@@ -34,7 +34,9 @@ class Loader {
 			const gltfWorldLoader = new GLTFLoader();
 			gltfWorldLoader.setCrossOrigin('');
 			gltfWorldLoader.load(this.meshToLoad, (data) => {
-				resolve(data.scene);
+				const loadedScene = data.scene;
+				loadedScene.animations = data.animations;
+				resolve(loadedScene);
 			}, undefined, reject);
 		});
 	}

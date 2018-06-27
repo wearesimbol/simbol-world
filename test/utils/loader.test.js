@@ -73,7 +73,8 @@ describe('Loader', () => {
 
 		beforeEach((done) => {
 			returnedScene = {
-				scene: true
+				scene: {},
+				animations: []
 			};
 			loader.meshToLoad = 'myscene.gltf';
 
@@ -83,7 +84,7 @@ describe('Loader', () => {
 				}
 			});
 
-			loader._loadGLTF().then((scene) => {
+			loader._loadGLTF().then((scene, animations) => {
 				loadedScene = scene;
 				done();
 			});
@@ -94,7 +95,7 @@ describe('Loader', () => {
 		});
 
 		it('should resolve loadedScene', () => {
-			assert.isTrue(loadedScene);
+			assert.deepEqual(loadedScene, {animations: []});
 		});
 	});
 
@@ -105,7 +106,9 @@ describe('Loader', () => {
 		let loadedScene;
 
 		beforeEach((done) => {
-			returnedScene = {};
+			returnedScene = {
+				scene: true
+			};
 			loader.meshToLoad = 'myscene.json';
 
 			sinon.stub(THREE.ObjectLoader.prototype, 'load').callsFake((scene, callback) => {

@@ -149,6 +149,7 @@ class VirtualPersona extends EventEmitter {
 			for (const child of mesh.children) {
 				if (child.isMesh) {
 					child.geometry.computeFaceNormals();
+					child.material.skinning = true;
 					child.castShadow = true;
 					child.receiveShadow = true;
 				}
@@ -174,6 +175,13 @@ class VirtualPersona extends EventEmitter {
 
 		this.mesh = mesh;
 		this.headMesh = this.mesh.getObjectByName('VirtualPersonaHead');
+		// TODO: FIX HEADMESH with Mirrors
+		// this.headMesh.onBeforeRender = () => {
+		// 	this.headMesh.layers.set(0);
+		// };
+		// this.headMesh.onAfterRender = () => {
+		// 	this.headMesh.layers.set(1);
+		// };
 		this.bodyMesh = this.mesh.getObjectByName('VirtualPersonaBody');
 		const boundingBox = new THREE.Box3().setFromObject(this.mesh);
 		this._meshHeight = boundingBox.max.y - boundingBox.min.y;
@@ -217,7 +225,7 @@ class VirtualPersona extends EventEmitter {
 		// Make it so you only climb objects that are 0.4m above the ground
 		this._feetPosition.setY(this._feetPosition.y - this.userHeight + this.climbableHeight);
 		// TODO: Remove temporary hack to make stairs work
-		this._feetPosition.add(scene.camera.getWorldDirection().multiplyScalar(0.4));
+		this._feetPosition.add(scene.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.4));
 
 		this._floorRayCaster.set(this._feetPosition, VERTICAL_VECTOR);
 		const collisionMesh = scene.scene;

@@ -51,7 +51,6 @@ describe('VirtualPersona', () => {
 			assert.instanceOf(vp, EventEmitter);
 		});
 
-
 		it('should set some properties', () => {
 			assert.deepEqual(vp._feetPosition, new THREE.Vector3());
 			assert.instanceOf(vp.fakeCamera, THREE.Object3D);
@@ -247,6 +246,7 @@ describe('VirtualPersona', () => {
 		const mesh = {
 			scale: new THREE.Vector3(),
 			position: new THREE.Vector3(),
+			material: {},
 			children: [{
 				isMesh: true,
 				material: {},
@@ -270,6 +270,7 @@ describe('VirtualPersona', () => {
 			assert.isTrue(mesh.children[0].geometry.computeFaceNormals.calledOnce);
 			assert.isTrue(mesh.children[0].castShadow);
 			assert.isTrue(mesh.children[0].receiveShadow);
+			assert.isTrue(mesh.children[0].material.skinning);
 		});
 	});
 

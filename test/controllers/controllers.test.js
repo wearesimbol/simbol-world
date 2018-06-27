@@ -14,16 +14,12 @@ describe('Controllers', () => {
 	const canvas = document.createElement('canvas');
 
 	beforeEach(() => {
-		sinon.stub(window, 'addEventListener');
-		sinon.stub(Controllers.prototype, 'updateControllers');
 		sinon.stub(Controllers.prototype, '_setUpEventListeners');
 
-		controllers = new Controllers(canvas);
+		controllers = new Controllers(canvas, 'left');
 	});
 
 	afterEach(() => {
-		window.addEventListener.restore();
-		Controllers.prototype.updateControllers.restore && Controllers.prototype.updateControllers.restore();
 		Controllers.prototype._setUpEventListeners.restore && Controllers.prototype._setUpEventListeners.restore();
 	});
 
@@ -34,8 +30,7 @@ describe('Controllers', () => {
 	it('should have a set of methods', () => {
 		assert.isFunction(Controllers.prototype._setUpEventListeners);
 		assert.isFunction(Controllers.prototype._removeEventListeners);
-		assert.isFunction(Controllers.prototype._handleGamepadConnected);
-		assert.isFunction(Controllers.prototype._handleGamepadDisconnected);
+		assert.isFunction(Controllers.prototype.init);
 		assert.isFunction(Controllers.prototype.addController);
 		assert.isFunction(Controllers.prototype.removeController);
 		assert.isFunction(Controllers.prototype.updateControllers);
@@ -54,14 +49,11 @@ describe('Controllers', () => {
 			assert.instanceOf(controllers, EventEmitter);
 		});
 
-		it('should listen to gamepad events', () => {
-			assert.isTrue(window.addEventListener.calledTwice);
-			assert.isTrue(window.addEventListener.firstCall.calledWith('gamepadconnected'));
-			assert.isTrue(window.addEventListener.secondCall.calledWith('gamepaddisconnected'));
-		});
+        it('should set hand', () => {
+            assert.equal(controllers.hand, 'left');
+        });
 
 		it('should add controllers', () => {
-			assert.isTrue(controllers.updateControllers.calledOnce);
 			assert.instanceOf(controllers.currentControllers['KeyboardController'], KeyboardController);
 			assert.instanceOf(controllers.currentControllers['PointerController'], PointerController);
 			assert.isTrue(controllers._setUpEventListeners.calledTwice);
@@ -93,11 +85,12 @@ describe('Controllers', () => {
 			});
 
 			it('should add all event handlers', () => {
-				assert.equal(EventEmitter.prototype.on.callCount, 4);
-				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('ztranslationstart'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('xtranslationstart'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('ztranslationend'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('xtranslationend'));
+				assert.equal(EventEmitter.prototype.on.callCount, 5);
+				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('ztranslationstart'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('xtranslationstart'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('ztranslationend'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('xtranslationend'));
 			});
 
 			it('should forward ztranslationstart', (done) => {
@@ -144,12 +137,13 @@ describe('Controllers', () => {
 			});
 
 			it('should add all event handlers', () => {
-				assert.equal(EventEmitter.prototype.on.callCount, 5);
-				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('ztranslationstart'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('ztranslationend'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('orientation'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('currentorientation'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('trigger'));
+				assert.equal(EventEmitter.prototype.on.callCount, 6);
+				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('ztranslationstart'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('ztranslationend'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('orientation'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('currentorientation'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(5).calledWith('triggerpressed'));
 			});
 
 			it('should forward ztranslationstart', (done) => {
@@ -177,11 +171,11 @@ describe('Controllers', () => {
 			});
 
 			it('should forward trigger', (done) => {
-				controllers.on('trigger', (fwdevent) => {
+				controllers.on('triggerpressed', (fwdevent) => {
 					assert.equal(fwdevent, event);
 					done();
 				});
-				emitter.emit('trigger', event);
+				emitter.emit('triggerpressed', event);
 			});
 		});
 
@@ -196,9 +190,10 @@ describe('Controllers', () => {
 			});
 
 			it('should add all event handlers', () => {
-				assert.equal(EventEmitter.prototype.on.callCount, 2);
-				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('controllerdisconnected'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('trigger'));
+				assert.equal(EventEmitter.prototype.on.callCount, 3);
+				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('controllerdisconnected'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('triggerpressed'));
 			});
 
 			// Doesn't emit another event, should remove handler to test separately
@@ -211,11 +206,11 @@ describe('Controllers', () => {
 			});
 
 			it('should forward trigger', (done) => {
-				controllers.on('trigger', (fwdevent) => {
+				controllers.on('triggerpressed', (fwdevent) => {
 					assert.equal(fwdevent, event);
 					done();
 				});
-				emitter.emit('trigger', event);
+				emitter.emit('triggerpressed', event);
 			});
 		});
 
@@ -225,16 +220,26 @@ describe('Controllers', () => {
 			const event = {};
 
 			beforeEach(() => {
-				emitter = new PoseController({pose:{}});
+				sinon.stub(PoseController.prototype, 'renameAnimations');
+				sinon.stub(PoseController.prototype, 'setGesture');
+				emitter = new PoseController();
 				controllers._setUpEventListeners(emitter);
 			});
 
+			afterEach(() => {
+				PoseController.prototype.renameAnimations.restore();
+				PoseController.prototype.setGesture.restore();
+			});
+
 			it('should add all event handlers', () => {
-				assert.equal(EventEmitter.prototype.on.callCount, 4);
-				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('controllerdisconnected'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('trigger'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('add'));
-				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('thumpadpressed'));
+				assert.equal(EventEmitter.prototype.on.callCount, 7);
+				assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('controllerdisconnected'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(2).calledWith('triggerpressed'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(3).calledWith('thumbpadpressed'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(4).calledWith('thumbpadtouched'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(5).calledWith('thumbpaduntouched'));
+				assert.isTrue(EventEmitter.prototype.on.getCall(6).calledWith('gesturechange'));
 			});
 
 			// Doesn't emit another event, should remove handler to test separately
@@ -246,33 +251,25 @@ describe('Controllers', () => {
 				emitter.emit('controllerdisconnected', event);
 			});
 
-			it('should forward trigger', (done) => {
-				controllers.on('trigger', (fwdevent) => {
+			it('should forward triggerpressed', (done) => {
+				controllers.on('triggerpressed', (fwdevent) => {
 					assert.equal(fwdevent, event);
 					done();
 				});
-				emitter.emit('trigger', event);
+				emitter.emit('triggerpressed', event);
 			});
 
-			it('should forward add', (done) => {
-				controllers.on('add', (fwdevent) => {
+			it('should forward thumbpadpressed', (done) => {
+				controllers.on('thumbpadpressed', (fwdevent) => {
 					assert.equal(fwdevent, event);
 					done();
 				});
-				emitter.emit('add', event);
-			});
-
-			it('should forward thumpadpressed', (done) => {
-				controllers.on('thumpadpressed', (fwdevent) => {
-					assert.equal(fwdevent, event);
-					done();
-				});
-				emitter.emit('thumpadpressed', event);
+				emitter.emit('thumbpadpressed', event);
 			});
 		});
 	});
 
-	describe('_removeEventListeners', () => {
+	describe('#_removeEventListeners', () => {
 
 		let emitter;
 
@@ -284,40 +281,97 @@ describe('Controllers', () => {
 		});
 
 		it('should remove all listeners', () => {
-			assert.equal(emitter.removeAllListeners.callCount, 9);
-			assert.isTrue(emitter.removeAllListeners.getCall(0).calledWith('ztranslationstart'));
-			assert.isTrue(emitter.removeAllListeners.getCall(1).calledWith('xtranslationstart'));
-			assert.isTrue(emitter.removeAllListeners.getCall(2).calledWith('ztranslationend'));
-			assert.isTrue(emitter.removeAllListeners.getCall(3).calledWith('xtranslationend'));
-			assert.isTrue(emitter.removeAllListeners.getCall(4).calledWith('orientation'));
-			assert.isTrue(emitter.removeAllListeners.getCall(5).calledWith('controllerdisconnected'));
-			assert.isTrue(emitter.removeAllListeners.getCall(6).calledWith('add'));
-			assert.isTrue(emitter.removeAllListeners.getCall(7).calledWith('trigger'));
-			assert.isTrue(emitter.removeAllListeners.getCall(8).calledWith('thumbpadpressed'));
+			assert.equal(emitter.removeAllListeners.callCount, 14);
+			assert.isTrue(emitter.removeAllListeners.getCall(0).calledWith('error'));
+			assert.isTrue(emitter.removeAllListeners.getCall(1).calledWith('ztranslationstart'));
+			assert.isTrue(emitter.removeAllListeners.getCall(2).calledWith('xtranslationstart'));
+			assert.isTrue(emitter.removeAllListeners.getCall(3).calledWith('ztranslationend'));
+			assert.isTrue(emitter.removeAllListeners.getCall(4).calledWith('xtranslationend'));
+			assert.isTrue(emitter.removeAllListeners.getCall(5).calledWith('orientation'));
+			assert.isTrue(emitter.removeAllListeners.getCall(6).calledWith('currentorientation'));
+			assert.isTrue(emitter.removeAllListeners.getCall(7).calledWith('controllerdisconnected'));
+			assert.isTrue(emitter.removeAllListeners.getCall(8).calledWith('add'));
+			assert.isTrue(emitter.removeAllListeners.getCall(9).calledWith('triggerpressed'));
+			assert.isTrue(emitter.removeAllListeners.getCall(10).calledWith('thumbpadpressed'));
+			assert.isTrue(emitter.removeAllListeners.getCall(11).calledWith('thumbpadtouched'));
+			assert.isTrue(emitter.removeAllListeners.getCall(12).calledWith('thumbpaduntouched'));
+			assert.isTrue(emitter.removeAllListeners.getCall(13).calledWith('gesturechange'));
 		});
 	});
 
-	describe('_handleGamepadConnected', () => {
+	describe('#init', () => {
+		
+		let mesh = 1;
 
 		beforeEach(() => {
-			controllers._handleGamepadConnected(true);
+			sinon.stub(window, 'addEventListener');
+			sinon.stub(controllers, 'updateControllers');
+
+			controllers.init(mesh);
+		});
+
+		afterEach(() => {
+			window.addEventListener.restore();
+		});
+
+		it('should listen to gamepad events', () => {
+			assert.isTrue(window.addEventListener.calledTwice);
+			assert.isTrue(window.addEventListener.firstCall.calledWith('gamepadconnected'));
+			assert.isTrue(window.addEventListener.secondCall.calledWith('gamepaddisconnected'));
 		});
 
 		it('should update controllers', () => {
-			assert.isTrue(controllers.updateControllers.calledTwice);
-			assert.isTrue(controllers.updateControllers.secondCall.calledWith(true, true));
+			assert.isTrue(controllers.updateControllers.calledOnce);
+			assert.isTrue(controllers.updateControllers.calledWith(mesh));
 		});
 	});
 
-	describe('_handleGamepadDisconnected', () => {
+	describe('#updateControllers', () => {
+
+		let gamepad;
+		let gamepad2;
 
 		beforeEach(() => {
-			controllers._handleGamepadDisconnected(false);
+			gamepad = {};
+			gamepad2 = {};
+			sinon.stub(navigator, 'getGamepads').returns([gamepad, gamepad2]);
+			sinon.stub(PoseController.prototype, 'renameAnimations');
+			sinon.stub(PoseController.prototype, 'setGesture');
+			sinon.stub(controllers, 'addController');
+			
+			controllers.updateControllers();
 		});
 
-		it('should update controllers', () => {
-			assert.isTrue(controllers.updateControllers.calledTwice);
-			assert.isTrue(controllers.updateControllers.secondCall.calledWith(false, false));
+		afterEach(() => {
+			navigator.getGamepads.restore();
+			PoseController.prototype.renameAnimations.restore();
+			PoseController.prototype.setGesture.restore();
+			controllers.addController.restore();
+		});
+
+		it('should add all controllers', () => {
+			assert.isTrue(controllers.addController.calledTwice);
+			assert.isTrue(controllers.addController.calledWith(gamepad));
+			assert.isTrue(controllers.addController.calledWith(gamepad2));
+		});
+
+		describe('mesh', () => {
+			
+			const mesh = new THREE.Mesh();
+
+			beforeEach(() => {
+				controllers.currentControllers['1'] = new PoseController({}, new THREE.Mesh());
+
+				controllers.updateControllers(mesh);
+			});
+
+			it('should save mesh', () => {
+				assert.equal(controllers.mesh, mesh);
+			});
+
+			it('should update all PoseControllers', () => {
+				assert.equal(controllers.currentControllers['1'].vpMesh, mesh);
+			});
 		});
 	});
 
@@ -347,10 +401,18 @@ describe('Controllers', () => {
 		describe('pose controller', () => {
 
 			beforeEach(() => {
+				sinon.stub(PoseController.prototype, 'renameAnimations');
+				sinon.stub(PoseController.prototype, 'setGesture');
 				gamepad.pose = true;
 				controllers.currentControllers = {};
+				controllers.mesh = new THREE.Mesh();
 
 				controllers.addController(gamepad);
+			});
+
+			afterEach(() => {
+				PoseController.prototype.renameAnimations.restore();
+				PoseController.prototype.setGesture.restore();
 			});
 
 			it('should save PoseController', () => {
@@ -384,10 +446,7 @@ describe('Controllers', () => {
 		beforeEach(() => {
 			gamepad = {
 				id: 'testController',
-				hand: 'left',
-				model: {
-					visible: true
-				}
+				hand: 'left'
 			};
 			controllers.currentControllers['testController (left)'] = gamepad;
 			controllers.mainHandController = gamepad;
@@ -398,89 +457,6 @@ describe('Controllers', () => {
 		it('should remove gamepad', () => {
 			assert.isNull(controllers.mainHandController);
 			assert.isUndefined(controllers.currentControllers['testController (left)']);
-			assert.isFalse(gamepad.model.visible);
-		});
-	});
-
-	describe('updateControllers', () => {
-
-		beforeEach(() => {
-			Controllers.prototype.updateControllers.restore();
-		});
-
-		describe('event', () => {
-
-			describe('connected', () => {
-
-				let event;
-
-				beforeEach(() => {
-					sinon.stub(controllers, 'addController');
-					event = {
-						gamepad: 1
-					};
-
-					controllers.updateControllers(event, true);
-				});
-
-				afterEach(() => {
-					controllers.addController.restore();
-				});
-
-				it('should add controller', () => {
-					assert.isTrue(controllers.addController.calledOnce);
-					assert.isTrue(controllers.addController.calledWith(1));
-				});
-			});
-
-			describe('disconnected', () => {
-
-				let event;
-
-				beforeEach(() => {
-					sinon.stub(controllers, 'removeController');
-					event = {
-						gamepad: 1
-					};
-
-					controllers.updateControllers(event, false);
-				});
-
-				afterEach(() => {
-					controllers.removeController.restore();
-				});
-
-				it('should remove controller', () => {
-					assert.isTrue(controllers.removeController.calledOnce);
-					assert.isTrue(controllers.removeController.calledWith(1));
-				});
-			});
-		});
-
-		describe('no event', () => {
-
-			let gamepad;
-			let gamepad2;
-
-			beforeEach(() => {
-				gamepad = {};
-				gamepad2 = {};
-				sinon.stub(navigator, 'getGamepads').returns([gamepad, gamepad2]);
-				sinon.stub(controllers, 'addController');
-				
-				controllers.updateControllers();
-			});
-
-			afterEach(() => {
-				navigator.getGamepads.restore();
-				controllers.addController.restore();
-			});
-
-			it('should add all controllers', () => {
-				assert.isTrue(controllers.addController.calledTwice);
-				assert.isTrue(controllers.addController.calledWith(gamepad));
-				assert.isTrue(controllers.addController.calledWith(gamepad2));
-			});
 		});
 	});
 

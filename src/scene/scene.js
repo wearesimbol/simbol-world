@@ -52,9 +52,9 @@ class Scene {
 				canvas: config.canvas,
 				antialias: true
 			});
-			renderer.setPixelRatio(window.devicePixelRatio);
 			// Last parameter adds pixel units to canvas element
 			renderer.setSize(window.innerWidth, window.innerHeight, true);
+			renderer.setPixelRatio(window.devicePixelRatio);
 			renderer.shadowMap.enabled = true;
 
 			this.camera = camera;

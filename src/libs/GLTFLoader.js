@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import * as THREE from 'three';
-import {FileLoader} from './FileLoader';
 
 /**
  * @author Rich Tibbett / https://github.com/richtr
