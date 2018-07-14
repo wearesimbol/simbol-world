@@ -30,6 +30,7 @@ describe('Simbol', () => {
 
     beforeEach(() => {
         simbol = new Simbol({
+            hand: 'right',
             scene: {
                 render: true,
                 canvas: document.createElement('canvas')
@@ -56,6 +57,10 @@ describe('Simbol', () => {
 
         it('should extend EventEmitter', () => {
             assert.instanceOf(simbol, EventEmitter);
+        });
+
+        it('should set hand', () => {
+            assert.equal(simbol.hand, 'right');
         });
 
         it('should initialise a Scene', () => {
@@ -92,9 +97,11 @@ describe('Simbol', () => {
             sinon.stub(simbol, 'addAnimateFunctions');
             sinon.stub(simbol._scene, 'init').resolves();
             sinon.stub(simbol.virtualPersona, 'init').resolves();
+            sinon.stub(simbol.controllers, 'updateControllers');
             sinon.stub(simbol, 'addToScene');
             sinon.stub(simbol.interactions, 'getMeshes').returns([1, 2]);
             sinon.stub(simbol.locomotion, 'getMeshes').returns([3, 4]);
+            simbol.virtualPersona.mesh = 1;
 
             simbol.init().then(done);
         });
@@ -105,6 +112,12 @@ describe('Simbol', () => {
 
         it('should initialise VirtualPersona', () => {
             assert.isTrue(simbol.virtualPersona.init.calledOnce);
+        });
+
+        it('should save mesh and update controllers', () => {
+            assert.equal(simbol.vpMesh, 1);
+            assert.isTrue(simbol.controllers.updateControllers.calledOnce);
+            assert.isTrue(simbol.controllers.updateControllers.calledWith(1));
         });
 
         it('should add interactions and locomotion meshes into the scene', () => {
@@ -335,25 +348,22 @@ describe('Simbol', () => {
 				sendData: sinon.stub()
 			}
 
-			simbol.virtualPersona.mesh = {
+            simbol.virtualPersona.floorHeight = 0;
+            simbol.virtualPersona._meshHeight = 0;
+
+            simbol.virtualPersona.setFloorHeight = sinon.stub();
+            simbol.vpMesh = {
 				rotation: {
 					y: 0
 				},
 				position: {
 					copy: sinon.stub(),
-					setY: sinon.stub()
+                    setY: sinon.stub(),
+                    y: 0
                 },
                 children: []
 			};
-			simbol.virtualPersona.mesh.position.copy.returns(simbol.virtualPersona.mesh.position);
-			simbol.virtualPersona.headMesh = {
-				position: {
-					y: 0
-				}
-			};
-			simbol.virtualPersona.floorHeight = 0;
-
-			simbol.virtualPersona.setFloorHeight = sinon.stub();
+			simbol.vpMesh.position.copy.returns(simbol.vpMesh.position);
 		});
 
 		afterEach(() => {
@@ -422,7 +432,7 @@ describe('Simbol', () => {
 				assert.isTrue(simbol.virtualPersona.mesh.position.copy.calledOnce);
 				assert.isTrue(simbol.virtualPersona.mesh.position.copy.calledWith(simbol._scene.camera.position));
 
-				assert.isTrue(simbol.virtualPersona.mesh.position.setY.calledOnce);
+                assert.isTrue(simbol.virtualPersona.mesh.position.setY.calledOnce);
 				assert.isTrue(simbol.virtualPersona.mesh.position.setY.calledWith(0));
 			});
 

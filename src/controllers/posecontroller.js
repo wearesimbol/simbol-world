@@ -1,25 +1,25 @@
 import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
-import {MTLLoader} from '../libs/MTLLoader';
-import {OBJLoader} from '../libs/OBJLoader';
 
 import {Controllers} from './controllers';
 
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 
-const ControllerModels = {
-	'Daydream Controller': 'https://cdn.aframe.io/controllers/google/vr-controller-daydream',
-	'OpenVR Gamepad': 'https://cdn.aframe.io/controllers/vive/vr-controller-vive',
-	'OpenVR Controller': 'https://cdn.aframe.io/controllers/vive/vr-controller-vive',
-	'Oculus Touch (Right)': 'https://cdn.aframe.io/controllers/oculus/oculus-touch-controller-right',
-	'Oculus Touch (Left)': 'https://cdn.aframe.io/controllers/oculus/oculus-touch-controller-left'
+const HAND_GESTURES = {
+	open: 'Open',
+	fist: 'Fist',
+	okay: 'Okay',
+	point: 'Point',
+	thumb: 'Thumb',
+	thumbPoint: 'ThumbPoint'
 };
 
 const ControllerButtons = {
 	'Thumbpad': 0,
 	'Trigger': 1,
 	'Grip': 2,
-	'AppMenu': 3
+	'A': 3,
+	'B': 4
 };
 
 const eyesToElbow = new THREE.Vector3(0.175, -0.3, -0.03);
@@ -36,144 +36,214 @@ class PoseController extends EventEmitter {
 		return this._pressedButtons;
 	}
 
+	set pressedButtons(pressedButtons) {
+		this._pressedButtons = pressedButtons;
+	}
+
+	/** @property {Object} touchedButtons - Objects that maps buttons to their states */
+	get touchedButtons() {
+		if (!this._touchedButtons) {
+			this._touchedButtons = {};
+		}
+		return this._touchedButtons;
+	}
+
+	set touchedButtons(touchedButtons) {
+		this._touchedButtons = touchedButtons;
+	}
+
 	/**
 	 * Initialises a PoseController
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
+	 * @param {THREE.Mesh} vpMesh - The Virtual Persona's mesh used to associate controller to hand
 	 */
-	constructor(gamepad) {
+	constructor(gamepad = {}, vpMesh) {
 		super();
+
 
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
 		this.gamepadId = gamepad.id;
+		this.vpMesh = vpMesh;
+
+		if (!this.vpMesh || !(this.vpMesh instanceof THREE.Object3D)) {
+			this.emit('error', {
+				error: new Error('The Virtual Persona mesh must be set and passed onto the PoseController to associate the controller with a hand')
+			});
+
+			return;
+		}
 
 		this.quaternion = new THREE.Quaternion();
 		this.euler = new THREE.Euler();
 		// Some controllers don't return an orientation and position until further on
-		if (gamepad.pose.orientation) {
+		if (gamepad.pose && gamepad.pose.orientation) {
 			this.quaternion.fromArray(gamepad.pose.orientation);
 		}
 		this.position = new THREE.Vector3().set(0, -0.015, 0.05);
 
-		const modelPath = ControllerModels[this.gamepadId];
-		if (!modelPath) {
-			return;
+		if (this.hand === 'left') {
+			this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandLeft');
+		} else if (this.hand === 'right') {
+			this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandRight');
 		}
 
-		const modelRootPath = modelPath.substr(0, modelPath.lastIndexOf('/') + 1);
-		const objLoader = new OBJLoader();
-		const mtlLoader = new MTLLoader();
-		mtlLoader.crossOrigin = '';
-		mtlLoader.setTexturePath(modelRootPath);
+		if (this.handMesh) {
+			this.vpMesh.parent.add(this.handMesh);
+		}
 
-		mtlLoader.load(`${modelPath}.mtl`, (materials) => {
-			materials.preload();
-			objLoader.setMaterials(materials);
-			objLoader.load(`${modelPath}.obj`, (model) => {
-				this.model = model;
-				this.emit('add', {
-					mesh: model
-				});
-				this._configureControllerModel(gamepad.id);
-			});
+		this.renameAnimations();
+		this._animationMixer = new THREE.AnimationMixer(this.vpMesh);
+		this.setGesture(HAND_GESTURES.open);
+	}
+
+	// TODO: Remove if no exporters add prefixes
+	renameAnimations() {
+		const gestures = Object.values(HAND_GESTURES)
+			.map((gesture) => this.getGestureName(gesture));
+
+		this.vpMesh.animations = this.vpMesh.animations.map((animation) => {
+			for (const gesture of gestures) {
+				if (animation.name.includes(gesture)) {
+					animation.name = gesture;
+					return animation;
+				}
+			}
+			return animation;
 		});
 	}
 
 	/**
-	 * Configures the controller model depending on the controller
+	 * Based on the hand and gesture, it generates the complete gesture name
+	 * e.g. "Open" => "HandLeftOpen"
 	 *
-	 * @param {string} id - The controller's id
+	 * @param {string} gesture - The short gesture name ("Open")
 	 *
-	 * @return {undefined}
+	 * @returns {string} gestureName - The full gesture name ("HandLeftOpen")
 	 */
-	_configureControllerModel(id) {
-		const textureLoader = new THREE.TextureLoader();
-		textureLoader.crossOrigin = '';
-		switch(id) {
-		case 'Daydream Controller':
-			this.model.scale.multiplyScalar(2.5);
-			this.armModel = true;
-			this.offset = new THREE.Vector3();
-			break;
-		}
+	getGestureName(gesture) {
+		const hand = this.hand === 'left' ? 'Left' : 'Right';
+		const gestureName = `Hand${hand}${gesture}`;
+		return gestureName;
 	}
 
 	/**
-	 * Activates transportation if thumbpad is pressed
+	 * Based on pressed and touched buttons, it determines the correct gesture
 	 *
-	 * @param {boolean} state - Whether thumbpad is pressed
-	 *
-	 * @return {undefined}
+	 * @returns {string} gesture - The gesture name ("Open")
 	 */
-	handleThumbpadPressed(state) {
-		if (state) {
-			this.emit('thumbpadpressed');
-		}
-	}
+	determineGesture() {
+		let gesture = HAND_GESTURES.open;
+		const isGripActive = this.pressedButtons['Grip'];
+		const isThumbpadActive = this.touchedButtons['Thumbpad'] || this.touchedButtons['A'] || this.touchedButtons['B'];
+		const isTriggerActive = this.touchedButtons['Trigger'] || this.pressedButtons['Trigger'];
 
-	/**
-	 * Activates z translation if thumbpad is touched
-	 *
-	 * @param {boolean} state - Whether thumbpad is touched
-	 *
-	 * @return {undefined}
-	 */
-	handleThumbpadTouched(state) {
-		if (state) {
-			this.emit('thumbpadtouched');
+		if (isGripActive) {
+			if (isThumbpadActive) {
+				gesture = isTriggerActive ? HAND_GESTURES.fist : HAND_GESTURES.point;
+			} else {
+				gesture = isTriggerActive ? HAND_GESTURES.thumb : HAND_GESTURES.thumbPoint;
+			}
 		} else {
-			this.emit('thumbpaduntouched');
+			if (isTriggerActive) {
+				gesture = isThumbpadActive ? HAND_GESTURES.okay : HAND_GESTURES.fist;
+			}
 		}
+
+		return gesture;
 	}
 
 	/**
-	 * Handles trigger pressed
+	 * Applies the gesture by playing the animation
 	 *
-	 * @param {boolean} state - Whether trigger is pressed
+	 * @param {string} gesture - Short gesture name ("Open")
 	 *
-	 * @return {undefined}
+	 * @returns {undefined}
+	 * @emits PoseController#gesturechange
 	 */
-	handleTriggerPressed(state) {
-		if (state) {
-			this.emit('trigger');
+	setGesture(gesture) {
+		if (!Object.values(HAND_GESTURES).includes(gesture)) {
+			return;
 		}
-	}
 
-	/**
-	 * Handles grip pressed
-	 *
-	 * @param {boolean} state - Whether grip is pressed
-	 *
-	 * @return {undefined}
-	 */
-	handleGripPressed(state) {
-		state;
-	}
+		const gestureName = this.getGestureName(gesture);
 
-	/**
-	 * Handles menu pressed
-	 *
-	 * @param {boolean} state - Whether menu is pressed
-	 *
-	 * @return {undefined}
-	 */
-	handleAppMenuPressed(state) {
-		state;
+		if (gestureName === this.currentGesture) {
+			return;
+		}
+
+		const clipAction = this._animationMixer.clipAction(gestureName);
+		if (!clipAction) {
+			return;
+		}
+		clipAction.clampWhenFinished = true;
+		clipAction.loop = THREE.LoopRepeat;
+		clipAction.repetitions = 0;
+		clipAction.weight = 1;
+
+		this._animationMixer.stopAllAction();
+
+		if (!this.currentGesture) {
+			clipAction.play();
+			this.emit('gesturechange', {
+				gesture: gestureName,
+				previousGesture: false
+			});
+			return;
+		}
+
+		const previousAction = this._animationMixer.clipAction(this.currentGesture);
+		if (!previousAction) {
+			return;
+		}
+		previousAction.weight = 0.15;
+		previousAction.play();
+		clipAction.play();
+
+		this.emit('gesturechange', {
+			gesture: gestureName,
+			previousGesture: this.currentGesture
+		});
+
+		this.currentGesture = gestureName;
 	}
 
 	/**
 	 * Gets latest information from gamepad and updates the model based on it
 	 * It applies an arm model if it's a 3DOF controller
-	 * It also applies the handlers for different buttons
+	 * It applies the correct hand gesture
+	 * It also emits events for different button states that have the structure:
+	 * "button""pressed/unpressed/touched/untouched" e.g. "triggerpressed"
 	 *
+	 * @param {number} delta - Delta from the animation frame
 	 * @param {THREE.Camera} camera - Scene camera
 	 * @param {number} userHeight - The user's set height
-	 * @param {number} floorHeight - The current height where the floor is
 	 *
 	 * @return {undefined}
+	 * @emits PoseController#controllerdisconnected
+	 * @emits PoseController#thumbpadpressed
+	 * @emits PoseController#thumbpadunpressed
+	 * @emits PoseController#thumbpadtouched
+	 * @emits PoseController#thumbpaduntouched
+	 * @emits PoseController#triggerpressed
+	 * @emits PoseController#triggerunpressed
+	 * @emits PoseController#triggertouched
+	 * @emits PoseController#triggeruntouched
+	 * @emits PoseController#grippressed
+	 * @emits PoseController#gripunpressed
+	 * @emits PoseController#griptouched
+	 * @emits PoseController#gripuntouched
+	 * @emits PoseController#apressed
+	 * @emits PoseController#aunpressed
+	 * @emits PoseController#atouched
+	 * @emits PoseController#auntouched
+	 * @emits PoseController#bpressed
+	 * @emits PoseController#bunpressed
+	 * @emits PoseController#btouched
+	 * @emits PoseController#buntouched
 	 */
-	update(camera, userHeight, floorHeight) {
+	update(delta, camera, userHeight) {
 		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
@@ -189,18 +259,28 @@ class PoseController extends EventEmitter {
 			const buttonId = ControllerButtons[buttonName];
 			const button = gamepad.buttons[buttonId];
 			if (button) {
-				// As all functions follow the same naming pattern, we can avoid a switch clause
-				if (button.pressed && !this.pressedButtons[buttonId]) {
-					this[`handle${buttonName}Pressed`](button.pressed);
+				if (button.pressed && !this.pressedButtons[buttonName]) {
+					this.emit(`${buttonName.toLowerCase()}pressed`);
+					this.pressedButtons[buttonName] = true;
+				} else if (!button.pressed && this.pressedButtons[buttonName]) {
+					this.emit(`${buttonName.toLowerCase()}unpressed`);
+					this.pressedButtons[buttonName] = false;
 				}
 
-				this.pressedButtons[buttonId] = button.pressed;
-
-				if (buttonName === 'Thumbpad') {
-					this[`handle${buttonName}Touched`](button.touched);
+				if (button.touched && !this.touchedButtons[buttonName]) {
+					this.emit(`${buttonName.toLowerCase()}touched`);
+					this.touchedButtons[buttonName] = true;
+				} else if (!button.touched && this.touchedButtons[buttonName]) {
+					this.emit(`${buttonName.toLowerCase()}untouched`);
+					this.touchedButtons[buttonName] = false;
 				}
 			}
 		}
+
+		const gesture = this.determineGesture();
+		this.setGesture(gesture);
+
+		this._animationMixer.update(delta);
 
 		if (gamepad.pose.orientation) {
 			this.quaternion.fromArray(gamepad.pose.orientation || [0, 0, 0, 1]);
@@ -210,9 +290,13 @@ class PoseController extends EventEmitter {
 			this.position.fromArray(gamepad.pose.position);
 		}
 
-		if (this.armModel) {
+		if (!gamepad.pose.position) {
 			// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
 			this.position.copy(camera.position);
+
+			if (!this.offset) {
+				this.offset = new THREE.Vector3();
+			}
 			// Set offset for degenerate "arm model" to elbow
 			this.offset.set(
 				this.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // Hand is to your left, or right
@@ -235,17 +319,14 @@ class PoseController extends EventEmitter {
 			this.offset.applyEuler(this.euler);
 			// Apply rotated offset to camera position
 			this.position.add(this.offset);
-			this.model.quaternion.copy(this.quaternion);
-			this.model.position.copy(this.position);
-		} else if (this.model) {
-			this.model.quaternion.copy(this.quaternion);
-			this.model.position.copy(camera.position);
-			this.model.position.add(this.position);
-
-			this.model.position.y = this.position.y +
-				floorHeight +
-				userHeight;
-
+			if (this.handMesh) {
+				this.handMesh.quaternion.copy(this.quaternion);
+				this.handMesh.position.copy(this.position);
+			}
+		} else if (this.handMesh) {
+			this.handMesh.quaternion.copy(this.quaternion);
+			this.handMesh.position.copy(camera.position);
+			this.handMesh.position.add(this.position);
 		}
 	}
 }

@@ -12,8 +12,7 @@ const json = require('rollup-plugin-json');
 const builtins = require('rollup-plugin-node-builtins');
 const globals = require('rollup-plugin-node-globals');
 const replace = require('rollup-plugin-replace');
-const karmaServer = require('karma').Server;
-
+const karma = require('karma').Server;
 const uglify = composer(uglifyjs, console);
 
 gulp.task('js', () => {
@@ -84,12 +83,19 @@ gulp.task('eslint', () => {
 gulp.task('lint', gulp.parallel('eslint'));
 
 gulp.task('test', (done) => {
-	new karmaServer({
+	const server = new karma({
 		configFile: __dirname + '/karma.conf.js',
 		singleRun: true
-	}, (exitCode) => {
-		exitCode ? process.exit(exitCode) : done();
-	}).start();
+	});
+
+	server.on('run_complete', (_, results) => {
+		if (results.error) {
+			process.exit(results.exitCode);
+		}
+		done();
+	});
+
+	server.start();
 });
 
 gulp.task('docs', (done) => {

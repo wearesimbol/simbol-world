@@ -35,21 +35,20 @@ class Controllers extends EventEmitter {
 	 * Initialises a Controllers instance
 	 *
 	 * @param {HTMLCanvasElement} canvas - <canvas> element required by PointerController
+	 * @param {string} hand - The user's preferred hand
 	 *
 	 * @returns {Controllers} this
 	 */
-	constructor(canvas) {
+	constructor(canvas, hand) {
 		super();
 
-		window.addEventListener('gamepadconnected', this._handleGamepadConnected.bind(this));
-		window.addEventListener('gamepaddisconnected', this._handleGamepadDisconnected.bind(this));
+		this.hand = hand;
 
 		// TODO: Check if it's a mobile device or standalone
 		this.currentControllers['KeyboardController'] = new KeyboardController();
 		this.currentControllers['PointerController'] = new PointerController(canvas);
 		this._setUpEventListeners(this.currentControllers['KeyboardController']);
 		this._setUpEventListeners(this.currentControllers['PointerController']);
-		this.updateControllers();
 	}
 
 	/**
@@ -60,6 +59,10 @@ class Controllers extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	_setUpEventListeners(emitter) {
+		emitter.on('error', (event) => {
+			this.emit('error', event);
+		});
+
 		if (Object.getPrototypeOf(emitter) === KeyboardController.prototype) {
 			emitter.on('ztranslationstart', (event) => {
 				this.emit('ztranslationstart', event);
@@ -95,8 +98,8 @@ class Controllers extends EventEmitter {
 				this.emit('currentorientation', event);
 			});
 
-			emitter.on('trigger', (event) => {
-				this.emit('trigger', event);
+			emitter.on('triggerpressed', (event) => {
+				this.emit('triggerpressed', event);
 			});
 		}
 
@@ -105,8 +108,8 @@ class Controllers extends EventEmitter {
 				this.removeController(event);
 			});
 
-			emitter.on('trigger', (event) => {
-				this.emit('trigger', event);
+			emitter.on('triggerpressed', (event) => {
+				this.emit('triggerpressed', event);
 			});
 		}
 
@@ -115,16 +118,24 @@ class Controllers extends EventEmitter {
 				this.removeController(event);
 			});
 
-			emitter.on('trigger', (event) => {
-				this.emit('trigger', event);
+			emitter.on('triggerpressed', (event) => {
+				this.emit('triggerpressed', event);
 			});
 
-			emitter.on('add', (event) => {
-				this.emit('add', event);
+			emitter.on('thumbpadpressed', (event) => {
+				this.emit('thumbpadpressed', event);
 			});
 
-			emitter.on('thumpadpressed', (event) => {
-				this.emit('thumpadpressed', event);
+			emitter.on('thumbpadtouched', (event) => {
+				this.emit('thumbpadtouched', event);
+			});
+
+			emitter.on('thumbpaduntouched', (event) => {
+				this.emit('thumbpaduntouched', event);
+			});
+
+			emitter.on('gesturechange', (event) => {
+				this.emit('gesturechange', event);
 			});
 		}
 	}
@@ -137,41 +148,59 @@ class Controllers extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	_removeEventListeners(emitter) {
-		emitter.removeAllListeners('ztranslationstart')
+		emitter.removeAllListeners('error')
+			.removeAllListeners('ztranslationstart')
 			.removeAllListeners('xtranslationstart')
 			.removeAllListeners('ztranslationend')
 			.removeAllListeners('xtranslationend')
 			.removeAllListeners('orientation')
+			.removeAllListeners('currentorientation')
 			.removeAllListeners('controllerdisconnected')
 			.removeAllListeners('add')
-			.removeAllListeners('trigger')
-			.removeAllListeners('thumbpadpressed');
+			.removeAllListeners('triggerpressed')
+			.removeAllListeners('thumbpadpressed')
+			.removeAllListeners('thumbpadtouched')
+			.removeAllListeners('thumbpaduntouched')
+			.removeAllListeners('gesturechange');
 	}
 
 	/**
-	 * Event handler for 'gamepadconnected' indicating the controllers that a controller has been added
+	 * Initialises the Controllers instance by adding event listener
+	 * and searching for current gamepads
 	 *
-	 * @param {Event} event - Event object with the gamepad information
+	 * @param {THREE.Mesh} mesh - The Virtual Persona mesh
 	 *
 	 * @returns {undefined}
-	 *
-	 * @private
 	 */
-	_handleGamepadConnected(event) {
-		this.updateControllers(event, true);
+	init(mesh) {
+		window.addEventListener('gamepadconnected', this.addController.bind(this));
+		window.addEventListener('gamepaddisconnected', this.removeController.bind(this));
+
+		this.updateControllers(mesh);
 	}
 
 	/**
-	 * Event handler for 'gamepaddisconnected' indicating the controllers that a controller has been removed
+	 * Updates controller list
 	 *
-	 * @param {Event} event - Event object with the gamepad information
+	 * @param {THREE.Mesh} mesh - Current Virtual Persona mesh. Used to associate hands to controllers
 	 *
 	 * @returns {undefined}
-	 *
-	 * @private
 	 */
-	_handleGamepadDisconnected(event) {
-		this.updateControllers(event, false);
+	updateControllers(mesh) {
+		if (mesh) {
+			this.mesh = mesh;
+
+			for (const controller of Object.values(this.currentControllers)) {
+				if (controller instanceof PoseController) {
+					controller.vpMesh = mesh;
+				}
+			}
+		}
+
+		const gamepads = navigator.getGamepads();
+		for (const gamepad of gamepads) {
+			this.addController(gamepad);
+		}
 	}
 
 	/**
@@ -186,12 +215,16 @@ class Controllers extends EventEmitter {
 			return;
 		}
 
+		gamepad = gamepad.gamepad || gamepad;
+
 		const gamepadId = Controllers.getGamepadId(gamepad);
 		if (!this.currentControllers[gamepadId]) {
 			if (gamepad.pose) {
-				const poseController = new PoseController(gamepad);
+				const poseController = new PoseController(gamepad, this.mesh, this.hand);
 				this.currentControllers[gamepadId] = poseController;
-				this.mainHandController = poseController;
+				if (gamepad.hand === this.hand) {
+					this.mainHandController = poseController;
+				}
 			} else {
 				const gamepadController = new GamepadController(gamepad);
 				this.currentControllers[gamepadId] = gamepadController;
@@ -212,36 +245,8 @@ class Controllers extends EventEmitter {
 		if (this.mainHandController && this.mainHandController.id === gamepad.id) {
 			this.mainHandController = null;
 		}
-		if (this.currentControllers[gamepadId]) {
-			if (this.currentControllers[gamepadId].model) {
-				this.currentControllers[gamepadId].model.visible = false;
-			}
 
-			delete this.currentControllers[gamepadId];
-		}
-	}
-
-	/**
-	 * Updates controller list
-	 *
-	 * @param {Event} event - Gamepad connection event object
-	 * @param {boolean} connected - Whether a given gamepad is being connected or not
-	 *
-	 * @returns {undefined}
-	 */
-	updateControllers(event, connected) {
-		if (event) {
-			if (connected) {
-				this.addController(event.gamepad);
-			} else {
-				this.removeController(event.gamepad);
-			}
-		} else {
-			const gamepads = navigator.getGamepads();
-			for (const gamepad of gamepads) {
-				this.addController(gamepad);
-			}
-		}
+		delete this.currentControllers[gamepadId];
 	}
 
 	/**

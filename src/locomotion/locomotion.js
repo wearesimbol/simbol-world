@@ -204,7 +204,7 @@ class Locomotion {
 			this.currentRotation.set(...event.rotation);
 		});
 
-		controllers.on('trigger', (event) => {
+		controllers.on('triggerpressed', (event) => {
 			if (!event || !event.touch) {
 				this.teleport();
 			}

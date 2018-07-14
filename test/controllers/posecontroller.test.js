@@ -2,7 +2,6 @@
 
 import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
-import {Utils} from '../../src/utils/utils';
 import {Controllers} from '../../src/controllers/controllers';
 import {PoseController} from '../../src/controllers/posecontroller';
 
@@ -10,9 +9,18 @@ describe('PoseController', () => {
 
 	let poseController;
 	let gamepad;
+	let mesh;
+	let handMesh;
 
 	beforeEach(() => {
+		mesh = new THREE.Mesh();
+		handMesh = new THREE.Mesh();
+		handMesh.name = 'Armature_VirtualPersonaHandLeft';
+		mesh.add(handMesh);
+		mesh.animations = [];
 		sinon.stub(THREE.Quaternion.prototype, 'fromArray');
+		sinon.stub(PoseController.prototype, 'renameAnimations');
+		sinon.stub(PoseController.prototype, 'setGesture');
 		gamepad = {
 			id: 'test',
 			hand: 'left',
@@ -21,11 +29,13 @@ describe('PoseController', () => {
 			}
 		};
 
-		poseController = new PoseController(gamepad);
+		poseController = new PoseController(gamepad, mesh);
 	});
 
 	afterEach(() => {
 		THREE.Quaternion.prototype.fromArray.restore();
+		PoseController.prototype.renameAnimations.restore && PoseController.prototype.renameAnimations.restore();
+		PoseController.prototype.setGesture.restore && PoseController.prototype.setGesture.restore();
 	});
 
 	it('should be a class', () => {
@@ -33,17 +43,16 @@ describe('PoseController', () => {
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(PoseController.prototype._configureControllerModel);
-		assert.isFunction(PoseController.prototype.handleThumbpadPressed);
-		assert.isFunction(PoseController.prototype.handleThumbpadTouched);
-		assert.isFunction(PoseController.prototype.handleTriggerPressed);
-		assert.isFunction(PoseController.prototype.handleGripPressed);
-		assert.isFunction(PoseController.prototype.handleAppMenuPressed);
+		assert.isFunction(PoseController.prototype.renameAnimations);
+		assert.isFunction(PoseController.prototype.getGestureName);
+		assert.isFunction(PoseController.prototype.determineGesture);
+		assert.isFunction(PoseController.prototype.setGesture);
 		assert.isFunction(PoseController.prototype.update);
 	});
 
 	it('should have a set of properties', () => {
 		assert.deepEqual(PoseController.prototype.pressedButtons, {});
+		assert.deepEqual(PoseController.prototype.touchedButtons, {});
 	});
 
 	describe('#constructor', () => {
@@ -67,74 +76,322 @@ describe('PoseController', () => {
 			assert.deepEqual(poseController.position.toArray(), [0, -0.015, 0.05]);
 		});
 
-		// Doesnt test loading model as that will change soon to loading GLTF hands
+		it('should save hand mesh', () => {
+			assert.equal(poseController.vpMesh, mesh);
+			assert.equal(poseController.handMesh, handMesh);
+		});
+
+		it('should handle animations', () => {
+			assert.isTrue(poseController.renameAnimations.calledOnce);
+			assert.instanceOf(poseController._animationMixer, THREE.AnimationMixer);
+			assert.isTrue(poseController.setGesture.calledOnce);
+			assert.isTrue(poseController.setGesture.calledWith('Open'));
+		})
 	});
 
-	describe('#handleThumbpadPressed', () => {
+	describe('#renameAnimations', () => {
 
 		beforeEach(() => {
-			sinon.stub(poseController, 'emit');
+			poseController.renameAnimations.restore();
+			poseController.vpMesh.animations.push({name: 'test-HandLeftOpen'}, {name: 'testingloool_HandLeftThumb'});
 
-			poseController.handleThumbpadPressed(true);
+			poseController.renameAnimations();
 		});
 
-		it('should emit thumpadpressed event', () => {
-			assert.isTrue(poseController.emit.calledOnce);
-			assert.isTrue(poseController.emit.calledWith('thumbpadpressed'));
+		it('should have renamed animations properly', () => {
+			assert.equal(poseController.vpMesh.animations[0].name, 'HandLeftOpen');
+			assert.equal(poseController.vpMesh.animations[1].name, 'HandLeftThumb');
 		});
 	});
 
-	describe('#handleThumbpadTouched', () => {
+	describe('#getGestureName', () => {
+
+		let gesture;
 
 		beforeEach(() => {
-			sinon.stub(poseController, 'emit');
+			gesture = poseController.getGestureName('Okay');
 		});
 
-		describe('touched', () => {
+		it('should add correct prefixes to gesture name', () => {
+			assert.equal(gesture, 'HandLeftOkay');
+		});
+	});
 
-			beforeEach(() => {	
-				poseController.handleThumbpadTouched(true);
+	describe('#determineGesture', () => {
+
+		let gesture;
+
+		beforeEach(() => {
+			poseController.pressedButtons = [];
+			poseController.touchedButtons = [];
+		});
+
+		describe('open', () => {
+
+			beforeEach(() => {
+				gesture = poseController.determineGesture();
 			});
 
-			it('should emit thumpadtoucned event', () => {
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Open');
+			});
+		});
+
+		describe('fist1', () => {
+
+			beforeEach(() => {
+				poseController.pressedButtons['Grip'] = true;
+				poseController.touchedButtons['Thumbpad'] = true;
+				poseController.touchedButtons['Trigger'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Fist');
+			});
+		});
+
+		describe('fist2', () => {
+
+			beforeEach(() => {
+				poseController.touchedButtons['Trigger'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Fist');
+			});
+		});
+
+		describe('point', () => {
+
+			beforeEach(() => {
+				poseController.pressedButtons['Grip'] = true;
+				poseController.touchedButtons['Thumbpad'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Point');
+			});
+		});
+
+		describe('thumb', () => {
+
+			beforeEach(() => {
+				poseController.pressedButtons['Grip'] = true;
+				poseController.touchedButtons['Trigger'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Thumb');
+			});
+		});
+
+		describe('thumbpoint', () => {
+
+			beforeEach(() => {
+				poseController.pressedButtons['Grip'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'ThumbPoint');
+			});
+		});
+
+		describe('okay', () => {
+
+			beforeEach(() => {
+				poseController.touchedButtons['Thumbpad'] = true;
+				poseController.touchedButtons['Trigger'] = true;
+
+				gesture = poseController.determineGesture();
+			});
+
+			it('should determine correct gesture', () => {
+				assert.equal(gesture, 'Okay');
+			});
+		});
+	});
+
+	describe('#setGesture', () => {
+
+		let clipAction;
+		let previousAction;
+
+		beforeEach(() => {
+			poseController.setGesture.restore();
+
+			sinon.stub(poseController, 'emit');
+			sinon.stub(poseController, 'getGestureName');
+			sinon.stub(poseController._animationMixer, 'clipAction');
+			sinon.stub(poseController._animationMixer, 'stopAllAction');
+
+			clipAction = {
+				play: sinon.stub()
+			};
+			previousAction = {
+				play: sinon.stub()
+			};
+		});
+
+		afterEach(() => {
+			poseController.emit.restore();
+		});
+
+		describe('invalid gesture', () => {
+
+			let returnValue;
+
+			beforeEach(() => {
+				returnValue = poseController.setGesture('gesture');
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(returnValue);
+			});
+		});
+
+		describe('gesture equals currentGesture', () => {
+
+			let returnValue;
+
+			beforeEach(() => {
+				poseController.getGestureName.returns('HandRightOpen');
+				poseController.currentGesture = 'HandRightOpen';
+				returnValue = poseController.setGesture('Open');
+			});
+
+			it('should get gesture name', () => {
+				assert.isTrue(poseController.getGestureName.calledOnce);
+				assert.isTrue(poseController.getGestureName.calledWith('Open'));
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(returnValue);
+			});
+		});
+
+		describe('no clipAction', () => {
+
+			let returnValue;
+
+			beforeEach(() => {
+				poseController.getGestureName.returns('HandRightOpen');
+				poseController._animationMixer.clipAction.returns(undefined);
+				returnValue = poseController.setGesture('Open');
+			});
+
+			it('should get clipAction', () => {
+				assert.isTrue(poseController._animationMixer.clipAction.calledOnce);
+				assert.isTrue(poseController._animationMixer.clipAction.calledWith('HandRightOpen'));
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(returnValue);
+			});
+		});
+
+		describe('no currentGesture', () => {
+
+			let returnValue;
+
+			beforeEach(() => {
+				poseController.getGestureName.returns('HandRightOpen');
+				poseController._animationMixer.clipAction.returns(clipAction);
+				returnValue = poseController.setGesture('Open');
+			});
+
+			it('should handle clipAction', () => {
+				assert.isTrue(clipAction.clampWhenFinished);
+				assert.equal(clipAction.loop, 2201);
+				assert.equal(clipAction.repetitions, 0);
+				assert.equal(clipAction.weight, 1);
+				assert.isTrue(poseController._animationMixer.stopAllAction.calledOnce);
+				assert.isTrue(clipAction.play.calledOnce);
+			});
+
+			it('should emit gesturechange', () => {
 				assert.isTrue(poseController.emit.calledOnce);
-				assert.isTrue(poseController.emit.calledWith('thumbpadtouched'));
+				assert.isTrue(poseController.emit.calledWith('gesturechange'));
+				assert.deepEqual(poseController.emit.firstCall.args[1], {
+					gesture: 'HandRightOpen',
+					previousGesture: false
+				});
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(returnValue);
 			});
 		});
+		
+		describe('no previousAction', () => {
 
-		describe('untouched', () => {
+			let returnValue;
 
-			beforeEach(() => {	
-				poseController.handleThumbpadTouched(false);
+			beforeEach(() => {
+				poseController.getGestureName.returns('HandRightOpen');
+				poseController._animationMixer.clipAction
+					.onFirstCall().returns(clipAction)
+					.onSecondCall().returns(undefined);
+				poseController.currentGesture = 'HandRightOkay';
+				returnValue = poseController.setGesture('Open');
 			});
 
-			it('should emit thumpadtoucned event', () => {
+			it('should get clipAction', () => {
+				assert.isTrue(poseController._animationMixer.clipAction.calledTwice);
+				assert.isTrue(poseController._animationMixer.clipAction.secondCall.calledWith('HandRightOkay'));
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(previousAction.weight);
+				assert.isUndefined(returnValue);
+			});
+		});
+		
+		describe('everything works', () => {
+
+			let returnValue;
+
+			beforeEach(() => {
+				poseController.getGestureName.returns('HandRightOpen');
+				poseController._animationMixer.clipAction
+					.onFirstCall().returns(clipAction)
+					.onSecondCall().returns(previousAction);
+				poseController.currentGesture = 'HandRightOkay';
+				returnValue = poseController.setGesture('Open');
+			});
+
+			it('should handle actions', () => {
+				assert.equal(previousAction.weight, 0.15);
+				assert.isTrue(previousAction.play.calledOnce);
+				assert.isTrue(clipAction.play.calledOnce);
+			});
+
+			it('should emit gesturechange', () => {
 				assert.isTrue(poseController.emit.calledOnce);
-				assert.isTrue(poseController.emit.calledWith('thumbpaduntouched'));
+				assert.isTrue(poseController.emit.calledWith('gesturechange'));
+				assert.deepEqual(poseController.emit.firstCall.args[1], {
+					gesture: 'HandRightOpen',
+					previousGesture: 'HandRightOkay'
+				});
+			});
+
+			it('should set currentGesture', () => {
+				assert.equal(poseController.currentGesture, 'HandRightOpen');
+			});
+
+			it('should return undefined', () => {
+				assert.isUndefined(returnValue);
 			});
 		});
-	});
-
-	describe('#handleTriggerPressed', () => {
-
-		beforeEach(() => {
-			sinon.stub(poseController, 'emit');
-
-			poseController.handleTriggerPressed(true);
-		});
-
-		it('should emit trigger event', () => {
-			assert.isTrue(poseController.emit.calledOnce);
-			assert.isTrue(poseController.emit.calledWith('trigger'));
-		});
-	});
-
-	describe('#handleGripPressed', () => {
-
-	});
-
-	describe('#handleAppMenuPressed', () => {
-
 	});
 
 	describe('#update', () => {
@@ -146,6 +403,7 @@ describe('PoseController', () => {
 
 		afterEach(() => {
 			Controllers.getGamepad.restore();
+			poseController.emit.restore();
 		});
 
 		describe('no gamepad', () => {
@@ -167,12 +425,6 @@ describe('PoseController', () => {
 		describe('gamepad', () => {
 
 			const gamepad = {
-				buttons: {
-					0: {
-						pressed: true,
-						touched: true
-					}
-				},
 				pose: {
 					orientation: 1,
 					position: 1
@@ -180,44 +432,112 @@ describe('PoseController', () => {
 			};
 			let camera;
 			const userHeight = 0;
-			const standingMatrix = 0;
+			const floorHeight = 0;
 
 			beforeEach(() => {
+				sinon.stub(poseController, 'determineGesture').returns(1);
+				sinon.stub(poseController._animationMixer, 'update');
 				sinon.stub(THREE.Vector3.prototype, 'fromArray');
-				sinon.stub(poseController, 'handleThumbpadPressed');
-				sinon.stub(poseController, 'handleThumbpadTouched');
-				Controllers.getGamepad.returns(gamepad);
 
 				camera = {
 					position: 0
 				};
-				poseController.pressedButtons[0] = false;
-
-				poseController.update();
 			});
 
 			afterEach(() => {
 				THREE.Vector3.prototype.fromArray.restore();
 			});
 
-			it('should update properties', () => {
-				assert.isTrue(THREE.Quaternion.prototype.fromArray.calledTwice);
-				assert.isTrue(THREE.Quaternion.prototype.fromArray.calledWith(1));
-				assert.isTrue(THREE.Vector3.prototype.fromArray.calledOnce);
-				assert.isTrue(THREE.Vector3.prototype.fromArray.calledWith(1));
+			describe('pressed / touched', () => {
+
+				beforeEach(() => {
+					gamepad.buttons = {
+						0: {
+							pressed: true,
+							touched: true
+						}
+					};
+					
+					Controllers.getGamepad.returns(gamepad);
+	
+					poseController.pressedButtons['Thumbpad'] = false;
+					poseController.touchedButtons['Thumbpad'] = false;
+	
+					poseController.update(0, camera, userHeight, floorHeight);
+				});
+
+				it('should handle pressed button', () => {
+					assert.isTrue(poseController.emit.calledTwice);
+					assert.isTrue(poseController.emit.calledWith('thumbpadpressed'));
+					assert.isTrue(poseController.pressedButtons['Thumbpad']);
+				});
+
+				it('should handle touched button', () => {
+					assert.isTrue(poseController.emit.calledTwice);
+					assert.isTrue(poseController.emit.calledWith('thumbpadtouched'));
+					assert.isTrue(poseController.touchedButtons['Thumbpad']);
+				});
 			});
 
-			// Not sure how to test arm model
+			describe('unpressed / untouched', () => {
 
-			it('should handle pressed button', () => {
-				assert.isTrue(poseController.handleThumbpadPressed.calledOnce);
-				assert.isTrue(poseController.handleThumbpadPressed.calledWith(true));
-				assert.isTrue(poseController.pressedButtons[0]);
+				beforeEach(() => {
+					gamepad.buttons = {
+						0: {
+							pressed: false,
+							touched: false
+						}
+					};
+					
+					Controllers.getGamepad.returns(gamepad);
+	
+					poseController.pressedButtons['Thumbpad'] = true;
+					poseController.touchedButtons['Thumbpad'] = true;
+	
+					poseController.update(0, camera, userHeight, floorHeight);
+				});
+
+				it('should handle unpressed button', () => {
+					assert.isTrue(poseController.emit.calledTwice);
+					assert.isTrue(poseController.emit.calledWith('thumbpadunpressed'));
+					assert.isFalse(poseController.pressedButtons['Thumbpad']);
+				});
+	
+				it('should handle untouched button', () => {
+					assert.isTrue(poseController.emit.calledTwice);
+					assert.isTrue(poseController.emit.calledWith('thumbpaduntouched'));
+					assert.isFalse(poseController.touchedButtons['Thumbpad']);
+				});
 			});
 
-			it('should handle touched button', () => {
-				assert.isTrue(poseController.handleThumbpadTouched.calledOnce);
-				assert.isTrue(poseController.handleThumbpadTouched.calledWith(true));
+			describe('general', () => {
+
+				beforeEach(() => {
+					gamepad.buttons = {};
+					
+					Controllers.getGamepad.returns(gamepad);
+		
+					poseController.update(0, camera, userHeight, floorHeight);
+				});
+
+				it('should set gesture', () => {
+					assert.isTrue(poseController.determineGesture.calledOnce);
+					// Called in constructor
+					assert.isTrue(poseController.setGesture.calledTwice);
+					assert.isTrue(poseController.setGesture.calledWith(1));
+					assert.isTrue(poseController._animationMixer.update.calledOnce);
+					assert.isTrue(poseController._animationMixer.update.calledWith(0));
+				});
+
+				it('should update properties', () => {
+					// First call is in the Constructor
+					assert.isTrue(THREE.Quaternion.prototype.fromArray.calledTwice);
+					assert.isTrue(THREE.Quaternion.prototype.fromArray.calledWith(1));
+					assert.isTrue(THREE.Vector3.prototype.fromArray.calledOnce);
+					assert.isTrue(THREE.Vector3.prototype.fromArray.calledWith(1));
+				});
+	
+				// Not sure how to test arm model
 			});
 		});
 	});

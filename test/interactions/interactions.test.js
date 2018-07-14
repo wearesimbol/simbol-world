@@ -88,7 +88,7 @@ describe('Interactions', () => {
 
 		it('should add event listeners to emitter', () => {
 			assert.isTrue(emitter.on.calledOnce);
-			assert.isTrue(emitter.on.calledWith('trigger'));
+			assert.isTrue(emitter.on.calledWith('triggerpressed'));
 		});
 	});
 });

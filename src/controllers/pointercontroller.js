@@ -63,7 +63,7 @@ class PointerController extends EventEmitter {
 				direction: -1
 			});
 		} else {
-			this.emit('trigger', {
+			this.emit('triggerpressed', {
 				touch: true
 			});
 
@@ -112,7 +112,7 @@ class PointerController extends EventEmitter {
 		if (!document.pointerLockElement) {
 			this._pointerLock(event);
 		} else {
-			this.emit('trigger');
+			this.emit('triggerpressed');
 		}
 	}
 

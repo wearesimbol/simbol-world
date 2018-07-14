@@ -42,7 +42,7 @@ class Interactions extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	setUpEventListeners(emitter) {
-		emitter.on('trigger', this.selection.handleSelection.bind(this.selection));
+		emitter.on('triggerpressed', this.selection.handleSelection.bind(this.selection));
 	}
 }
 

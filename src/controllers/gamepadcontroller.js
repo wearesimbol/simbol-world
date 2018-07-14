@@ -37,7 +37,7 @@ class GamepadController extends EventEmitter {
 	 */
 	handleTriggerPressed(state) {
 		if (state) {
-			this.emit('trigger');
+			this.emit('triggerpressed');
 		}
 	}
 

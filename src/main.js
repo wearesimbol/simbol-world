@@ -18,10 +18,25 @@ if (!navigator.getVRDisplays) {
 /**  Main class for Simbol */
 class Simbol extends EventEmitter {
 
+	/** @property {string} hand - The user's height */
+	get hand() {
+		if (typeof this._hand === 'undefined') {
+			this._hand = 'left';
+		}
+		return this._hand;
+	}
+
+	set hand(hand) {
+		if (hand === 'left' || hand === 'right') {
+			this._hand = hand;
+		}
+	}
+
 	/**
 	 * Creates a Simbol instance
 	 *
 	 * @param {object} config - Config object
+	 * @param {string} config.hand - The user's preferred hand
 	 * @param {object} config.scene - Configuration object for a Simbol scene
 	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
 	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
@@ -29,11 +44,13 @@ class Simbol extends EventEmitter {
 	constructor(config) {
 		super();
 
+		this.hand = config.hand;
+
 		this._scene = new Scene(config.scene);
 
 		this.virtualPersona = new VirtualPersona(config.virtualPersona);
 
-		this.controllers = new Controllers(this._scene.canvas);
+		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
 		this.locomotion = new Locomotion();
 		this.interactions = new Interactions();
@@ -53,6 +70,9 @@ class Simbol extends EventEmitter {
 		return this._scene.init()
 			.then(() => this.virtualPersona.init())
 			.then(() => {
+				this.vpMesh = this.virtualPersona.mesh;
+				this.controllers.init(this.vpMesh);
+
 				this.addToScene([
 					...this.interactions.getMeshes(),
 					...this.locomotion.getMeshes()
@@ -158,6 +178,7 @@ class Simbol extends EventEmitter {
 * @returns {undefined}
 */
 Simbol.prototype.animate = (function() {
+	const unalteredCamera = new THREE.Camera();
 	const previousCameraPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
 	previousControllerQuaternion.initialised = false;
@@ -173,7 +194,10 @@ Simbol.prototype.animate = (function() {
 
 		// Gets the correct controller
 		const camera = this._scene.camera;
-		const controller = this.controllers.mainHandController || camera;
+		let controller = camera;
+		if (Utils.isPresenting && this.controllers.mainHandController) {
+			controller = this.controllers.mainHandController;
+		}
 
 		if (!previousControllerQuaternion.initialised) {
 			previousControllerQuaternion.copy(controller.quaternion);
@@ -183,10 +207,11 @@ Simbol.prototype.animate = (function() {
 		// Handle position
 		camera.position.copy(previousCameraPosition);
 
+			// Translation
 		if (this.locomotion.translatingZ || this.locomotion.translatingX) {
 			translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
 			translationDirection.applyQuaternion(camera.quaternion);
-			const collision = Physics.checkMeshCollision(this.virtualPersona.mesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
+			const collision = Physics.checkMeshCollision(this.vpMesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
 			if (!collision) {
 				if (this.locomotion.translatingZ) {
 					camera.translateZ(this.locomotion.translatingZ * delta);
@@ -198,6 +223,7 @@ Simbol.prototype.animate = (function() {
 			}
 		}
 
+			// Teleportation
 		if (this.locomotion.teleportation.isRayCurveActive) {
 			this.locomotion.teleportation.updateRayCurve(controller, this._scene.scene);
 		}
@@ -218,6 +244,7 @@ Simbol.prototype.animate = (function() {
 			}
 		}
 
+			// Camera height
 		if (!camera.position.equals(previousCameraPosition)) {
 			this.virtualPersona.setFloorHeight(this._scene);
 		}
@@ -225,8 +252,13 @@ Simbol.prototype.animate = (function() {
 		camera.position.setY(this.virtualPersona.floorHeight + this.virtualPersona.userHeight);
 
 		previousCameraPosition.copy(camera.position);
-		previousControllerQuaternion.copy(controller.quaternion);
+		if (controller.quaternion) {
+			previousControllerQuaternion.copy(controller.quaternion);
+		}
 
+		unalteredCamera.copy(camera);
+
+			// Immersive mode + Rotation
 		if (Utils.isPresenting) {
 			this.virtualPersona.vrControls.update();
 
@@ -234,24 +266,20 @@ Simbol.prototype.animate = (function() {
 			camera.position.add(this.virtualPersona.fakeCamera.position);
 			camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
 
-			this.virtualPersona.mesh.rotation.y = camera.rotation.y + Math.PI;
+			this.vpMesh.rotation.y = camera.rotation.y + Math.PI;
 		} else {
-			this.virtualPersona.mesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
+			this.vpMesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
 			camera.rotation.order = 'XYZ';
 			camera.rotation.copy(this.locomotion.orientation.euler);
 		}
 
-		// Adjust vertical position
-		this.virtualPersona.mesh.position.copy(camera.position);
-		if (this.headMesh) {
-			const meshYPosition = camera.position.y - this.virtualPersona.headMesh.position.y;
-			this.virtualPersona.mesh.position.setY(meshYPosition);
-		} else {
-			this.virtualPersona.mesh.position.setY(this.virtualPersona.floorHeight);
-		}
+		// Adjust the mesh's position
+		this.vpMesh.position.copy(camera.position);
+		const meshYPosition = camera.position.y - this.virtualPersona._meshHeight;
+		this.vpMesh.position.setY(meshYPosition);
 
 		// MultiVP
-		this.virtualPersona.multiVP.sendData(this.virtualPersona.mesh);
+		this.virtualPersona.multiVP.sendData(this.vpMesh);
 
 		// Interactions
 		this.interactions.update(controller.position, controller.quaternion);
@@ -261,9 +289,12 @@ Simbol.prototype.animate = (function() {
 		for (const controllerId of controllerIds) {
 			// Gets the controller from the list with this id and updates it
 			const controller = this.controllers.currentControllers[controllerId];
-			controller.update && controller.update(camera,
-				this.virtualPersona.userHeight,
-				this.virtualPersona.floorHeight
+			controller.update && controller.update(
+				delta,
+				// Uses a camera that hasn't been applied the HMD data so that
+				// it works properly to get the exact controller position
+				unalteredCamera,
+				this.virtualPersona.userHeight
 			);
 		}
 	};
