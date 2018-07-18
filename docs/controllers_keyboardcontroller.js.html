@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/keyboardcontroller.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/keyboardcontroller.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import EventEmitter from 'eventemitter3';
+
+/** Class for keyboard inputs */
+class KeyboardController extends EventEmitter {
+
+	/** Listens to keyboard presses and emits accordingly */
+	constructor() {
+		super();
+
+		document.addEventListener('keydown', this._handleKeyDownEvent.bind(this));
+		document.addEventListener('keyup', this._handleKeyUpEvent.bind(this));
+	}
+
+	/**
+	 * Handles direction keys to move the VirtualPersona
+	 *
+	 * @param {Event} event - Event object
+	 *
+	 * @return {undefined}
+	 *
+	 * @emits KeyboardController#ztranslationstart
+	 * @emits KeyboardController#xtranslationstart
+	 *
+	 * @private
+	 */
+	_handleKeyDownEvent(event) {
+		switch (event.keyCode) {
+		// Up or w
+		case 87:
+		case 38:
+			/**
+			 * KeyboardController ztranslationstart event,
+			 * fired when translation on the Z axis starts
+			 *
+			 * @event KeyboardController#ztranslationstart
+			 * @type {object}
+			 * @property direction - Positive or negative depending on the direction
+			 */
+			this.emit('ztranslationstart', {
+				direction: -1
+			});
+			break;
+		// Down or s
+		case 83:
+		case 40:
+			this.emit('ztranslationstart', {
+				direction: 1
+			});
+			break;
+		// Left or a
+		case 65:
+		case 37:
+			/**
+			 * KeyboardController ztranslationstart event,
+			 * fired when translation on the x axis starts
+			 *
+			 * @event KeyboardController#xtranslationstart
+			 * @type {object}
+			 * @property direction - Positive or negative depending on the direction
+			 */
+			this.emit('xtranslationstart', {
+				direction: -1
+			});
+			break;
+		// Right or d
+		case 68:
+		case 39:
+			this.emit('xtranslationstart', {
+				direction: 1
+			});
+			break;
+		}
+	}
+
+	/**
+	 * Handles direction keys to move the VirtualPersona
+	 *
+	 * @param {Event} event - Event object
+	 *
+	 * @return {undefined}
+	 *
+	 * @emits KeyboardController#ztranslationend
+	 * @emits KeyboardController#xtranslationend
+	 *
+	 * @private
+	 */
+	_handleKeyUpEvent(event) {
+		switch (event.keyCode) {
+		// Up or w, down or s
+		case 87:
+		case 38:
+		case 83:
+		case 40:
+			/**
+			 * KeyboardController ztranslationend event,
+			 * fired when translation on the z axis ends
+			 *
+			 * @event KeyboardController#ztranslationend
+			 */
+			this.emit('ztranslationend');
+			break;
+		// Left or a, right or d
+		case 65:
+		case 37:
+		case 68:
+		case 39:
+			/**
+			 * KeyboardController xtranslationend event,
+			 * fired when translation on the x axis ends
+			 *
+			 * @event KeyboardController#xtranslationend
+			 */
+			this.emit('xtranslationend');
+			break;
+		}
+	}
+}
+
+export {KeyboardController};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiVP.html">MultiVP</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiVP.html#event:add">add</a></li><li><a href="MultiVP.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="MultiVP.html#event:error">error</a></li><li><a href="MultiVP.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:add">add</a></li><li><a href="VirtualPersona.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="VirtualPersona.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:remove">remove</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jul 17 2018 21:01:09 GMT-0500 (DST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

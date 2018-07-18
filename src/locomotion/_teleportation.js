@@ -171,6 +171,13 @@ class Teleportation {
 	 *
 	 * @param {boolean} active - Whethere it's active
 	 *
+	 * @example
+	 * // Ray Curve is active
+	 * teleporation.setRayCurveState(true);
+	 * @example
+	 * // Ray Curve is inactive
+	 * teleporation.setRayCurveState(false);
+	 *
 	 * @return {undefined}
 	 */
 	setRayCurveState(active) {
@@ -180,6 +187,9 @@ class Teleportation {
 	/**
 	 * Activates teleportation
 	 *
+	 * @example
+	 * teleportation.activateTeleport();
+	 *
 	 * @return {undefined}
 	 */
 	activateTeleport() {
@@ -187,7 +197,10 @@ class Teleportation {
 	}
 
 	/**
-	 * Resets teleportation
+	 * Resets teleportation by hiding Ray Curve and sets it to inactive
+	 *
+	 * @example
+	 * teleportation.resetTeleport();
 	 *
 	 * @return {undefined}
 	 */
@@ -209,7 +222,6 @@ class Teleportation {
 	 * @param {number} time - Time value
 	 *
 	 * @return {number} Position on the curve at {time}
-	 *
 	 * @private
 	 */
 	_parabolicCurveScalar(point, velocity, acceleration, time) {
@@ -224,7 +236,6 @@ class Teleportation {
 	 * @param {number} time - Time value
 	 *
 	 * @return {THREE.Vector3} Vector3 with the parabolic curve position for each axis
-	 *
 	 * @private
 	 */
 	_parabolicCurve(point, velocity, time) {
@@ -242,7 +253,6 @@ class Teleportation {
 	 * @param {THREE.Vector3} currentPoint - The current's point Vector3
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
 	 */
 	_setRayCurvePoint(pointInCurve, currentPoint) {
@@ -276,6 +286,7 @@ class Teleportation {
 	 * @param {THREE.Vector3} direction - Provided direction
 	 *
 	 * @return {undefined}
+	 * @private
 	 */
 	_setDirection(direction) {
 		this._direction
@@ -286,7 +297,10 @@ class Teleportation {
 	}
 
 	/**
-	 * Renders the ray
+	 * Renders a Ray Curve by creating its meshes
+	 *
+	 * @example
+	 * const rayCurveMesh = teleporation.renderRayCurve();
 	 *
 	 * @return {THREE.Object3D} The ray's mesh
 	 */
@@ -309,7 +323,10 @@ class Teleportation {
 	}
 
 	/**
-	 * Renders the hit cylinder
+	 * Renders the hit cylinder by creating its meshes
+	 *
+	 * @example
+	 * const hitCylinderMesh = teleporation.renderHitCylinder();
 	 *
 	 * @return {THREE.Object3D} The hit cylinder
 	 */
@@ -329,10 +346,14 @@ class Teleportation {
 	}
 
 	/**
-	 * Updates the ray, when active, depending on the world position
+	 * Updates the ray, when active, depending on the world position by displaying it
+	 * and checking if it hits an object
 	 *
 	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
 	 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
+	 *
+	 * @example
+	 * teleporation.updateRayCurve();
 	 *
 	 * @return {undefined}
 	 */

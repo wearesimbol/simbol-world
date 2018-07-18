@@ -15,7 +15,11 @@ if (!navigator.getVRDisplays) {
 	InitializeWebVRPolyfill(); // eslint-disable-line
 }
 
-/**  Main class for Simbol */
+/**
+ * Main class for Simbol
+ *
+ * @extends EventEmitter
+ */
 class Simbol extends EventEmitter {
 
 	/** @property {string} hand - The user's height */
@@ -64,6 +68,15 @@ class Simbol extends EventEmitter {
 	 * Initialises Simbol by initialising its different components
 	 * and adding all necessary meshes into the scene
 	 *
+	 * @example
+	 * simbol.init()
+	 * 	.then(() => {
+	 * 		// Instantiated
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
+	 *
 	 * @returns {Promise} promise - Signals that all components have been initiated
 	 */
 	init() {
@@ -89,7 +102,12 @@ class Simbol extends EventEmitter {
 	 *
 	 * @param {Object} components - List of Simbol components that fire common events
 	 *
+	 * @example
+	 * simbol.addListeners(virtualPersona, controllers, interactions);
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits Simbol#error
 	 */
 	addListeners(...components) {
 		for (const component of components) {
@@ -106,6 +124,13 @@ class Simbol extends EventEmitter {
 			});
 
 			component.on('error', (event) => {
+				/**
+				 * Simbol error event that forwards an error event from any of its components
+				 *
+				 * @event Simbol#error
+				 * @type {Error}
+				 *
+				 */
 				this.emit('error', event);
 			});
 		}
@@ -118,6 +143,10 @@ class Simbol extends EventEmitter {
 	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
 	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
 	 *
+	 * @example
+	 * // Not collidable (avatars can go through it) and no shadows (better for performance)
+	 * simbol.addToScene([mesh1, mesh2], false, false);
+	 *
 	 * @returns {undefined}
 	 */
 	addToScene(meshes, collidable = false, shadow = false) {
@@ -128,6 +157,9 @@ class Simbol extends EventEmitter {
 	 * Helper function that removes a mesh from the scene
 	 *
 	 * @param {THREE.Mesh} mesh - Mesh to be removed from scene
+	 *
+	 * @example
+	 * simbol.removeFromScene(mesh1);
 	 *
 	 * @returns {undefined}
 	 */
@@ -140,6 +172,9 @@ class Simbol extends EventEmitter {
 	 *
 	 * @param {array} functions - Array of functions to add to the animation loop
 	 *
+	 * @example
+	 * simbol.addAnimateFunctions(function1, function2);
+	 *
 	 * @returns {undefined}
 	 */
 	addAnimateFunctions(functions) {
@@ -149,6 +184,9 @@ class Simbol extends EventEmitter {
 	/**
 	 * Helper function that wraps VREffect.prototype.requestPresent
 	 * and sets Utils.isPresenting
+	 *
+	 * @example
+	 * simbol.startPresenting();
 	 *
 	 * @returns {undefined}
 	 */
@@ -160,6 +198,9 @@ class Simbol extends EventEmitter {
 	/**
 	 * Helper function that wraps VREffect.prototype.exitPresent
 	 * and sets Utils.isPresenting
+	 *
+	 * @example
+	 * simbol.stopPresenting();
 	 *
 	 * @returns {undefined}
 	 */
@@ -174,6 +215,10 @@ class Simbol extends EventEmitter {
 * and controllers correctly on each frame
 *
 * @param {number} time - Current time (ms) to make smooth animations
+*
+* @example
+* // This is already done in Simbol#init
+* simbol.addAnimateFunctions([simbol.animate.bind(simbol)]);
 *
 * @returns {undefined}
 */
@@ -207,7 +252,7 @@ Simbol.prototype.animate = (function() {
 		// Handle position
 		camera.position.copy(previousCameraPosition);
 
-			// Translation
+		// Translation
 		if (this.locomotion.translatingZ || this.locomotion.translatingX) {
 			translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
 			translationDirection.applyQuaternion(camera.quaternion);
@@ -223,7 +268,7 @@ Simbol.prototype.animate = (function() {
 			}
 		}
 
-			// Teleportation
+		// Teleportation
 		if (this.locomotion.teleportation.isRayCurveActive) {
 			this.locomotion.teleportation.updateRayCurve(controller, this._scene.scene);
 		}
@@ -244,7 +289,7 @@ Simbol.prototype.animate = (function() {
 			}
 		}
 
-			// Camera height
+		// Camera height
 		if (!camera.position.equals(previousCameraPosition)) {
 			this.virtualPersona.setFloorHeight(this._scene);
 		}
@@ -258,7 +303,7 @@ Simbol.prototype.animate = (function() {
 
 		unalteredCamera.copy(camera);
 
-			// Immersive mode + Rotation
+		// Immersive mode + Rotation
 		if (Utils.isPresenting) {
 			this.virtualPersona.vrControls.update();
 
@@ -291,8 +336,8 @@ Simbol.prototype.animate = (function() {
 			const controller = this.controllers.currentControllers[controllerId];
 			controller.update && controller.update(
 				delta,
-				// Uses a camera that hasn't been applied the HMD data so that
-				// it works properly to get the exact controller position
+				// Uses a camera that hasn't been applied the HMD data
+				// So that it works properly to get the exact controller position
 				unalteredCamera,
 				this.virtualPersona.userHeight
 			);

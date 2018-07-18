@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/controllers.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/controllers.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import EventEmitter from 'eventemitter3';
+import {PoseController} from './posecontroller';
+import {GamepadController} from './gamepadcontroller';
+import {KeyboardController} from './keyboardcontroller';
+import {PointerController} from './pointercontroller';
+
+/** Class to act as a wrapper for all controllers */
+class Controllers extends EventEmitter {
+
+	/** @property {object} currentControllers - maps of controller ids to controller instances */
+	get currentControllers() {
+		if (!this._currentControllers) {
+			this._currentControllers = {};
+		}
+		return this._currentControllers;
+	}
+
+	set currentControllers(currentControllers) {
+		this._currentControllers = currentControllers;
+	}
+
+	/** @property {PoseController} mainHandController - Controller associated to your main hand */
+	get mainHandController() {
+		if (typeof this._mainHandController === 'undefined') {
+			this._mainHandController = null;
+		}
+		return this._mainHandController;
+	}
+
+	set mainHandController(mainHandController) {
+		this._mainHandController = mainHandController;
+	}
+
+	/**
+	 * Initialises a Controllers instance
+	 *
+	 * @param {HTMLCanvasElement} canvas - &lt;canvas> element required by PointerController
+	 * @param {string} hand - The user's preferred hand
+	 */
+	constructor(canvas, hand) {
+		super();
+
+		this.hand = hand;
+
+		// TODO: Check if it's a mobile device or standalone
+		this.currentControllers['KeyboardController'] = new KeyboardController();
+		this.currentControllers['PointerController'] = new PointerController(canvas);
+		this._setUpEventListeners(this.currentControllers['KeyboardController']);
+		this._setUpEventListeners(this.currentControllers['PointerController']);
+	}
+
+	/**
+	 * Helper that forwards events from controllers
+	 *
+	 * @param {EventEmitter} emitter - Controller that can emit events
+	 *
+	 * @returns {undefined}
+	 *
+	 * @emits Controllers#error
+	 * @emits Controllers#ztranslationstart
+	 * @emits Controllers#ztranslationend
+	 * @emits Controllers#xtranslationstart
+	 * @emits Controllers#xtranslationend
+	 * @emits Controllers#orientation
+	 * @emits Controllers#currentorientation
+	 * @emits Controllers#triggerpressed
+	 * @emits Controllers#thumbpadpressed
+	 * @emits Controllers#thumbpadtouched
+	 * @emits Controllers#thumbpaduntouched
+	 * @emits Controllers#gesturechange
+	 *
+	 * @private
+	 */
+	_setUpEventListeners(emitter) {
+		emitter.on('error', (event) => {
+			/**
+			 * Controllers error event that forwards the event
+			 * from any kind of controllers
+			 *
+			 * @event Controllers#error
+			 * @type {Error}
+			 */
+			this.emit('error', event);
+		});
+
+		if (Object.getPrototypeOf(emitter) === KeyboardController.prototype) {
+			emitter.on('ztranslationstart', (event) => {
+				/**
+				 * Controllers ztranslationstart event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#ztranslationstart
+				 * @type {object}
+				 */
+				this.emit('ztranslationstart', event);
+			});
+
+			emitter.on('xtranslationstart', (event) => {
+				/**
+				 * Controllers xtranslationstart event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#xtranslationstart
+				 * @type {object}
+				 */
+				this.emit('xtranslationstart', event);
+			});
+
+			emitter.on('ztranslationend', (event) => {
+				/**
+				 * Controllers ztranslationend event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#ztranslationend
+				 * @type {object}
+				 */
+				this.emit('ztranslationend', event);
+			});
+
+			emitter.on('xtranslationend', (event) => {
+				/**
+				 * Controllers xtranslationend event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#xtranslationend
+				 * @type {object}
+				 */
+				this.emit('xtranslationend', event);
+			});
+		}
+
+		if (Object.getPrototypeOf(emitter) === PointerController.prototype) {
+			emitter.on('ztranslationstart', (event) => {
+				this.emit('ztranslationstart', event);
+			});
+
+			emitter.on('ztranslationend', (event) => {
+				this.emit('ztranslationend', event);
+			});
+
+			emitter.on('orientation', (event) => {
+				/**
+				 * Controllers orientation event that forwards the event
+				 * from a PointerController
+				 *
+				 * @event Controllers#orientation
+				 * @type {object}
+				 */
+				this.emit('orientation', event);
+			});
+
+			emitter.on('currentorientation', (event) => {
+				/**
+				 * Controllers currentorientation event that forwards the event
+				 * from a PointerController
+				 *
+				 * @event Controllers#currentorientation
+				 * @type {object}
+				 */
+				this.emit('currentorientation', event);
+			});
+
+			emitter.on('triggerpressed', (event) => {
+				/**
+				 * Controllers triggerpressed event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#triggerpressed
+				 * @type {object}
+				 */
+				this.emit('triggerpressed', event);
+			});
+		}
+
+		if (Object.getPrototypeOf(emitter) === GamepadController.prototype) {
+			emitter.on('controllerdisconnected', (event) => {
+				this.removeController(event);
+			});
+
+			emitter.on('triggerpressed', (event) => {
+				this.emit('triggerpressed', event);
+			});
+		}
+
+		if (Object.getPrototypeOf(emitter) === PoseController.prototype) {
+			emitter.on('controllerdisconnected', (event) => {
+				this.removeController(event);
+			});
+
+			emitter.on('triggerpressed', (event) => {
+				this.emit('triggerpressed', event);
+			});
+
+			emitter.on('thumbpadpressed', (event) => {
+				/**
+				 * Controllers thumbpadpressed event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#thumbpadpressed
+				 * @type {object}
+				 */
+				this.emit('thumbpadpressed', event);
+			});
+
+			emitter.on('thumbpadtouched', (event) => {
+				/**
+				 * Controllers thumbpadtouched event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#thumbpadtouched
+				 * @type {object}
+				 */
+				this.emit('thumbpadtouched', event);
+			});
+
+			emitter.on('thumbpaduntouched', (event) => {
+				/**
+				 * Controllers thumbpaduntouched event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#thumbpaduntouched
+				 * @type {object}
+				 */
+				this.emit('thumbpaduntouched', event);
+			});
+
+			emitter.on('gesturechange', (event) => {
+				/**
+				 * Controllers gesturechange event that forwards the event
+				 * from a controller
+				 *
+				 * @event Controllers#gesturechange
+				 * @type {object}
+				 */
+				this.emit('gesturechange', event);
+			});
+		}
+	}
+
+	/**
+	 * Helper function that removes all event handlers from an emitter
+	 *
+	 * @param {EventEmitter} emitter - Controller that has event handlers set up
+	 *
+	 * @returns {undefined}
+	 * @private
+	 */
+	_removeEventListeners(emitter) {
+		emitter.removeAllListeners('error')
+			.removeAllListeners('ztranslationstart')
+			.removeAllListeners('xtranslationstart')
+			.removeAllListeners('ztranslationend')
+			.removeAllListeners('xtranslationend')
+			.removeAllListeners('orientation')
+			.removeAllListeners('currentorientation')
+			.removeAllListeners('controllerdisconnected')
+			.removeAllListeners('add')
+			.removeAllListeners('triggerpressed')
+			.removeAllListeners('thumbpadpressed')
+			.removeAllListeners('thumbpadtouched')
+			.removeAllListeners('thumbpaduntouched')
+			.removeAllListeners('gesturechange');
+	}
+
+	/**
+	 * Initialises the Controllers instance by adding gamepad event listeners
+	 * and searching for current gamepads
+	 *
+	 * @param {THREE.Mesh} vpMesh - The Virtual Persona mesh
+	 *
+	 * @example
+	 * controllers.init(virtualPersonaMesh);
+	 *
+	 * @returns {undefined}
+	 */
+	init(vpMesh) {
+		window.addEventListener('gamepadconnected', this.addController.bind(this));
+		window.addEventListener('gamepaddisconnected', this.removeController.bind(this));
+
+		this.updateControllers(vpMesh);
+	}
+
+	/**
+	 * Updates controller list by checking for available gamepads
+	 * If a vpMesh is supplied, it also sets all current controllers' vpMesh to it
+	 *
+	 * @param {THREE.Mesh} vpMesh - Current Virtual Persona mesh. Used to associate hands to controllers
+	 *
+	 * @example
+	 * // Update current controllers to a new virtualPersonaMesh and get new gamepads
+	 * controllers.updateControllers(virtualPersonaMesh);
+	 * @example
+	 * // Only gets new gamepads
+	 * controllers.updateControllers();
+	 *
+	 * @returns {undefined}
+	 */
+	updateControllers(vpMesh) {
+		if (vpMesh) {
+			this.vpMesh = vpMesh;
+
+			for (const controller of Object.values(this.currentControllers)) {
+				if (controller instanceof PoseController) {
+					controller.vpMesh = vpMesh;
+				}
+			}
+		}
+
+		const gamepads = navigator.getGamepads();
+		for (const gamepad of gamepads) {
+			this.addController(gamepad);
+		}
+	}
+
+	/**
+	 * Adds a controller to the currentControlles list
+	 *
+	 * @param {Gamepad} gamepad - Controller to add
+	 *
+	 * @example
+	 * // gamepad comes from the 'gamepadconnected' event or from 'navigator.getGamepads()'
+	 * controllers.addController(gamepad);
+	 *
+	 * @returns {undefined}
+	 */
+	addController(gamepad) {
+		if (!gamepad) {
+			return;
+		}
+
+		gamepad = gamepad.gamepad || gamepad;
+
+		const gamepadId = Controllers.getGamepadId(gamepad);
+		if (!this.currentControllers[gamepadId]) {
+			if (gamepad.pose) {
+				const poseController = new PoseController(gamepad, this.vpMesh, this.hand);
+				this.currentControllers[gamepadId] = poseController;
+				if (gamepad.hand === this.hand) {
+					this.mainHandController = poseController;
+				}
+			} else {
+				const gamepadController = new GamepadController(gamepad);
+				this.currentControllers[gamepadId] = gamepadController;
+			}
+			this._setUpEventListeners(this.currentControllers[gamepadId]);
+		}
+	}
+
+	/**
+	 * Removes a controller from the list
+	 *
+	 * @param {Gamepad} gamepad - Controller to remove
+	 *
+	 * @example
+	 * // gamepad comes from the 'gamepaddisconnected' event
+	 * controllers.removeController(gamepad);
+	 *
+	 * @returns {undefined}
+	 */
+	removeController(gamepad) {
+		const gamepadId = Controllers.getGamepadId(gamepad);
+		if (this.mainHandController &amp;&amp; this.mainHandController.id === gamepad.id) {
+			this.mainHandController = null;
+		}
+
+		delete this.currentControllers[gamepadId];
+	}
+
+	/**
+	 * Gets unique GamePad id
+	 *
+	 * @param {Gamepad} gamepad - Gamepad to generate id from
+	 *
+	 * @example
+	 * // gamepad comes from 'navigator.getGamepads();
+	 * Controllers.getGamepadId(gamepad);
+	 *
+	 * @returns {string} id
+	 *
+	 * @static
+	 */
+	static getGamepadId(gamepad) {
+		const id = `${gamepad.id} (${gamepad.hand})`;
+		return id;
+	}
+
+	/**
+	 * Gets GamePad in its latest state using the id Simbol uses
+	 *
+	 * @param {string} id - The gamepad's id that you want to receive
+	 *
+	 * @example
+	 * Controllers.getGamepad('GamepadID (left)');
+	 *
+	 * @returns {Gamepad} gamepad
+	 *
+	 * @static
+	 */
+	static getGamepad(id) {
+		const gamepads = navigator.getGamepads();
+
+		for (const gamepad of gamepads) {
+			if (gamepad &amp;&amp; Controllers.getGamepadId(gamepad) === id) {
+				return gamepad;
+			}
+		}
+	}
+}
+
+export {Controllers};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiVP.html">MultiVP</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiVP.html#event:add">add</a></li><li><a href="MultiVP.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="MultiVP.html#event:error">error</a></li><li><a href="MultiVP.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:add">add</a></li><li><a href="VirtualPersona.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="VirtualPersona.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:remove">remove</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jul 17 2018 21:01:09 GMT-0500 (DST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

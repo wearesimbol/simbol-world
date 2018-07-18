@@ -1,10 +1,8 @@
 const gulp = require('gulp');
 const eslint = require('gulp-eslint');
-const jsdoc = require('gulp-jsdoc3');
 const composer = require('gulp-uglify/composer');
 const uglifyjs = require('uglify-es');
 const rename = require('gulp-rename');
-const sourcemaps = require('gulp-sourcemaps');
 const rollup = require('rollup').rollup;
 const nodeResolve = require('rollup-plugin-node-resolve');
 const commonJS = require('rollup-plugin-commonjs');
@@ -96,17 +94,6 @@ gulp.task('test', (done) => {
 	});
 
 	server.start();
-});
-
-gulp.task('docs', (done) => {
-	const config = {
-		opts: {
-			destination: './docs'
-		}
-	};
-
-	gulp.src(['README.md', './src/**/*.js', '!./src/libs/*.js'], {read: false})
-		.pipe(jsdoc(config, done));
 });
 
 gulp.task('watch', gulp.series('js', () => {

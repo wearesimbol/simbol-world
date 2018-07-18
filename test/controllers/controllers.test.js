@@ -366,7 +366,7 @@ describe('Controllers', () => {
 			});
 
 			it('should save mesh', () => {
-				assert.equal(controllers.mesh, mesh);
+				assert.equal(controllers.vpMesh, mesh);
 			});
 
 			it('should update all PoseControllers', () => {
@@ -405,7 +405,7 @@ describe('Controllers', () => {
 				sinon.stub(PoseController.prototype, 'setGesture');
 				gamepad.pose = true;
 				controllers.currentControllers = {};
-				controllers.mesh = new THREE.Mesh();
+				controllers.vpMesh = new THREE.Mesh();
 
 				controllers.addController(gamepad);
 			});

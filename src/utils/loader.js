@@ -59,6 +59,16 @@ class Loader {
 	/**
 	 * Loads a model depending on its type
 	 *
+	 * @example
+	 * loader.load()
+	 * 	.then((loadedMesh) => {
+	 * 		// Handle your loadedMesh, e.g. adding it to your scene
+	 * 		simbol.addToScene(loadedMesh);
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
+	 *
 	 * @returns {Promise} promise - Resolves to the loaded mesh
 	 */
 	load() {

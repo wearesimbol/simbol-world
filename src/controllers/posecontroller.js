@@ -57,6 +57,8 @@ class PoseController extends EventEmitter {
 	 *
 	 * @param {Gamepad} gamepad - Gamepad object associated to this controller
 	 * @param {THREE.Mesh} vpMesh - The Virtual Persona's mesh used to associate controller to hand
+	 *
+	 * @emits PoseController#error
 	 */
 	constructor(gamepad = {}, vpMesh) {
 		super();
@@ -68,6 +70,13 @@ class PoseController extends EventEmitter {
 		this.vpMesh = vpMesh;
 
 		if (!this.vpMesh || !(this.vpMesh instanceof THREE.Object3D)) {
+			/**
+			 * PoseController error event when there's not a valid
+			 * Virtual Persona mesh
+			 *
+			 * @event PoseController#error
+			 * @type {Error}
+			 */
 			this.emit('error', {
 				error: new Error('The Virtual Persona mesh must be set and passed onto the PoseController to associate the controller with a hand')
 			});
@@ -120,6 +129,9 @@ class PoseController extends EventEmitter {
 	 *
 	 * @param {string} gesture - The short gesture name ("Open")
 	 *
+	 * @example
+	 * const fullGestureName = poseController.getGestureName('Open');
+	 *
 	 * @returns {string} gestureName - The full gesture name ("HandLeftOpen")
 	 */
 	getGestureName(gesture) {
@@ -130,6 +142,9 @@ class PoseController extends EventEmitter {
 
 	/**
 	 * Based on pressed and touched buttons, it determines the correct gesture
+	 *
+	 * @example
+	 * const currentGesture = poseController.determineGesture();
 	 *
 	 * @returns {string} gesture - The gesture name ("Open")
 	 */
@@ -159,7 +174,11 @@ class PoseController extends EventEmitter {
 	 *
 	 * @param {string} gesture - Short gesture name ("Open")
 	 *
+	 * @example
+	 * poseController.setGesture('Open');
+	 *
 	 * @returns {undefined}
+	 *
 	 * @emits PoseController#gesturechange
 	 */
 	setGesture(gesture) {
@@ -186,6 +205,15 @@ class PoseController extends EventEmitter {
 
 		if (!this.currentGesture) {
 			clipAction.play();
+			/**
+			 * PoseController gesturechange event emitted when
+			 * there's a new hand gesture
+			 *
+			 * @event PoseController#gesturechange
+			 * @type {object}
+			 * @property gesture - The name of the gesture
+			 * @property previousGesture - The name of the previous gesture
+			 */
 			this.emit('gesturechange', {
 				gesture: gestureName,
 				previousGesture: false
@@ -220,7 +248,12 @@ class PoseController extends EventEmitter {
 	 * @param {THREE.Camera} camera - Scene camera
 	 * @param {number} userHeight - The user's set height
 	 *
+	 * @example
+	 * // This is executed in an animation loop
+	 * gamepadController.update();
+	 *
 	 * @return {undefined}
+	 *
 	 * @emits PoseController#controllerdisconnected
 	 * @emits PoseController#thumbpadpressed
 	 * @emits PoseController#thumbpadunpressed
@@ -247,7 +280,14 @@ class PoseController extends EventEmitter {
 		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
-			// Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
+			/**
+			 * Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
+			 * PoseController controllerdisconnected event for when a gamepad is no longer available
+			 *
+			 * @event PoseController#controllerdisconnected
+			 * @type {object}
+			 * @property id - The controller's id
+			 */
 			this.emit('controllerdisconnected', {
 				id: this.gamepadId,
 				hand: this.hand

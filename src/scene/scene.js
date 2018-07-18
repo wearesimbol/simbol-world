@@ -42,8 +42,6 @@ class Scene {
 	 * @param {HTMLCanvasElement} config.canvas - Canvas element where the scene will be rendered
 	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Simbol needs access to your renderer
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Simbol needs access to your camera
-	 *
-	 * @returns {Scene} scene
 	 */
 	constructor(config) {
 		if (config.render) {
@@ -82,6 +80,15 @@ class Scene {
 	/**
 	 * Initialises this instance by loading the scene and starting the animation loop
 	 *
+	 * @example
+	 * scene.init()
+	 * 	.then(() => {
+	 * 		// Scene has finished loading and has started the animation loop
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
+	 *
 	 * @returns {Promise} promise - Promise that the scene has been loaded
 	 */
 	init() {
@@ -108,6 +115,9 @@ class Scene {
 	 * @param {array|Three.Object3D} meshes - List of meshes to be added to the scene
 	 * @param {boolean} collidable - Whether this mesh should be checked in a collision test
 	 * @param {boolean} shadow - Whether this mesh should cast and receive shadows
+	 *
+	 * @example
+	 * scene.addToScene([mesh1, mesh2], false, false);
 	 *
 	 * @returns {undefined}
 	*/
@@ -165,6 +175,9 @@ class Scene {
 	 * Resize event handler that sets the correct camera size and its projection matrix
 	 * Also sets the size of the renderer
 	 *
+	 * @example
+	 * window.addEventListener('resize', scene.onResize.bind(scene), false);
+	 *
 	 * @returns {undefined}
 	 */
 	onResize() {
@@ -198,7 +211,10 @@ class Scene {
 	}
 
 	/**
-	 * Starts the animation frame and saves the rAF ID
+	 * Starts the animation loop and saves the requestAnimationFrame ID
+	 *
+	 * @example
+	 * scene.animate();
 	 *
 	 * @returns {undefined}
 	 */
@@ -207,7 +223,10 @@ class Scene {
 	}
 
 	/**
-	 * Cancels the animation. Useful when the canvas is not visible for performance reasons
+	 * Cancels the animation loop. Useful when the canvas is not visible for performance reasons
+	 *
+	 * @example
+	 * scene.cancelAnimate();
 	 *
 	 * @returns {undefined}
 	 */
@@ -216,9 +235,13 @@ class Scene {
 	}
 
 	/**
-	 * Adds functions to animateFunctions so they will be executed in #render
+	 * Adds functions to animateFunctions so they will be executed in each animation frame
 	 *
 	 * @param {array} functions - List of functions that will be executed every frame
+	 *
+	 * @example
+	 * // You can provide different functions that will be executed during each animation frame
+	 * scene.addAnimateFunctions(() => {}, () => {});
 	 *
 	 * @returns {undefined}
 	*/

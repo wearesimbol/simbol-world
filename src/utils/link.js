@@ -79,6 +79,10 @@ class Link {
 	 *
 	 * @param {Simbol.Scene} scene - Simbol scene instance to be used to add the link object to it
 	 *
+	 * @example
+	 * // scene is your Three.JS scene
+	 * link.render(scene);
+	 *
 	 * @returns {undefined}
 	*/
 	render(scene) {
@@ -93,6 +97,9 @@ class Link {
 
 	/**
 	 * Performs the action of redirecting to the link's path
+	 *
+	 * @example
+	 * link.navigate();
 	 *
 	 * @returns {undefined}
 	*/

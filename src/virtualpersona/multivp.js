@@ -43,7 +43,6 @@ class MultiVP extends EventEmitter {
 	 * @param {Object} config - Configuration parameters
 	 * @param {Simbol.VirtualPersona} vp - Simbol Virtual Persona associated with the local human running the site
 	 *
-	 * @returns {undefined}
 	 * @emits MultiVP#error
 	 */
 	constructor(config = {}, vp) {
@@ -54,6 +53,14 @@ class MultiVP extends EventEmitter {
 
 		this.getStream()
 			.then((stream) => {
+				/**
+				 * MultiVP addanimatefunctions event that provides
+				 * an array of functions to be added to the event loop
+				 *
+				 * @event MultiVP#addanimatefunctions
+				 * @type {object}
+				 * @property functions - Array of functions
+				 */
 				this.emit('addanimatefunctions', {
 					functions: [this.animate.bind(this)]
 				});
@@ -62,7 +69,8 @@ class MultiVP extends EventEmitter {
 			})
 			.catch((error) => {
 				/**
-				 * MultiVP error event for a getUserMedia error
+				 * MultiVP error event, sometimes forwarding errors
+				 * from other functions or objects
 				 *
 				 * @event MultiVP#error
 				 * @type {Error}
@@ -74,6 +82,15 @@ class MultiVP extends EventEmitter {
 
 	/**
 	 * Wrapper around getUserMedia
+	 *
+	 * @example
+	 * multiVP.getStream()
+	 * 	.then((stream) => {
+	 * 		// We got a stream
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
 	 *
 	 * @returns {Promise<MediaStream>} stream
 	 */
@@ -91,6 +108,9 @@ class MultiVP extends EventEmitter {
 	 * Updates all peer meshes with their current position and rotation
 	 * Executed on every animation frame
 	 *
+	 * @example
+	 * simbol.addAnimateFunctions(multiVP.animate.bind(multiVP));
+	 *
 	 * @returns {undefined}
 	 */
 	animate() {
@@ -102,7 +122,10 @@ class MultiVP extends EventEmitter {
 	}
 
 	/**
-	 * Creates a new WebSocket with the set configuration
+	 * Creates a new WebSocket with the set configuration and sets event handlers
+	 *
+	 * @example
+	 * const socket = multiVP.createSocket();
 	 *
 	 * @returns {WebSocket} socket - Created WebSocket
 	 */
@@ -121,18 +144,12 @@ class MultiVP extends EventEmitter {
 	 * @param {Object} error - Error event Object
 	 *
 	 * @returns {undefined}
+	 *
 	 * @emits MultiVP#error
 	 *
 	 * @private
 	 */
 	_socketError(error) {
-		/**
-		 * MultiVP error event for a socket error
-		 *
-		 * @event MultiVP#error
-		 * @type {Error}
-		 *
-		 */
 		this.emit('error', error);
 	}
 
@@ -174,6 +191,10 @@ class MultiVP extends EventEmitter {
 	 * @param {boolean} initiator - Whether this peer is the initiator of the communication
 	 * @param {number} id - This peer's id, sent by the signalling server
 	 * @param {MediaStream} stream - Stream obtained from getUserMedia for audio
+	 *
+	 * @example
+	 * // stream is obtained from getUserMedia
+	 * const peer1 = multiVP.createPeer(false, 1, stream);
 	 *
 	 * @returns {Peer} peer - Created SimplePeer
 	 */
@@ -237,19 +258,12 @@ class MultiVP extends EventEmitter {
 	 * @param {Object} error - Event object for an error handler
 	 *
 	 * @returns {undefined}
+	 *
 	 * @emits MultiVP#error
 	 *
 	 * @private
 	 */
 	_peerError(error) {
-		/**
-		 * MultiVP error event for a SimplePeer error. It emits an Error object
-		 *
-		 * @event MultiVP#error
-		 * @type {Error}
-		 * @property {string} code - SimplePeer error code
-		 *
-		 */
 		this.multiVP.emit('error', error);
 	}
 
@@ -276,6 +290,9 @@ class MultiVP extends EventEmitter {
 	 *
 	 * @returns {undefined}
 	 *
+	 * @emits MultiVP#add
+	 * @emits MUltiVP#error
+	 *
 	 * @private
 	 */
 	_peerData(data) {
@@ -285,6 +302,13 @@ class MultiVP extends EventEmitter {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
+					/**
+					 * MultiVP add event that provides a mesh to be added to the scene
+					 *
+					 * @event MultiVP#add
+					 * @type {object}
+					 * @property {THREE.Mesh} mesh - Mesh to add to the scene
+					 */
 					this.multiVP.emit('add', {
 						mesh
 					});
@@ -307,13 +331,22 @@ class MultiVP extends EventEmitter {
 	 * @returns {undefined}
 	 *
 	 * @private
+	 *
+	 * @emits MultiVP#remove
 	 */
 	_peerClose() {
 		console.log(`peer ${this.id} closing`);
 		delete this.multiVP.remotePeers[this.id];
 		document.body.removeChild(this.audioEl);
 		if (this.multiVP.meshes[this.id]) {
-			const mesh = this.multiVP.meshes[this.id].mesh;
+			const mesh = this.multiVP.meshes[this.id].mesh;/**
+			* MultiVP remove event that provides a mesh to be removed
+			* from the scene
+			*
+			* @event MultiVP#remove
+			* @type {object}
+			* @property mesh - Mesh to be removed from the scene
+			*/
 			this.multiVP.emit('remove', {mesh});
 			delete this.multiVP.meshes[this.id];
 		}
@@ -322,7 +355,10 @@ class MultiVP extends EventEmitter {
 	/**
 	 * Sends data from a VirtualPersona to all peers
 	 *
-	 * @param {THREE.Mesh} vp - VirtualPersona from where to get the data
+	 * @param {THREE.Mesh} vp - VirtualPersona mesh from where to get the data
+	 *
+	 * @example
+	 * multiVP.sendData(simbol.vpMesh);
 	 *
 	 * @returns {undefined}
 	 */
@@ -344,7 +380,11 @@ class MultiVP extends EventEmitter {
 	/**
 	 * Sends a piece of data to all peers
 	 *
-	 * @param {ArrayBuffer} data - Data to be shared to other peers
+	 * @param {ArrayBuffer|string} data - Data to be shared to other peers
+	 *
+	 * @example
+	 * const data = {};
+	 * multiVP.update(JSON.stringify(data));
 	 *
 	 * @returns {undefined}
 	 */
@@ -363,7 +403,9 @@ class MultiVP extends EventEmitter {
 	 * @param {ArrayBuffer|TypedArray} buffer - ArrayBuffer to be converted
 	 *
 	 * @returns {string} string
-	*/
+	 *
+	 * @private
+	 */
 	_decodeBuffer(buffer) {
 		buffer = buffer.buffer || buffer;
 		if (!(buffer instanceof ArrayBuffer)) {

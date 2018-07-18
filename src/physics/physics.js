@@ -9,7 +9,12 @@ class Physics {
 	 * @param {THREE.RayCaster} rayCaster - RayCaster that we want to see if it intersects
 	 * @param {THREE.Object3D} mesh - Mesh that we want to check if rayCaster intersects with
 	 *
+	 * @example
+	 * // In this case, scene would be the Three.JS scene
+	 * Physics.checkRayCollision(new THREE.Raycaster(), scene);
+	 *
 	 * @returns {boolean|Object} If it intersects, it returns the intersection, if not, false
+	 * @static
 	 */
 	static checkRayCollision(rayCaster, mesh) {
 		const isGroup = mesh instanceof THREE.Scene || mesh.children.length > 0;
@@ -26,11 +31,19 @@ class Physics {
 	 * Checks if two meshes intersect
 	 *
 	 * @param {THREE.Mesh} mesh - Mesh to check if it intersects
-	 * @param {array} collisionArray - Mesh to check if it intersects
+	 * @param {array} collisionArray - Meshes array to check if the mesh intersects with them
 	 * @param {number} height - Height up to which collisions are ignored
 	 * @param {THREE.Vector3} direction - Direction in which the mesh is currently moving
 	 *
+	 * @example
+	 * // Checks if the Virtual Persona collisions with an array of meshes in the direction it's moving
+	 * const direction = new THREE.Vector3();
+	 * // Moving on the +X axis
+	 * direction.set(1, 0, 0);
+	 * direction.applyQuaternion(simbol.vpMesh.quaternion);
+	 * Physics.checkMeshCollision(simbol.vpMesh, [mesh1, mesh2], 5, direction);
 	 * @returns {boolean}  Whether they intersect or not
+	 * @static
 	 */
 	static checkMeshCollision(mesh, collisionArray, height, direction) {
 		const box = new THREE.Box3();

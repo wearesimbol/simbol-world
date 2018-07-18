@@ -29,29 +29,31 @@ class GamepadController extends EventEmitter {
 	}
 
 	/**
-	 * Activates teleportation if trigger is pressed
-	 *
-	 * @param {boolean} state - Whether trigger is pressed
-	 *
-	 * @returns {undefined}
-	 */
-	handleTriggerPressed(state) {
-		if (state) {
-			this.emit('triggerpressed');
-		}
-	}
-
-	/**
 	 * Gets latest information from gamepad
 	 * It also applies the handlers for different buttons
 	 *
+	 * @example
+	 * // This is executed in an animation loop
+	 * gamepadController.update();
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits GamepadController#controllerdisconnected
+	 * @emits GamepadController#triggerpressed
+	 * @emits GamepadController#triggerunpressed
 	 */
 	update() {
 		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
-			// Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
+			/**
+			 * Temporary fix because gamepaddisconnected is not firing when leaving VR in Daydream
+			 * GamepadController controllerdisconnected event for when a gamepad is no longer available
+			 *
+			 * @event GamepadController#controllerdisconnected
+			 * @type {object}
+			 * @property id - The controller's id
+			 */
 			this.emit('controllerdisconnected', {id: this.id});
 			return;
 		}
@@ -60,12 +62,23 @@ class GamepadController extends EventEmitter {
 			const buttonId = ControllerButtons[buttonName];
 			const button = gamepad.buttons[buttonId];
 			if (button) {
-				// As all functions follow the same naming pattern, we can avoid a switch clause
-				if (button.pressed && !this.pressedButtons[buttonId]) {
-					this[`handle${buttonName}Pressed`](button.pressed);
+				if (button.pressed && !this.pressedButtons[buttonName]) {
+					/**
+					 * GamepadController triggerpressed event, fired when the trigger is pressed
+					 *
+					 * @event GamepadController#triggerpressed
+					 */
+					this.emit(`${buttonName.toLowerCase()}pressed`);
+					this.pressedButtons[buttonName] = true;
+				} else if (!button.pressed && this.pressedButtons[buttonName]) {
+					/**
+					 * GamepadController triggerunpressed event, fired when the trigger is unpressed
+					 *
+					 * @event GamepadController#triggerunpressed
+					 */
+					this.emit(`${buttonName.toLowerCase()}unpressed`);
+					this.pressedButtons[buttonName] = false;
 				}
-
-				this.pressedButtons[buttonId] = button.pressed;
 			}
 		}
 	}

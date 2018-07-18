@@ -94,6 +94,11 @@ class Locomotion {
 	/**
 	 * Gets all the meshes that serve as guides for the locomotion system
 	 *
+	 * @example
+	 * const locomotionMeshes = locomotion.getMeshes();
+	 * // Adds theses meshes to the scene
+	 * simbol.addToScene(locomotionMeshes);
+	 *
 	 * @returns {array} meshes
 	 */
 	getMeshes() {
@@ -104,6 +109,9 @@ class Locomotion {
 	 * Starts translating across the Z axis at the stated velocity
 	 *
 	 * @param {number} velocity - Value to translate by
+	 *
+	 * @example
+	 * locomotion.translateZ(locomotion.velocity);
 	 *
 	 * @returns {undefined}
 	 */
@@ -116,6 +124,9 @@ class Locomotion {
 	 *
 	 * @param {number} velocity - Value to translate by
 	 *
+	 * @example
+	 * locomotion.translateX(locomotion.velocity);
+	 *
 	 * @returns {undefined}
 	 */
 	translateX(velocity) {
@@ -124,6 +135,9 @@ class Locomotion {
 
 	/**
 	 * Stops translating across the Z axis
+	 *
+	 * @example
+	 * locomotion.stopTranslateZ();
 	 *
 	 * @returns {undefined}
 	 */
@@ -134,12 +148,26 @@ class Locomotion {
 	/**
 	 * Stops translating across the X axis
 	 *
+	 * @example
+	 * locomotion.stopTranslateX();
+	 *
 	 * @returns {undefined}
 	 */
 	stopTranslateX() {
 		this.translatingX = false;
 	}
 
+	/**
+	 * Calculates and sets this.orientation based on the provided rotation
+	 * It also debounces Teleportation#activateTeleport
+	 *
+	 * @param {THREE.Vector2} rotation - Vector for X and Y axis rotation
+	 *
+	 * @example
+	 * locomotion.orient(new THREE.Vector2(0, 1));
+	 *
+	 * @returns {undefined}
+	 */
 	orient(rotation) {
 		// Calculates the delta between the current move event and the previous one
 		const rotationDelta = new THREE.Vector2();
@@ -163,6 +191,15 @@ class Locomotion {
 		}
 	}
 
+	/**
+	 * It triggers teleportation. If the Ray Curve is active, it resets it,
+	 * otherwise, it activates it
+	 *
+	 * @example
+	 * locomotion.teleport();
+	 *
+	 * @returns {undefined}
+	 */
 	teleport() {
 		if (this.teleportation.isRayCurveActive || this._cancelTeleportation) {
 			this._cancelTeleportation = false;
@@ -175,14 +212,25 @@ class Locomotion {
 	/**
 	 * Handles teleportation
 	 *
-	 * @return {undefined}
-	 *
+	 * @returns {undefined}
 	 * @private
 	 */
 	_handleTeleportation() {
 		this.teleportation.setRayCurveState(true);
 	}
 
+	/**
+	 * Adds Locomotion handlers to a Controllers and an Interactions emitter
+	 *
+	 * @param {Simbol.Controllers} controllers - A Controllers instance that is an EventEmitter
+	 * @param {Simbol.Interactions} interactions - An Interactions instance that is an EventEmitter
+	 *
+	 * @example
+	 * // Passes in the Controllers and Interactions instances that Simbol creates
+	 * locomotion.setUpEventListeners(simbol.controllers, simbol.interactions);
+	 *
+	 * @returns {undefined}
+	 */
 	setUpEventListeners(controllers, interactions) {
 		controllers.on('ztranslationstart', (event) => {
 			this.translateZ(event.direction * this.velocity);
