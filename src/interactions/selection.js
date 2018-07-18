@@ -84,6 +84,12 @@ class Selection extends EventEmitter {
 	 *
 	 * @param {THREE.Object3D} object - Object to add
 	 *
+	 * @example
+	 * const selectableMesh = new THREE.Mesh();
+	 * simbol.addToScene(selectableMesh);
+	 * // Makes an object in the scene selectable
+	 * selection.add(selectableMesh);
+	 *
 	 * @returns {undefined}
 	 */
 	add(object) {
@@ -98,6 +104,10 @@ class Selection extends EventEmitter {
 	 *
 	 * @param {THREE.Object3D} object - Objects to be removed
 	 *
+	 * @example
+	 * // selectableMesh will no longer be selectable
+	 * selection.remove(selectableMesh);
+	 *
 	 * @returns {undefined}
 	 */
 	remove(object) {
@@ -108,6 +118,9 @@ class Selection extends EventEmitter {
 	 * Sets the position that will act as the RayCaster's origin
 	 *
 	 * @param {THREE.Vector3} position - Origin position
+	 *
+	 * @example
+	 * selection.setOrigin(new THREE.Vector3(1, 1, 1));
 	 *
 	 * @returns {undefined}
 	 */
@@ -121,6 +134,9 @@ class Selection extends EventEmitter {
 	 *
 	 * @param {THREE.Quaternion} orientation - The direction
 	 *
+	 * @example
+	 * selection.setDirection(new THREE.Quaternion());
+	 *
 	 * @returns {undefined}
 	 */
 	setDirection(orientation) {
@@ -131,6 +147,9 @@ class Selection extends EventEmitter {
 
 	/**
 	 * Returns the currently hovered mesh
+	 *
+	 * @example
+	 * const currentHoveredMesh = selection.getHoveredMesh();
 	 *
 	 * @returns {THREE.Mesh} mesh
 	 */
@@ -146,10 +165,23 @@ class Selection extends EventEmitter {
 	/**
 	 * Selects the currently hovered mesh and emits a 'selected' event
 	 *
+	 * @example
+	 * selection.select();
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits Selection#selected
 	 */
 	select() {
 		const mesh = this.getHoveredMesh();
+		/**
+		 * Selection selected event that's emitted with
+		 * the selected mesh
+		 *
+		 * @event Selection#selected
+		 * @type {object}
+		 * @property mesh - Selected mesh
+		 */
 		this.emit('selected', {
 			mesh
 		});
@@ -158,10 +190,23 @@ class Selection extends EventEmitter {
 	/**
 	 * Unselects the currently hovered mesh and emits a 'unselected' evemt
 	 *
+	 * @example
+	 * selection.unselect();
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits Selection#unselected
 	*/
 	unselect() {
 		const mesh = this.getHoveredMesh();
+		/**
+		 * Selection unselected event that's emitted with
+		 * the unselected mesh
+		 *
+		 * @event Selection#unselected
+		 * @type {object}
+		 * @property mesh - Unselected mesh
+		 */
 		this.emit('unselected', {
 			mesh
 		});
@@ -173,7 +218,14 @@ class Selection extends EventEmitter {
 	 * @param {THREE.Vector3} position - The position of the main interaction element
 	 * @param {THREE.Quaternion} orientation = The orientation of the main interaction element
 	 *
+	 * @example
+	 * // Position and Orientation normally comes from the controller
+	 * selection.update(controller.position, controller.quaternion);
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits Selection#hover
+	 * @emits Selection#unhover
 	 */
 	update(position, orientation) {
 		this.setOrigin(position);
@@ -187,6 +239,14 @@ class Selection extends EventEmitter {
 			if (intersection && !isHovering) {
 				this.hovering[id] = true;
 				this.reticle.children[0].material.color.setHex(0x99ff99);
+				/**
+				 * Selection hover event that's emitted with
+				 * the hovered mesh
+				 *
+				 * @event Selection#hover
+				 * @type {object}
+				 * @property mesh - Hovered mesh
+				 */
 				this.emit('hover', {
 					mesh: object
 				});
@@ -196,6 +256,14 @@ class Selection extends EventEmitter {
 			if (!intersection && isHovering) {
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
+				/**
+				 * Selection unhover event that's emitted with
+				 * the unhovered mesh
+				 *
+				 * @event Selection#unhover
+				 * @type {object}
+				 * @property mesh - Unhovered mesh
+				 */
 				this.emit('unhover', {
 					mesh: object
 				});
@@ -213,6 +281,9 @@ class Selection extends EventEmitter {
 	/**
 	 * If reticle is hovering over a selectable item, select it
 	 *
+	 * @example
+	 * selection.handleSelection();
+	 *
 	 * @returns {undefined}
 	 */
 	handleSelection() {
@@ -225,7 +296,6 @@ class Selection extends EventEmitter {
 	 * Creates a spherical reticle
 	 *
 	 * @returns {THREE.Group} reticle
-	 *
 	 * @private
 	 */
 	_createReticle() {
@@ -258,7 +328,6 @@ class Selection extends EventEmitter {
 	 * @param {object} intersection - An intersection
 	 *
 	 * @returns {undefined}
-	 *
 	 * @private
      */
 	_moveReticle(intersection) {
@@ -275,7 +344,6 @@ class Selection extends EventEmitter {
 	 * Updates the reticle's position
 	 *
 	 * @returns {undefined}
-	 *
 	 * @private
 	 */
 	_updateReticle() {

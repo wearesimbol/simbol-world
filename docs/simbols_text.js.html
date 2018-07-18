@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: simbols/text.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: simbols/text.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import * as THREE from 'three';
+import loadBmfont from 'load-bmfont';
+import createTextGeometry from 'three-bmfont-text';
+import createMSDFShader from '../libs/createMSDFShader';
+import {NodeSimbol} from './node';
+
+class TextSimbol extends NodeSimbol {
+
+	/** @property {bmfont} font - Saved font once it's loaded the first time */
+	static get font() {
+		return this._font;
+	}
+
+	static set font(font) {
+		this._font = font;
+	}
+
+	/** @property {THREE.Texture} texture - Saved texture once it's loaded the first time */
+	static get texture() {
+		return this._texture;
+	}
+
+	static set texture(texture) {
+		this._texture = texture;
+	}
+
+	/** @property {THREE.Mesh} mesh - Text mesh */
+	get mesh() {
+		return this._mesh;
+	}
+
+	set mesh(mesh) {
+		if (this.parent) {
+			this.parent.mesh.remove(this._mesh);
+			this.parent.mesh.add(mesh);
+		}
+
+		this._mesh = mesh;
+	}
+
+	/**
+	 * Creates a TextSimbol instance for a string of text
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {string} config.text - String of text
+	 * @param {boolean} config.bold - Whether to use the bold or regular font
+	 * @param {array} config.position - Array that represents the desired position for the mesh
+	 *
+	 * @emits TextSimbol#error
+	 */
+	constructor(config = {}) {
+		super();
+
+		this.constructMesh(config.text, config.bold, config.position)
+			.then((mesh) => {
+				this.mesh = mesh;
+			})
+			.catch((error) => {
+				/**
+				 * TextSimbol error event that may be produced when
+				 * constructing the Text mesh
+				 *
+				 * @event TextSimbol#error
+				 * @type {Error}
+				 */
+				this.emit('error', error);
+			});
+	}
+
+	/**
+	 * Consturcts a 3D MSDF based text geometry from a string
+	 *
+	 * @param {string} text - String to be converted to a 3D geometry. (Default: '')
+	 * @param {boolean} bold - Whether it should use the bold font. (Default: false)
+	 * @param {array} position - Where the mesh should be positioned. (Default: [0, 0, 0])
+	 *
+	 * @example
+	 * const textMesh = textSimbol.constructMesh('example-text', true, [0, 1, 0]);
+	 *
+	 * @return {Promise&lt;THREE.Mesh>} promise - Resolves with the Text mesh
+	 */
+	constructMesh(text = '', bold = false, position = [0, 0, 0]) {
+		return new Promise((resolve, reject) => {
+			const fontPath = `https://simbol.io/assets/fonts/Roboto-${bold ? 'Bold' : 'Regular'}`;
+			let font;
+			let texture;
+			this._loadFont(fontPath)
+				.then((loadedFont) => {
+					font = loadedFont;
+					return this._loadTexture(fontPath);
+				})
+				.then((loadedTexture) => {
+					texture = loadedTexture;
+
+					const geometry = createTextGeometry({
+						width: 500,
+						align: 'left',
+						font: font,
+						text: text
+					});
+
+					const shaderConfig = Object.assign(
+						createMSDFShader({
+							msdf: texture,
+							bgColor: new THREE.Vector4(1, 1, 1, 0),
+							// #4B606D in rgba is 75, 96, 109, then divided by 255
+							fgColor: new THREE.Vector4(0.295, 0.376, 0.427, 1)
+						}),
+						{
+							transparent: true,
+							side: THREE.DoubleSide
+						}
+					);
+
+					const material = new THREE.RawShaderMaterial(shaderConfig);
+
+					const mesh = new THREE.Mesh(geometry, material);
+					const scale = bold ? 0.015 : 0.006;
+					mesh.scale.set(scale, -scale, scale);
+					mesh.position.set(...position);
+
+					resolve(mesh);
+				})
+				.catch((error) => {
+					reject(error);
+				});
+		});
+	}
+
+	/**
+	 * Helper function to load and cache the font
+	 *
+	 * @param {string} path - Path to the font
+	 *
+	 * @returns {Promise&lt;BMFont>} promise
+	 *
+	 * @private
+	 */
+	_loadFont(path) {
+		return new Promise((resolve, reject) => {
+			if (TextSimbol.font) {
+				resolve(TextSimbol.font);
+			} else {
+				loadBmfont(`${path}.json`, (error, font) => {
+					if (error) {
+						reject(error);
+					}
+
+					TextSimbol.font = font;
+					resolve(font);
+				});
+			}
+		});
+	}
+
+	/**
+	 * Helper function to load and cache the font texture
+	 *
+	 * @param {string} path - Path to the texture
+	 *
+	 * @returns {Promise&lt;THREE.Texture>} promise
+	 *
+	 * @private
+	 */
+	_loadTexture(path) {
+		return new Promise((resolve, reject) => {
+			if (TextSimbol.texture) {
+				resolve(TextSimbol.texture);
+			} else {
+				const textureLoader = new THREE.TextureLoader();
+				textureLoader.load(`${path}.png`, (texture) => {
+					TextSimbol.texture = texture;
+					resolve(texture);
+				}, undefined, (error) => {
+					reject(error);
+				});
+			}
+		});
+	}
+}
+
+export {TextSimbol};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiVP.html">MultiVP</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiVP.html#event:add">add</a></li><li><a href="MultiVP.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="MultiVP.html#event:error">error</a></li><li><a href="MultiVP.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:add">add</a></li><li><a href="VirtualPersona.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="VirtualPersona.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:remove">remove</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jul 17 2018 21:01:10 GMT-0500 (DST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+    "plugins": [
+		"plugins/markdown"
+	],
+    "recurseDepth": 10,
+    "source": {
+        "include": ["README.md", "./src/"],
+        "exclude": ["./src/libs/"],
+        "includePattern": ".+\\.js$"
+    },
+    "sourceType": "module",
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+	},
+	"opts": {
+		"destination": "./docs",
+		"recurse": true
+	}
+}

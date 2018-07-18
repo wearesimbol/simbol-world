@@ -18,6 +18,9 @@ class KeyboardController extends EventEmitter {
 	 *
 	 * @return {undefined}
 	 *
+	 * @emits KeyboardController#ztranslationstart
+	 * @emits KeyboardController#xtranslationstart
+	 *
 	 * @private
 	 */
 	_handleKeyDownEvent(event) {
@@ -25,6 +28,14 @@ class KeyboardController extends EventEmitter {
 		// Up or w
 		case 87:
 		case 38:
+			/**
+			 * KeyboardController ztranslationstart event,
+			 * fired when translation on the Z axis starts
+			 *
+			 * @event KeyboardController#ztranslationstart
+			 * @type {object}
+			 * @property direction - Positive or negative depending on the direction
+			 */
 			this.emit('ztranslationstart', {
 				direction: -1
 			});
@@ -39,6 +50,14 @@ class KeyboardController extends EventEmitter {
 		// Left or a
 		case 65:
 		case 37:
+			/**
+			 * KeyboardController ztranslationstart event,
+			 * fired when translation on the x axis starts
+			 *
+			 * @event KeyboardController#xtranslationstart
+			 * @type {object}
+			 * @property direction - Positive or negative depending on the direction
+			 */
 			this.emit('xtranslationstart', {
 				direction: -1
 			});
@@ -60,6 +79,9 @@ class KeyboardController extends EventEmitter {
 	 *
 	 * @return {undefined}
 	 *
+	 * @emits KeyboardController#ztranslationend
+	 * @emits KeyboardController#xtranslationend
+	 *
 	 * @private
 	 */
 	_handleKeyUpEvent(event) {
@@ -69,6 +91,12 @@ class KeyboardController extends EventEmitter {
 		case 38:
 		case 83:
 		case 40:
+			/**
+			 * KeyboardController ztranslationend event,
+			 * fired when translation on the z axis ends
+			 *
+			 * @event KeyboardController#ztranslationend
+			 */
 			this.emit('ztranslationend');
 			break;
 		// Left or a, right or d
@@ -76,6 +104,12 @@ class KeyboardController extends EventEmitter {
 		case 37:
 		case 68:
 		case 39:
+			/**
+			 * KeyboardController xtranslationend event,
+			 * fired when translation on the x axis ends
+			 *
+			 * @event KeyboardController#xtranslationend
+			 */
 			this.emit('xtranslationend');
 			break;
 		}

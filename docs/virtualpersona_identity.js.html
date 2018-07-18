@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: virtualpersona/identity.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: virtualpersona/identity.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import EventEmitter from 'eventemitter3';
+import uport from '../libs/uport-connect';
+
+const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.gltf';
+
+class Identity extends EventEmitter {
+
+	/** @property {boolean} signedIn - Whether the human is signed in */
+	get signedIn() {
+		if (typeof this._signedIn === 'undefined') {
+			this._signedIn = false;
+		}
+		return this._signedIn;
+	}
+
+	set signedIn(signedIn) {
+		this._signedIn = signedIn;
+	}
+
+	/** @property {string} avatarPath = Path to the current human's avatar, defaults to the anonymous avatar path */
+	get avatarPath() {
+		if (!this._avatarPath) {
+			this._avatarPath = ANONYMOUS_AVATAR_PATH;
+		}
+		return this._avatarPath;
+	}
+
+	set avatarPath(avatarPath) {
+		this._avatarPath = avatarPath;
+	}
+
+	/**
+	 * Initializes an identity by instantiating uPort and fethcing the current identity
+	 *
+	 * @returns {undefined}
+	 */
+	constructor() {
+		super();
+
+		this.uPort = new uport.Connect('Simbol', {
+			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
+			network: 'rinkeby',
+			signer: uport.SimpleSigner('12856cfa7d87eca683cbccf3617c82c615b8cac4347db20b1874884c2bc6453d') // eslint-disable-line new-cap
+		});
+
+		const identity = this.getIdentity();
+		this.signedIn = !!identity;
+	}
+
+	/**
+	 * Signs the human in by showing a uPort QR code, and then saving the data
+	 *
+	 * @param {string} information - Pieces of information to be requested to the human
+	 *
+	 * @example
+	 * identity.signIn('age', 'name')
+	 * 	.then((error) => {
+	 * 		if (!error) {
+	 * 			// Person has signed in
+	 * 		} else {
+	 * 			// Person rejected signing in
+	 * 		}
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		// A different error from the person rejecting signing in
+	 * 		console.log(error);
+	 * 	})
+	 *
+	 * @returns {Promise&lt;string|undefined>} promise - If the user rejects signing in, it will resolve with that error object
+	 */
+	signIn(...information) {
+		return this.uPort.requestCredentials({
+			requested: information,
+			verified: ['SimbolConfig'],
+			notifications: true // We want this if we want to receive credentials
+		}).then((credentials) => {
+			this.setUPortData(credentials, true);
+			this.signedIn = true;
+			return Promise.resolve();
+		}, (error) => {
+			if (error.message === 'Request Cancelled') {
+				return Promise.resolve(error);
+			}
+			return Promise.reject(error);
+		});
+	}
+
+	/**
+	 * Signs the human out, removes saved data and resets avatar path
+	 *
+	 * @example
+	 * identity.signOut();
+	 *
+	 * @returns {undefined}
+	 */
+	signOut() {
+		localStorage.removeItem('currentIdentity');
+		this.avatarPath = ANONYMOUS_AVATAR_PATH;
+		delete this.uPortData;
+		this.signedIn = false;
+	}
+
+	/**
+	 * Fetches the identity trying the following options in this order:
+	 * 1. Saved in this instance
+	 * 2. Saved in LocalStorage
+	 *
+	 * @example
+	 * const identityData = identity.getIdentity();
+	 *
+	 * @returns {object} identity
+	 *
+	 * @emits Identity#error error - Error that may occur when parsing the JSON
+	 */
+	getIdentity() {
+		if (this.uPortData) {
+			return this.uPortData;
+		}
+
+		const savedIdentity = localStorage.getItem('currentIdentity');
+
+		if (!savedIdentity) {
+			return;
+		}
+
+		try {
+			const identity = JSON.parse(savedIdentity);
+			this.setUPortData(identity);
+			return identity;
+		} catch (error) {
+			/**
+			 * Identity error event that may happen parsing the JSON
+			 *
+			 * @event Identity#error
+			 * @type {Error}
+			 *
+			 */
+			this.emit('error', error);
+		}
+	}
+
+	/**
+	 * Saves the received credentials to this instance and optionally saves them to LocalStorage
+	 *
+	 * @param {object} credentials - The human's credentials from uPort
+	 * @param {boolean} save - Whether to save the credentials to LocalStorage
+	 *
+	 * @example
+	 * // Get identity information from somewhere
+	 * const credentials = {};
+	 * identity.setUPortData(credentials, true);
+	 *
+	 * @returns {undefined}
+	 */
+	setUPortData(credentials, save) {
+		this.uPortData = credentials;
+		if (credentials.SimbolConfig) {
+			const config = JSON.parse(credentials.SimbolConfig);
+			this.avatarPath = config.avatar3D ||
+								ANONYMOUS_AVATAR_PATH;
+		}
+
+		if (save) {
+			localStorage.setItem('currentIdentity', JSON.stringify(this.uPortData));
+		}
+	}
+}
+
+export {Identity};
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiVP.html">MultiVP</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiVP.html#event:add">add</a></li><li><a href="MultiVP.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="MultiVP.html#event:error">error</a></li><li><a href="MultiVP.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:add">add</a></li><li><a href="VirtualPersona.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="VirtualPersona.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:remove">remove</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jul 17 2018 21:01:09 GMT-0500 (DST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

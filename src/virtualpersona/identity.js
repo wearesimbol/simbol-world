@@ -52,6 +52,20 @@ class Identity extends EventEmitter {
 	 *
 	 * @param {string} information - Pieces of information to be requested to the human
 	 *
+	 * @example
+	 * identity.signIn('age', 'name')
+	 * 	.then((error) => {
+	 * 		if (!error) {
+	 * 			// Person has signed in
+	 * 		} else {
+	 * 			// Person rejected signing in
+	 * 		}
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		// A different error from the person rejecting signing in
+	 * 		console.log(error);
+	 * 	})
+	 *
 	 * @returns {Promise<string|undefined>} promise - If the user rejects signing in, it will resolve with that error object
 	 */
 	signIn(...information) {
@@ -74,6 +88,9 @@ class Identity extends EventEmitter {
 	/**
 	 * Signs the human out, removes saved data and resets avatar path
 	 *
+	 * @example
+	 * identity.signOut();
+	 *
 	 * @returns {undefined}
 	 */
 	signOut() {
@@ -88,7 +105,11 @@ class Identity extends EventEmitter {
 	 * 1. Saved in this instance
 	 * 2. Saved in LocalStorage
 	 *
+	 * @example
+	 * const identityData = identity.getIdentity();
+	 *
 	 * @returns {object} identity
+	 *
 	 * @emits Identity#error error - Error that may occur when parsing the JSON
 	 */
 	getIdentity() {
@@ -108,7 +129,7 @@ class Identity extends EventEmitter {
 			return identity;
 		} catch (error) {
 			/**
-			 * Identity error that may happen parsing the JSON
+			 * Identity error event that may happen parsing the JSON
 			 *
 			 * @event Identity#error
 			 * @type {Error}
@@ -123,6 +144,11 @@ class Identity extends EventEmitter {
 	 *
 	 * @param {object} credentials - The human's credentials from uPort
 	 * @param {boolean} save - Whether to save the credentials to LocalStorage
+	 *
+	 * @example
+	 * // Get identity information from somewhere
+	 * const credentials = {};
+	 * identity.setUPortData(credentials, true);
 	 *
 	 * @returns {undefined}
 	 */

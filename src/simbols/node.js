@@ -56,6 +56,11 @@ class NodeSimbol extends EventEmitter {
 	 *
 	 * @param {NodeSimbol} node - Child node
 	 *
+	 * @example
+	 * const childNode = new NodeSimbol();
+	 * const parentNode = new NodeSimbol();
+	 * parentNode.add(childNode);
+	 *
 	 * @returns {undefined}
 	 */
 	add(node) {
@@ -73,6 +78,9 @@ class NodeSimbol extends EventEmitter {
 	 * Removes a child node, and if it has a mesh, removes it from the Group mesh
 	 *
 	 * @param {NodeSimbol} node - Child node
+	 *
+	 * @example
+	 * parentNode.remove(childNode);
 	 *
 	 * @returns {undefined}
 	 */

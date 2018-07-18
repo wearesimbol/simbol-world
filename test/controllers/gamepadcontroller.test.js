@@ -24,7 +24,6 @@ describe('GamepadController', () => {
 	});
 
 	it('should have a set of methods', () => {
-		assert.isFunction(GamepadController.prototype.handleTriggerPressed);
 		assert.isFunction(GamepadController.prototype.update);
 	});
 
@@ -41,19 +40,6 @@ describe('GamepadController', () => {
 		it('should set some properties', () => {
 			assert.equal(gamepadController.id, 'gamepad (left)');
 		});
-	});
-
-	describe('#handleTriggerPressed', () => {
-		
-		beforeEach(() => {
-			sinon.stub(gamepadController, 'emit');
-			gamepadController.handleTriggerPressed(true);
-		});
-
-		it('should emit trigger event', () => {
-			assert.isTrue(gamepadController.emit.calledOnce);
-			assert.isTrue(gamepadController.emit.calledWith('triggerpressed'));
-		})
 	});
 	
 	describe('#update', () => {
@@ -93,16 +79,16 @@ describe('GamepadController', () => {
 			};
 
 			beforeEach(() => {
-				sinon.stub(gamepadController, 'handleTriggerPressed');
 				Controllers.getGamepad.returns(gamepad);
+				gamepadController.pressedButtons['Trigger'] = false;
 
 				gamepadController.update();
 			});
 
 			it('should handle pressed button', () => {
-				assert.isTrue(gamepadController.handleTriggerPressed.calledOnce);
-				assert.isTrue(gamepadController.handleTriggerPressed.calledWith(true));
-				assert.isTrue(gamepadController.pressedButtons[0]);
+				assert.isTrue(poseController.emit.calledTwice);
+				assert.isTrue(poseController.emit.calledWith('triggerpressed'));
+				assert.isTrue(poseController.pressedButtons['Trigger']);
 			});
 		});
 	});

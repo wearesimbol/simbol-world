@@ -22,6 +22,8 @@ class PointerController extends EventEmitter {
 	 * @param {HTMLCanvasElement} canvas - Canvas that listens to different events
 	 *
 	 * @returns {undefined}
+	 *
+	 * @emits PointerController#ztranslationend
 	*/
 	constructor(canvas) {
 		super();
@@ -33,6 +35,12 @@ class PointerController extends EventEmitter {
 
 		this._canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
 		this._canvas.addEventListener('touchend', () => {
+			/**
+			 * PointerController ztranslationend event,
+			 * fired when translation on the z axis ends
+			 *
+			 * @event PointerController#ztranslationend
+			 */
 			this.emit('ztranslationend');
 		});
 		this._moveHandler = this._moveHandler.bind(this);
@@ -45,24 +53,50 @@ class PointerController extends EventEmitter {
 	 * @param {Event} event - Event object
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
+	 * @emits PointerController#currentorientation
+	 * @emits PointerController#ztranslationstart
+	 * @emits PointerController#triggerpressed
 	 */
 	_handleTouchStart(event) {
 		if (event.touches.length > 1) {
 			return;
 		}
 
+		/**
+		 * PointerController currentorientation event,
+		 * fired with the initial orientation when touch starts
+		 *
+		 * @event PointerController#currentorientation
+		 * @type {object}
+		 * @property rotation - 2 element array with the rotation for the X and Y axis
+		 */
 		this.emit('currentorientation', {
 			rotation: [event.touches[0].pageX, event.touches[0].pageY]
 		});
 
 		const timeDelta = Math.abs(event.timeStamp - this._lastTouch);
 		if (timeDelta < 250 || Utils.isPresenting) {
+			/**
+			* PointerController ztranslationstart event,
+			* fired when translation on the z axis starts
+			*
+			* @event PointerController#ztranslationstart
+			* @type {object}
+			* @property direction - Positive or negative depending on the direction
+			*/
 			this.emit('ztranslationstart', {
 				direction: -1
 			});
 		} else {
+			/**
+			* PointerController triggerpressed event,
+			* fired when the canvas is touched
+			*
+			* @event PointerController#triggerpressed
+			* @type {object}
+			* @property touch - Whether the event comes from a touch action
+			*/
 			this.emit('triggerpressed', {
 				touch: true
 			});
@@ -78,8 +112,8 @@ class PointerController extends EventEmitter {
 	 * @param {Event} event - Event object
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
+	 * @emits PointerController#orientation
 	*/
 	_moveHandler(event) {
 		// Gets the new rotation vector
@@ -94,6 +128,14 @@ class PointerController extends EventEmitter {
 				this.rotation.y - event.movementY);
 		}
 
+		/**
+		* PointerController orientation event,
+		* fired with each touch or mouse movement
+		*
+		* @event PointerController#orientation
+		* @type {object}
+		* @property rotation - 2 element array with the rotation for the X and Y axis
+		*/
 		this.emit('orientation', {
 			rotation: this.rotation
 		});
@@ -105,13 +147,19 @@ class PointerController extends EventEmitter {
 	 * @param {Event} event - Event supplied
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
+	 * @emits PointerController#triggerpressed
 	 */
 	_handleClick(event) {
 		if (!document.pointerLockElement) {
 			this._pointerLock(event);
 		} else {
+			/**
+			* PointerController triggerpressed event,
+			* fired when the canvas is clicked
+			*
+			* @event PointerController#triggerpressed
+			*/
 			this.emit('triggerpressed');
 		}
 	}
@@ -122,7 +170,6 @@ class PointerController extends EventEmitter {
 	 * @param {CanvasHTMLElement} canvas - Canvas that locks the pointer
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
 	*/
 	_handlePointerLockChange() {
@@ -137,7 +184,6 @@ class PointerController extends EventEmitter {
 	 * Locks the pointer if not displaying to an HMD when canvas is clicked
 	 *
 	 * @return {undefined}
-	 *
 	 * @private
 	*/
 	_pointerLock() {

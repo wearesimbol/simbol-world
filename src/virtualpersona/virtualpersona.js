@@ -54,6 +54,11 @@ class VirtualPersona extends EventEmitter {
 	 * @param {boolean} signIn - Whether Simbol should attempt to sign in on init
 	 *
 	 * @returns {undefined}
+	 *
+	 * @emits VirtualPersona#error
+	 * @emits VirtualPersona#add
+	 * @emits VirtualPersona#remove
+	 * @emits VirtualPersona#addanimatefunctions
 	*/
 	constructor(config = { signIn: true }) {
 		super();
@@ -65,6 +70,12 @@ class VirtualPersona extends EventEmitter {
 		const fakeCamera = new THREE.Object3D();
 		fakeCamera.rotation.order = 'YXZ';
 		this.vrControls = new VRControls(fakeCamera, (event) => {
+			/**
+			 * VirtualPersona error event, sometimes forwarding from other subcomponents.
+			 *
+			 * @event VirtualPersona#error
+			 * @type {Error}
+			 */
 			this.emit('error', event);
 		});
 		this.vrControls.userHeight = 0;
@@ -81,12 +92,39 @@ class VirtualPersona extends EventEmitter {
 
 		this.multiVP = new MultiVP(config.multiVP, this);
 		this.multiVP.on('add', (event) => {
+			/**
+			 * VirtualPersona add event that provides a mesh
+			 * to be added to the scene. Sometimes forwarded
+			 * by other subcomponents
+			 *
+			 * @event VirtualPersona#add
+			 * @type {object}
+			 * @property mesh - Mesh to add to the scene
+			 */
 			this.emit('add', event);
 		});
 		this.multiVP.on('remove', (event) => {
+			/**
+			 * VirtualPersona remove event that provides a mesh
+			 * to be removed to the scene. Sometimes forwarded
+			 * by other subcomponents
+			 *
+			 * @event VirtualPersona#remove
+			 * @type {object}
+			 * @property mesh - Mesh to be removed from the scene
+			 */
 			this.emit('remove', event);
 		});
 		this.multiVP.on('addanimatefunctions', (event) => {
+			/**
+			 * VirtualPersona addanimatefunctions event that provides a function
+			 * to be added to the animation loop. Sometimes forwarded
+			 * by other subcomponents
+			 *
+			 * @event VirtualPersona#addanimatefunctions
+			 * @type {object}
+			 * @property functions - Array of functions
+			 */
 			this.emit('addanimatefunctions', event);
 		});
 		this.multiVP.on('error', (event) => {
@@ -96,6 +134,20 @@ class VirtualPersona extends EventEmitter {
 
 	/**
 	 * Initialises the VP instance by adding it to the scene
+	 *
+	 * @example
+	 * virtualPersona.init()
+	 * 	.then((error) => {
+	 * 		if (!error) {
+	 * 			// Mesh has been loaded, and either there is no automatic sign in,
+	 * 			// or the person was signed in successfully
+	 * 		} else {
+	 * 			// The person rejected the sign in attempt
+	 * 		}
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
 	 *
 	 * @returns {Promise} promise - Promise that resolves when the mesh loads
 	*/
@@ -116,6 +168,15 @@ class VirtualPersona extends EventEmitter {
 	 *
 	 * @param {string} path - Path to the mesh that will be loaded
 	 * @param {boolean} render - Whether to also render the loaded mesh as this identity's mesh
+	 *
+	 * @example
+	 * virtualPersona.loadMesh('path/to/mesh', true)
+	 * 	.then((mesh) => {
+	 * 		// loaded and rendered mesh
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
 	 *
 	 * @returns {Promise<THREE.Mesh>} mesh
 	*/
@@ -140,6 +201,8 @@ class VirtualPersona extends EventEmitter {
 	 * @param {THREE.Mesh} mesh - Loaded VP mesh
 	 *
 	 * @returns {THREE.Mesh} mesh
+	 *
+	 * @private
 	 */
 	_setUpMesh(mesh) {
 		mesh.name = 'SimbolVirtualPersona';
@@ -164,7 +227,14 @@ class VirtualPersona extends EventEmitter {
 	 *
 	 * @param {THREE.Mesh} mesh - Loaded VP mesh
 	 *
+	 * @example
+	 * // mesh is a loaded mesh
+	 * virtualPersona.render(mesh);
+	 *
 	 * @returns {undefined}
+	 *
+	 * @emits VirtualPersona#remove
+	 * @emits VirtualPersona#add
 	 */
 	render(mesh) {
 		if (this.mesh) {
@@ -194,6 +264,15 @@ class VirtualPersona extends EventEmitter {
 	/**
 	 * Signs in and loads mesh afterwards
 	 *
+	 * @example
+	 * virtualPersona.signIn()
+	 * 	.then((mesh) => {
+	 * 		// Signed in loaded mesh
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
+	 *
 	 * @returns {Promise} promise
 	 */
 	signIn() {
@@ -203,7 +282,16 @@ class VirtualPersona extends EventEmitter {
 	}
 
 	/**
-	 * Signs out and loads mesh afterwards
+	 * Signs out and loads anonymous mesh afterwards
+	 *
+	 * @example
+	 * virtualPersona.signOut()
+	 * 	.then((mesh) => {
+	 * 		// Anonymous loaded mesh
+	 * 	})
+	 * 	.catch((error) => {
+	 * 		console.log(error);
+	 * 	});
 	 *
 	 * @returns {Promise} promise
 	 */
@@ -214,7 +302,12 @@ class VirtualPersona extends EventEmitter {
 	}
 
 	/**
-	 * Adjusts the floor height depending on the position
+	 * Adjusts the floor height depending on the position of the Virtual Persona mesh,
+	 * checking where it collisions with the scene
+	 *
+	 * @example
+	 * // Three.JS scene
+	 * virtualPersona.setFloorHeight(scene);
 	 *
 	 * @param {Simbol.Scene} scene - Provide scene to adjust the floor height with respect to it
 	 *

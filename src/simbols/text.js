@@ -46,7 +46,7 @@ class TextSimbol extends NodeSimbol {
 	 * @param {boolean} config.bold - Whether to use the bold or regular font
 	 * @param {array} config.position - Array that represents the desired position for the mesh
 	 *
-	 * @returns {TextSimbol} this
+	 * @emits TextSimbol#error
 	 */
 	constructor(config = {}) {
 		super();
@@ -56,6 +56,13 @@ class TextSimbol extends NodeSimbol {
 				this.mesh = mesh;
 			})
 			.catch((error) => {
+				/**
+				 * TextSimbol error event that may be produced when
+				 * constructing the Text mesh
+				 *
+				 * @event TextSimbol#error
+				 * @type {Error}
+				 */
 				this.emit('error', error);
 			});
 	}
@@ -66,6 +73,9 @@ class TextSimbol extends NodeSimbol {
 	 * @param {string} text - String to be converted to a 3D geometry. (Default: '')
 	 * @param {boolean} bold - Whether it should use the bold font. (Default: false)
 	 * @param {array} position - Where the mesh should be positioned. (Default: [0, 0, 0])
+	 *
+	 * @example
+	 * const textMesh = textSimbol.constructMesh('example-text', true, [0, 1, 0]);
 	 *
 	 * @return {Promise<THREE.Mesh>} promise - Resolves with the Text mesh
 	 */
@@ -123,6 +133,8 @@ class TextSimbol extends NodeSimbol {
 	 * @param {string} path - Path to the font
 	 *
 	 * @returns {Promise<BMFont>} promise
+	 *
+	 * @private
 	 */
 	_loadFont(path) {
 		return new Promise((resolve, reject) => {
@@ -147,6 +159,8 @@ class TextSimbol extends NodeSimbol {
 	 * @param {string} path - Path to the texture
 	 *
 	 * @returns {Promise<THREE.Texture>} promise
+	 *
+	 * @private
 	 */
 	_loadTexture(path) {
 		return new Promise((resolve, reject) => {
