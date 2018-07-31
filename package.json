@@ -1,6 +1,6 @@
 {
   "name": "simbol",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "Simple Immersive Communication for everyone. Easily create a social XR experience with a self-sovereign identity system",
   "main": "build/simbol.cjs.js",
   "module": "src/main.js",
