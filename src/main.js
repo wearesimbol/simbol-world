@@ -1,7 +1,10 @@
 import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
-Object.assign(window.THREE = {}, THREE);
-import * as webvrPolyfill from 'webvr-polyfill'; // eslint-disable-line no-unused-vars
+if (THREE) {
+	const t = Object.assign({}, THREE);
+	window.THREE = t;
+}
+import WebVRPolyfill from 'webvr-polyfill';
 
 import {Utils, Loader, Link} from './utils/utils';
 import {Physics} from './physics/physics';
@@ -11,9 +14,8 @@ import {Locomotion} from './locomotion/locomotion';
 import {VirtualPersona} from './virtualpersona/virtualpersona';
 import {Scene} from './scene/scene';
 
-if (!navigator.getVRDisplays) {
-	InitializeWebVRPolyfill(); // eslint-disable-line
-}
+// Always polyfill as the polyfill itself checks if it's necessary
+new WebVRPolyfill();
 
 /**
  * Main class for Simbol
@@ -223,7 +225,7 @@ class Simbol extends EventEmitter {
 * @returns {undefined}
 */
 Simbol.prototype.animate = (function() {
-	const unalteredCamera = new THREE.Camera();
+	const unalteredCamera = new THREE.Object3D();
 	const previousCameraPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
 	previousControllerQuaternion.initialised = false;

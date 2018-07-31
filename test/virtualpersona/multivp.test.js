@@ -305,7 +305,7 @@ describe('MultiVP', () => {
 			assert.instanceOf(peer, Peer);
 			assert.isTrue(peer.initiator);
 			assert.equal(peer.channelName, 'test');
-			assert.deepEqual(peer.stream, stream);
+			assert.deepEqual(peer.streams[0], stream);
 		});
 
 		it('should set some properties', () => {

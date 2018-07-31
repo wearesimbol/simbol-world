@@ -43,11 +43,10 @@ gulp.task('js', () => {
 				file: 'build/simbol.script.js'
 			}),
 			bundle.write({
-				name: 'simbol',
-				format: 'umd',
+				format: 'cjs',
 				sourcemap: true,
 				exports: 'named',
-				file: 'build/simbol.umd.js'
+				file: 'build/simbol.cjs.js'
 			}),
 			bundle.write({
 				format: 'es',
@@ -60,7 +59,7 @@ gulp.task('js', () => {
 });
 
 gulp.task('minify', () => {
-	return gulp.src(['./build/simbol.js', './build/simbol.script.js', './build/simbol.umd.js'])
+	return gulp.src(['./build/simbol.js', './build/simbol.script.js', './build/simbol.cjs.js'])
 		.pipe(uglify())
 		.on('error', console.error)
 		.pipe(rename({

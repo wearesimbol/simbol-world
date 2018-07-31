@@ -201,7 +201,7 @@ class MultiVP extends EventEmitter {
 	createPeer(initiator, id, stream) {
 		this.config.peer.initiator = initiator;
 		this.config.peer.channelName = this.config.channelName;
-		this.config.peer.stream = stream;
+		this.config.peer.streams = [stream];
 
 		const peer = new Peer(this.config.peer);
 

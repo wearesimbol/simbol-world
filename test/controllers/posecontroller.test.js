@@ -14,8 +14,9 @@ describe('PoseController', () => {
 
 	beforeEach(() => {
 		mesh = new THREE.Mesh();
+		mesh.parent = new THREE.Object3D();
 		handMesh = new THREE.Mesh();
-		handMesh.name = 'Armature_VirtualPersonaHandLeft';
+		handMesh.name = 'VirtualPersonaHandLeft';
 		mesh.add(handMesh);
 		mesh.animations = [];
 		sinon.stub(THREE.Quaternion.prototype, 'fromArray');

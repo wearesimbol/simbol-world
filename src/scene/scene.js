@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 // TODO: Remove this hack to make THREE a global before three-bmfont-text is executed
-Object.assign(window.THREE = {}, THREE);
+if (THREE) {
+	const t = Object.assign({}, THREE);
+	window.THREE = t;
+}
 import {VREffect} from '../libs/VREffect';
 import {Loader} from '../utils/loader';
 
@@ -37,13 +40,15 @@ class Scene {
 	 * or provide it with a previously created renderer and camera to work with
 	 *
 	 * @param {object} config - Configuration object
-	 * @param {boolean} config.render - Whether it needs to render to the canvas
-	 * @param {string|THREE.Scene} config.sceneToLoad - Either a THREE.Scene to be added, or a path to the .gltf or .json file containing the scene
+	 * @param {boolean} config.render - Whether it needs to take of Three.JS rendering by setting up a renderer and a camera
+	 * @param {boolean} config.animate - Whether Simbol should start and control the render loop
+	 * @param {string|THREE.Scene} config.sceneToLoad - Either a THREE.Scene to be added, or a path to the .gltf file containing the scene
 	 * @param {HTMLCanvasElement} config.canvas - Canvas element where the scene will be rendered
 	 * @param {THREE.Renderer} config.renderer - If you're rendering on your own, Simbol needs access to your renderer
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Simbol needs access to your camera
 	 */
-	constructor(config) {
+	constructor(config = {render: true, animate: true}) {
+		this.config = config;
 		if (config.render) {
 			const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
 			const renderer = new THREE.WebGLRenderer({
@@ -64,7 +69,7 @@ class Scene {
 			this.renderer = config.renderer;
 		}
 
-		this.canvas = config.canvas;
+		this.canvas = this.renderer.domElement;
 		this.vrEffect = new VREffect(this.renderer, console.warn);
 
 		const sceneLoader = new Loader(config.sceneToLoad);
@@ -103,7 +108,10 @@ class Scene {
 						this.scene.add(mesh);
 					}
 				}
-				this.animate();
+
+				if (this.config.animate) {
+					this.animate();
+				}
 
 				return Promise.resolve();
 			}, (error) => Promise.reject(error));
