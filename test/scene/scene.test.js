@@ -81,6 +81,9 @@ describe('Scene', () => {
 			};
 			scene._setupMeshes = sinon.stub();
 			scene.animate = sinon.stub();
+			scene.config = {
+				animate: true
+			};
 
 			scene.init().then(done);
 		});

@@ -86,9 +86,9 @@ describe('GamepadController', () => {
 			});
 
 			it('should handle pressed button', () => {
-				assert.isTrue(poseController.emit.calledTwice);
-				assert.isTrue(poseController.emit.calledWith('triggerpressed'));
-				assert.isTrue(poseController.pressedButtons['Trigger']);
+				assert.isTrue(gamepadController.emit.calledOnce);
+				assert.isTrue(gamepadController.emit.calledWith('triggerpressed'));
+				assert.isTrue(gamepadController.pressedButtons['Trigger']);
 			});
 		});
 	});

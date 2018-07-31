@@ -51,7 +51,7 @@ class VirtualPersona extends EventEmitter {
 	 * Constructs a VP instance and sets its properties
 	 *
 	 * @param {object} config - Configuration parameters for different elements
-	 * @param {boolean} signIn - Whether Simbol should attempt to sign in on init
+	 * @param {boolean} config.signIn - Whether Simbol should attempt to sign the person in on #init
 	 *
 	 * @returns {undefined}
 	 *
@@ -245,13 +245,14 @@ class VirtualPersona extends EventEmitter {
 
 		this.mesh = mesh;
 		this.headMesh = this.mesh.getObjectByName('VirtualPersonaHead');
-		// TODO: FIX HEADMESH with Mirrors
-		// this.headMesh.onBeforeRender = () => {
-		// 	this.headMesh.layers.set(0);
-		// };
-		// this.headMesh.onAfterRender = () => {
-		// 	this.headMesh.layers.set(1);
-		// };
+		/** TODO: FIX HEADMESH with Mirrors
+		 * this.headMesh.onBeforeRender = () => {
+		 * 	this.headMesh.layers.set(0);
+		 * };
+		 * this.headMesh.onAfterRender = () => {
+		 * 	this.headMesh.layers.set(1);
+		 * };
+		 */
 		this.bodyMesh = this.mesh.getObjectByName('VirtualPersonaBody');
 		const boundingBox = new THREE.Box3().setFromObject(this.mesh);
 		this._meshHeight = boundingBox.max.y - boundingBox.min.y;

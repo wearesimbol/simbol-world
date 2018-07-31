@@ -10,6 +10,9 @@ class Loader {
 	 * @param {string|THREE.Mesh} meshToLoad - Either a THREE.Mesh to be added, or a path to the .gltf/.glb or .json file containing the mesh
 	 */
 	constructor(meshToLoad) {
+		if (!meshToLoad) {
+			return;
+		}
 		this.meshToLoad = meshToLoad;
 		if (typeof meshToLoad === 'string') {
 			if (meshToLoad.includes('gltf') || meshToLoad.includes('glb')) {
@@ -17,7 +20,7 @@ class Loader {
 			} else if (meshToLoad.includes('json')) {
 				this.type = 'OBJ';
 			}
-		} else if (meshToLoad instanceof THREE.Object3D) {
+		} else if (meshToLoad.isObject3D) {
 			this.type = 'Object3D';
 		}
 	}

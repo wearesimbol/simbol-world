@@ -2,8 +2,8 @@
   "name": "simbol",
   "version": "1.0.0-alpha.4",
   "description": "Simple Immersive Communication for everyone. Easily create a social XR experience with a self-sovereign identity system",
-  "main": "build/simbol.umd.js",
-  "module": "build/simbol.js",
+  "main": "build/simbol.cjs.js",
+  "module": "src/main.js",
   "repository": {
     "url": "https://github.com/wearesimbol/simbol.git",
     "type": "git"
@@ -21,35 +21,35 @@
     "docs": "./node_modules/.bin/jsdoc -c jsdoc.conf.json"
   },
   "dependencies": {
-    "eventemitter3": "^3.0.0",
+    "eventemitter3": "^3.1.0",
     "load-bmfont": "^1.3.0",
-    "simple-peer": "^8.1.1",
-    "three": "^0.92.0",
+    "simple-peer": "^9.1.1",
+    "three": "^0.94.0",
     "three-bmfont-text": "^2.2.1",
-    "uport-connect": "^0.7.0",
-    "webvr-polyfill": "^0.9.25"
+    "uport-connect": "^0.7.3",
+    "webvr-polyfill": "^0.10.6"
   },
   "devDependencies": {
     "chai": "^4.1.0",
     "gulp": "^4.0.0",
-    "gulp-eslint": "^4.0.0",
-    "gulp-rename": "^1.2.2",
+    "gulp-eslint": "^5.0.0",
+    "gulp-rename": "^1.3.0",
     "gulp-uglify": "^3.0.0",
-    "karma": "^2.0.0",
+    "karma": "^2.0.4",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.0.0",
     "karma-mocha": "^1.2.0",
-    "karma-rollup-preprocessor": "^5.0.0",
+    "karma-rollup-preprocessor": "^6.0.0",
     "karma-sinon": "^1.0.5",
-    "mocha": "^4.0.0",
-    "rollup": "^0.58.0",
+    "mocha": "^5.0.0",
+    "rollup": "^0.63.0",
     "rollup-plugin-commonjs": "^9.1.1",
-    "rollup-plugin-json": "^2.0.0",
+    "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.1.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-node-globals": "^1.2.1",
+    "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-replace": "^2.0.0",
-    "sinon": "^4.1.0",
+    "sinon": "^6.1.0",
     "uglify-es": "^3.3.9"
   }
 }
