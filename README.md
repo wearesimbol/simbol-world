@@ -170,6 +170,10 @@ Currently, [simbol](https://simbol.io) is dependent on several third party libra
 * [WebVR Polyfill](https://github.com/googlevr/webvr-polyfill): Polyfill for mobile devices
 * [uport-connect](https://github.com/uport-project/uport-connect): Underlying identity system that Virtual Personas is currently based on
 
+## Contributing
+
+Check out the [Contribution guide](https://github.com/wearesimbol/simbol/blob/master/CONTRIBUTING.md)! If you have any questions, we're also on [Slack](https://join.slack.com/t/wearesimbol/shared_invite/enQtNDA4NTMzODc0NzU1LTQzYTBkMjI4NmRhYjFhNTM2YWIxNjhiMmRlZTM1OTBiM2Y4ZWNlNWUwY2Q1ZGYwZTY2YTBkOTU0YzUyMWZhZTg)
+
 ## License
 
 This program is free software and is distributed under an [MIT License](https://github.com/wearesimbol/simbol/blob/master/LICENSE).

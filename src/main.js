@@ -193,7 +193,10 @@ class Simbol extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	startPresenting() {
-		this._scene.vrEffect.requestPresent();
+		this._scene.vrEffect.requestPresent()
+			.catch((error) => {
+				this.emit('error', error);
+			});
 		Utils.isPresenting = true;
 	}
 

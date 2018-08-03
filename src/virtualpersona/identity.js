@@ -1,7 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import uport from '../libs/uport-connect';
 
-const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.gltf';
+const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.glb';
 
 class Identity extends EventEmitter {
 

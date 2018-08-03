@@ -63,7 +63,6 @@ class PoseController extends EventEmitter {
 	constructor(gamepad = {}, vpMesh) {
 		super();
 
-
 		this.id = `${gamepad.id} (${gamepad.hand})`;
 		this.hand = gamepad.hand;
 		this.gamepadId = gamepad.id;
@@ -98,9 +97,9 @@ class PoseController extends EventEmitter {
 			this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandRight');
 		}
 
-		if (this.handMesh) {
-			this.vpMesh.parent.add(this.handMesh);
-		}
+		// if (this.handMesh) {
+		// 	this.vpMesh.parent.add(this.handMesh);
+		// }
 
 		this.renameAnimations();
 		this._animationMixer = new THREE.AnimationMixer(this.vpMesh);
@@ -330,43 +329,43 @@ class PoseController extends EventEmitter {
 			this.position.fromArray(gamepad.pose.position);
 		}
 
-		if (!gamepad.pose.position) {
-			// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-			this.position.copy(camera.position);
+		if (this.handMesh) {
+			if (!gamepad.pose.position) {
+				// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
+				this.position.copy(camera.position);
 
-			if (!this.offset) {
-				this.offset = new THREE.Vector3();
-			}
-			// Set offset for degenerate "arm model" to elbow
-			this.offset.set(
-				this.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // Hand is to your left, or right
-				eyesToElbow.y, // Lower than your eyes
-				eyesToElbow.z); // Slightly out in front
-			// Scale offset by user height
-			this.offset.multiplyScalar(userHeight);
-			// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-			this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
-			// Apply rotated offset to camera position
-			this.position.add(this.offset);
+				if (!this.offset) {
+					this.offset = new THREE.Vector3();
+				}
+				// Set offset for degenerate "arm model" to elbow
+				this.offset.set(
+					this.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // Hand is to your left, or right
+					eyesToElbow.y, // Lower than your eyes
+					eyesToElbow.z); // Slightly out in front
+				// Scale offset by user height
+				this.offset.multiplyScalar(userHeight);
+				// Apply camera Y rotation (not X or Z, so you can look down at your hand)
+				this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
+				// Apply rotated offset to camera position
+				this.position.add(this.offset);
 
-			// Set offset for degenerate "arm model" forearm
-			this.offset.set(forearm.x, forearm.y, forearm.z); // Forearm sticking out from elbow
-			// Scale offset by user height
-			this.offset.multiplyScalar(userHeight);
-			// Apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
-			this.euler.setFromQuaternion(this.quaternion);
-			this.euler.set(this.euler.x, this.euler.y, 0);
-			this.offset.applyEuler(this.euler);
-			// Apply rotated offset to camera position
-			this.position.add(this.offset);
-			if (this.handMesh) {
+				// Set offset for degenerate "arm model" forearm
+				this.offset.set(forearm.x, forearm.y, forearm.z); // Forearm sticking out from elbow
+				// Scale offset by user height
+				this.offset.multiplyScalar(userHeight);
+				// Apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
+				this.euler.setFromQuaternion(this.quaternion);
+				this.euler.set(this.euler.x, this.euler.y, 0);
+				this.offset.applyEuler(this.euler);
+				// Apply rotated offset to camera position
+				this.position.add(this.offset);
 				this.handMesh.quaternion.copy(this.quaternion);
 				this.handMesh.position.copy(this.position);
+			} else {
+				this.handMesh.quaternion.copy(this.quaternion);
+				this.handMesh.position.copy(camera.position);
+				this.handMesh.position.add(this.position);
 			}
-		} else if (this.handMesh) {
-			this.handMesh.quaternion.copy(this.quaternion);
-			this.handMesh.position.copy(camera.position);
-			this.handMesh.position.add(this.position);
 		}
 	}
 }
