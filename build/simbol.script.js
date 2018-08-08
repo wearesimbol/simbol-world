@@ -53680,9 +53680,12 @@ var simbol = (function (exports) {
 				this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandRight');
 			}
 
-			// if (this.handMesh) {
-			// 	this.vpMesh.parent.add(this.handMesh);
-			// }
+			/**
+			 * TODO: Currently broken
+			 * if (this.handMesh) {
+			 * 	this.vpMesh.parent.add(this.handMesh);
+			 * }
+			 */
 
 			this.renameAnimations();
 			this._animationMixer = new AnimationMixer(this.vpMesh);
@@ -138298,6 +138301,9 @@ var simbol = (function (exports) {
 	}
 
 	const VERTICAL_VECTOR$1 = new Vector3(0, -1, 0);
+	const defaultConfig$1 = {
+		signIn: true
+	};
 
 	/** Class for a VirtualPersona */
 	class VirtualPersona extends eventemitter3 {
@@ -138355,6 +138361,7 @@ var simbol = (function (exports) {
 		constructor(config = { signIn: true }) {
 			super();
 
+			config = Object.assign({}, defaultConfig$1, config);
 			this.config = config;
 			this._feetPosition = new Vector3();
 
@@ -141625,6 +141632,10 @@ var simbol = (function (exports) {
 	// Always polyfill as the polyfill itself checks if it's necessary
 	new WebVRPolyfill();
 
+	const defaultConfig$2 = {
+		locomotion: true
+	};
+
 	/**
 	 * Main class for Simbol
 	 *
@@ -141658,6 +141669,8 @@ var simbol = (function (exports) {
 		 */
 		constructor(config = {locomotion: true}) {
 			super();
+
+			config = Object.assign({}, defaultConfig$2, config);
 
 			this.hand = config.hand;
 
