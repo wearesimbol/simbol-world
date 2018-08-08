@@ -97,9 +97,12 @@ class PoseController extends EventEmitter {
 			this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandRight');
 		}
 
-		// if (this.handMesh) {
-		// 	this.vpMesh.parent.add(this.handMesh);
-		// }
+		/**
+		 * TODO: Currently broken
+		 * if (this.handMesh) {
+		 * 	this.vpMesh.parent.add(this.handMesh);
+		 * }
+		 */
 
 		this.renameAnimations();
 		this._animationMixer = new THREE.AnimationMixer(this.vpMesh);

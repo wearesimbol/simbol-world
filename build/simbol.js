@@ -138340,6 +138340,7 @@ class VirtualPersona extends eventemitter3 {
 	 *
 	 * @param {object} config - Configuration parameters for different elements
 	 * @param {boolean} config.signIn - Whether Simbol should attempt to sign the person in on #init
+	 * @param {object|boolean} config.multiVP - MultiVP options. Can be set to false if you configure your own multiuser experience
 	 *
 	 * @returns {undefined}
 	 *
@@ -138378,46 +138379,48 @@ class VirtualPersona extends eventemitter3 {
 			this.emit('error', event);
 		});
 
-		this.multiVP = new MultiVP(config.multiVP, this);
-		this.multiVP.on('add', (event) => {
-			/**
-			 * VirtualPersona add event that provides a mesh
-			 * to be added to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#add
-			 * @type {object}
-			 * @property mesh - Mesh to add to the scene
-			 */
-			this.emit('add', event);
-		});
-		this.multiVP.on('remove', (event) => {
-			/**
-			 * VirtualPersona remove event that provides a mesh
-			 * to be removed to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#remove
-			 * @type {object}
-			 * @property mesh - Mesh to be removed from the scene
-			 */
-			this.emit('remove', event);
-		});
-		this.multiVP.on('addanimatefunctions', (event) => {
-			/**
-			 * VirtualPersona addanimatefunctions event that provides a function
-			 * to be added to the animation loop. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#addanimatefunctions
-			 * @type {object}
-			 * @property functions - Array of functions
-			 */
-			this.emit('addanimatefunctions', event);
-		});
-		this.multiVP.on('error', (event) => {
-			this.emit('error', event);
-		});
+		if (config.multiVP) {
+			this.multiVP = new MultiVP(config.multiVP, this);
+			this.multiVP.on('add', (event) => {
+				/**
+				 * VirtualPersona add event that provides a mesh
+				 * to be added to the scene. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#add
+				 * @type {object}
+				 * @property mesh - Mesh to add to the scene
+				 */
+				this.emit('add', event);
+			});
+			this.multiVP.on('remove', (event) => {
+				/**
+				 * VirtualPersona remove event that provides a mesh
+				 * to be removed to the scene. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#remove
+				 * @type {object}
+				 * @property mesh - Mesh to be removed from the scene
+				 */
+				this.emit('remove', event);
+			});
+			this.multiVP.on('addanimatefunctions', (event) => {
+				/**
+				 * VirtualPersona addanimatefunctions event that provides a function
+				 * to be added to the animation loop. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#addanimatefunctions
+				 * @type {object}
+				 * @property functions - Array of functions
+				 */
+				this.emit('addanimatefunctions', event);
+			});
+			this.multiVP.on('error', (event) => {
+				this.emit('error', event);
+			});
+		}
 	}
 
 	/**
@@ -141648,8 +141651,9 @@ class Simbol extends eventemitter3 {
 	 * @param {object} config.scene - Configuration object for a Simbol scene
 	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
 	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
+	 * @param {boolean} config.locomtion - Whether Simbol should provide locomotion utilities
 	 */
-	constructor(config) {
+	constructor(config = {locomotion: true}) {
 		super();
 
 		this.hand = config.hand;
@@ -141660,11 +141664,14 @@ class Simbol extends eventemitter3 {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.locomotion = new Locomotion();
 		this.interactions = new Interactions();
-
 		this.interactions.setUpEventListeners(this.controllers);
-		this.locomotion.setUpEventListeners(this.controllers, this.interactions);
+
+		if (config.locomotion) {
+			this.locomotion = new Locomotion();
+			this.locomotion.setUpEventListeners(this.controllers, this.interactions);
+		}
+
 		this.addListeners(this.virtualPersona, this.controllers, this.interactions);
 	}
 
@@ -141690,10 +141697,10 @@ class Simbol extends eventemitter3 {
 				this.vpMesh = this.virtualPersona.mesh;
 				this.controllers.init(this.vpMesh);
 
-				this.addToScene([
-					...this.interactions.getMeshes(),
-					...this.locomotion.getMeshes()
-				]);
+				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.locomotion) {
+					this.addToScene([...this.locomotion.getMeshes()]);
+				}
 				this.addAnimateFunctions([this.animate.bind(this)]);
 
 				return Promise.resolve();
@@ -141859,40 +141866,42 @@ Simbol.prototype.animate = (function() {
 		// Handle position
 		camera.position.copy(previousCameraPosition);
 
-		// Translation
-		if (this.locomotion.translatingZ || this.locomotion.translatingX) {
-			translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
-			translationDirection.applyQuaternion(camera.quaternion);
-			const collision = Physics.checkMeshCollision(this.vpMesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
-			if (!collision) {
-				if (this.locomotion.translatingZ) {
-					camera.translateZ(this.locomotion.translatingZ * delta);
-				}
+		if (this.locomotion) {
+			// Translation
+			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
+				translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
+				translationDirection.applyQuaternion(camera.quaternion);
+				const collision = Physics.checkMeshCollision(this.vpMesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
+				if (!collision) {
+					if (this.locomotion.translatingZ) {
+						camera.translateZ(this.locomotion.translatingZ * delta);
+					}
 
-				if (this.locomotion.translatingX) {
-					camera.translateX(this.locomotion.translatingX * delta);
+					if (this.locomotion.translatingX) {
+						camera.translateX(this.locomotion.translatingX * delta);
+					}
 				}
 			}
-		}
 
-		// Teleportation
-		if (this.locomotion.teleportation.isRayCurveActive) {
-			this.locomotion.teleportation.updateRayCurve(controller, this._scene.scene);
-		}
+			// Teleportation
+			if (this.locomotion.teleportation.isRayCurveActive) {
+				this.locomotion.teleportation.updateRayCurve(controller, this._scene.scene);
+			}
 
-		if (this.locomotion.teleportation.isTeleportActive) {
-			camera.position.setX(this.locomotion.teleportation.hitPoint.x);
-			camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.virtualPersona.userHeight);
-			camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
-			this.locomotion.teleportation.resetTeleport();
-		}
+			if (this.locomotion.teleportation.isTeleportActive) {
+				camera.position.setX(this.locomotion.teleportation.hitPoint.x);
+				camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.virtualPersona.userHeight);
+				camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
+				this.locomotion.teleportation.resetTeleport();
+			}
 
-		if (this.locomotion.teleportation.hitPoint) {
-			// Compare both quaternions, and if the difference is big enough, activateTeleport
-			const areQuaternionsEqual = Utils.areQuaternionsEqual(previousControllerQuaternion, controller.quaternion);
-			if (!areQuaternionsEqual) {
-				// Debounced function
-				this.locomotion.teleportation.activateTeleport();
+			if (this.locomotion.teleportation.hitPoint) {
+				// Compare both quaternions, and if the difference is big enough, activateTeleport
+				const areQuaternionsEqual = Utils.areQuaternionsEqual(previousControllerQuaternion, controller.quaternion);
+				if (!areQuaternionsEqual) {
+					// Debounced function
+					this.locomotion.teleportation.activateTeleport();
+				}
 			}
 		}
 
@@ -141919,7 +141928,7 @@ Simbol.prototype.animate = (function() {
 			camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
 
 			this.vpMesh.rotation.y = camera.rotation.y + Math.PI;
-		} else {
+		} else if (this.locomotion) {
 			this.vpMesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
 			camera.rotation.order = 'XYZ';
 			camera.rotation.copy(this.locomotion.orientation.euler);
@@ -141931,7 +141940,9 @@ Simbol.prototype.animate = (function() {
 		this.vpMesh.position.setY(meshYPosition);
 
 		// MultiVP
-		this.virtualPersona.multiVP.sendData(this.vpMesh);
+		if (this.virtualPersona.multiVP) {
+			this.virtualPersona.multiVP.sendData(this.vpMesh);
+		}
 
 		// Interactions
 		this.interactions.update(controller.position, controller.quaternion);

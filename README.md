@@ -39,9 +39,17 @@ Simbol accepts several configuration parameters detailed below:
 
 `string`, default: `'left'`
 
-The main user's hand. It's value can be either `'left'` or `'right'`.
+The main user's hand. It's value can be either `'left'` or `'right'`
+
+### locomotion
+
+`boolean`, default `true`
+
+Whether Simbol should provide a default locomotion system
 
 ### scene
+
+`object`
 
 All configuration properties related to setting up the scene
 
@@ -83,6 +91,8 @@ If you're rendering on your own, Simbol needs access to your camera. This should
 
 ### virtualPersona
 
+`object`
+
 All configuration properties related to setting up the Virtual Persona
 
 #### signIn
@@ -93,7 +103,9 @@ Whether Simbol should attempt to sign the person in on #init
 
 ### virtualPersona.multiVP
 
-All configuration properties related to setting up the MultiVP component
+`object|boolean`
+
+All configuration properties related to setting up the MultiVP component. This can be set to `false` if your site takes care of the multiuser experience
 
 #### socketURL
 
@@ -124,6 +136,7 @@ Configuration object for [simple-peer](https://github.com/feross/simple-peer#api
 ```js
 {
 	hand: 'right',
+	locomotion: true,
 	virtualPersona: {
 		signIn: false,
 		multiVP: {

@@ -17,7 +17,7 @@ describe('VirtualPersona', () => {
 		sinon.spy(EventEmitter.prototype, 'emit');
 		sinon.spy(EventEmitter.prototype, 'on');
 
-		vp = new VirtualPersona();
+		vp = new VirtualPersona({multiVP: {}});
 	});
 
 	afterEach(() => {
@@ -60,7 +60,7 @@ describe('VirtualPersona', () => {
 			assert.instanceOf(vp.identity, Identity);
 			assert.instanceOf(vp.multiVP, MultiVP);
 			assert.equal(vp.multiVP.vp, vp);
-			assert.deepEqual(vp.config, {signIn: true});
+			assert.deepEqual(vp.config, {signIn: true, multiVP: {}});
 			assert.equal(EventEmitter.prototype.on.callCount, 5);
 			assert.isTrue(EventEmitter.prototype.on.getCall(0).calledWith('error'));
 			assert.isTrue(EventEmitter.prototype.on.getCall(1).calledWith('add'));
@@ -128,7 +128,7 @@ describe('VirtualPersona', () => {
 
 			it('should load mesh', () => {
 				assert.isTrue(vp.loadMesh.calledOnce);
-				assert.isTrue(vp.loadMesh.calledWith('https://simbol.io/assets/models/AnonymousVP.gltf', true));
+				assert.isTrue(vp.loadMesh.calledWith('https://simbol.io/assets/models/AnonymousVP.glb', true));
 			});
 		});
 
@@ -277,6 +277,7 @@ describe('VirtualPersona', () => {
 	describe('#render', () => {
 
 		let mesh;
+		const head = {};
 	
 		beforeEach(() => {
 			sinon.stub(THREE.Box3.prototype, 'setFromObject').returns({
@@ -286,7 +287,7 @@ describe('VirtualPersona', () => {
 			mesh = {
 				getObjectByName: sinon.stub()
 			};
-			mesh.getObjectByName.withArgs('VirtualPersonaHead').returns(1);
+			mesh.getObjectByName.withArgs('VirtualPersonaHead').returns(head);
 			mesh.getObjectByName.withArgs('VirtualPersonaBody').returns(2);
 		});
 
@@ -304,7 +305,7 @@ describe('VirtualPersona', () => {
 				assert.equal(vp.mesh, mesh);
 				assert.isTrue(mesh.getObjectByName.calledTwice);
 				assert.isTrue(mesh.getObjectByName.firstCall.calledWith('VirtualPersonaHead'));
-				assert.equal(vp.headMesh, 1);
+				assert.equal(vp.headMesh, head);
 				assert.isTrue(mesh.getObjectByName.secondCall.calledWith('VirtualPersonaBody'));
 				assert.equal(vp.bodyMesh, 2);
 			});

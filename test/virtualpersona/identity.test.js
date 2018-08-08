@@ -30,7 +30,7 @@ describe('Identity', () => {
 
 	it('should have a set of properties', () => {
 		assert.equal(Identity.prototype.signedIn, false);
-		assert.equal(Identity.prototype.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
+		assert.equal(Identity.prototype.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.glb');
 	});
 
 	describe('#constructor', () => {
@@ -125,7 +125,7 @@ describe('Identity', () => {
 		it('should reset the instance and remove identity data', () => {
 			assert.isTrue(localStorage.removeItem.calledOnce);
 			assert.isTrue(localStorage.removeItem.calledWith('currentIdentity'));
-			assert.equal(identity.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.gltf');
+			assert.equal(identity.avatarPath, 'https://simbol.io/assets/models/AnonymousVP.glb');
 			assert.isUndefined(identity.uPortData);
 			assert.isFalse(identity.signedIn);
 		});

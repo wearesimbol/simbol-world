@@ -121,8 +121,9 @@ describe('Simbol', () => {
         });
 
         it('should add interactions and locomotion meshes into the scene', () => {
-            assert.isTrue(simbol.addToScene.calledOnce);
-            assert.deepEqual(simbol.addToScene.firstCall.args, [[1, 2, 3, 4]]);
+            assert.isTrue(simbol.addToScene.calledTwice);
+            assert.deepEqual(simbol.addToScene.firstCall.args, [[1, 2]]);
+            assert.deepEqual(simbol.addToScene.secondCall.args, [[3, 4]]);
             assert.isTrue(simbol.interactions.getMeshes.calledOnce);
             assert.isTrue(simbol.locomotion.getMeshes.calledOnce);
         });
@@ -220,7 +221,7 @@ describe('Simbol', () => {
     describe('#startPresenting', () => {
 
         beforeEach(() => {
-            sinon.stub(simbol._scene.vrEffect, 'requestPresent');
+            sinon.stub(simbol._scene.vrEffect, 'requestPresent').resolves();
 
             simbol.startPresenting();
         });
