@@ -254,9 +254,6 @@ class VirtualPersona extends EventEmitter {
 		this.headMesh = this.mesh.getObjectByName('VirtualPersonaHead');
 		// TODO: FIX HEADMESH with Mirrors
 		this.headMesh.onBeforeRender = () => {
-			this.headMesh.layers.set(0);
-		};
-		this.headMesh.onAfterRender = () => {
 			this.headMesh.layers.set(1);
 		};
 		this.bodyMesh = this.mesh.getObjectByName('VirtualPersonaBody');

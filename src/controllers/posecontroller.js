@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 import {Controllers} from './controllers';
 
-const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
+const VERTICAL_VECTOR = new THREE.Vector3(0, 1, 0);
 
 const HAND_GESTURES = {
 	open: 'Open',
@@ -96,13 +96,6 @@ class PoseController extends EventEmitter {
 		} else if (this.hand === 'right') {
 			this.handMesh = this.vpMesh.getObjectByName('VirtualPersonaHandRight');
 		}
-
-		/**
-		 * TODO: Currently broken
-		 * if (this.handMesh) {
-		 * 	this.vpMesh.parent.add(this.handMesh);
-		 * }
-		 */
 
 		this.renameAnimations();
 		this._animationMixer = new THREE.AnimationMixer(this.vpMesh);
@@ -333,6 +326,15 @@ class PoseController extends EventEmitter {
 		}
 
 		if (this.handMesh) {
+			if (!this.worldToLocal) {
+				this.worldToLocal = new THREE.Matrix4().getInverse(this.handMesh.parent.matrixWorld);
+			} else {
+				this.worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
+			}
+			if (!this.poseMatrix) {
+				this.poseMatrix = new THREE.Matrix4();
+			}
+
 			if (!gamepad.pose.position) {
 				// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
 				this.position.copy(camera.position);
@@ -362,12 +364,15 @@ class PoseController extends EventEmitter {
 				this.offset.applyEuler(this.euler);
 				// Apply rotated offset to camera position
 				this.position.add(this.offset);
-				this.handMesh.quaternion.copy(this.quaternion);
-				this.handMesh.position.copy(this.position);
-			} else {
-				this.handMesh.quaternion.copy(this.quaternion);
-				this.handMesh.position.copy(camera.position);
-				this.handMesh.position.add(this.position);
+			}
+
+			this.poseMatrix.makeRotationFromQuaternion(this.quaternion);
+			this.poseMatrix.setPosition(this.position);
+			this.poseMatrix.multiplyMatrices(this.worldToLocal, this.poseMatrix);
+			this.poseMatrix.decompose(this.handMesh.position, this.handMesh.quaternion, {});
+
+			if (gamepad.pose.position) {
+				this.handMesh.position.add(camera.position);
 			}
 		}
 	}

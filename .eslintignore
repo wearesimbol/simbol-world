@@ -1,3 +1,4 @@
+src/libs/*
 test/*
 build/*
 gulpfile.js
