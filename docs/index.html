@@ -43,26 +43,95 @@
 
 
     <section>
-        <article><h1>simbol</h1><p>Create social virtual worlds that anyone can interact with using Virtual Personas, a self-sovereign identity.</p>
-<h2>Quick Start</h2><p>Install via <a href="https://npmjs.com">npm</a> or <a href="https://yarnpkg.com">yarn</a></p>
-<pre class="prettyprint source"><code>npm install --save simbol
-yarn add simbol</code></pre><p>And then import it using ES2015 Modules, CommonJS or with a <code>&lt;script&gt;</code> tag:</p>
-<pre class="prettyprint source"><code>import * as simbol from 'simbol';
-const simbol = require('simbol');
-&lt;script src=&quot;./node_modules/simbol/build/simbol.script.js&quot;>&lt;/script></code></pre><h2>Entities</h2><p>The library provides a set of entities to help create your virtual world, the two most important ones being <strong>Scene</strong> and <strong>VirtualPersona</strong></p>
-<p>Here's the list:</p>
-<h3>Scene</h3><p>Imports a GLTF Scene and renders it to an HMD</p>
-<h3>VirtualPersona</h3><p>Imports a GLTF avatar model that could be your single identity to transverse the WebVR metaverse. Also provides movement and animation mechanics</p>
-<h3>Physics</h3><p>Possible small physics library</p>
-<h2>API</h2><p>You can check out the API in our <a href="https://simbol.io/docs">JSDoc</a></p>
+        <article><h1>simbol</h1><p>Easily create social virtual worlds that anyone can interact with using Virtual Personas, a global identity system where people own their identities.</p>
+<h2>Quick Start</h2><p>Install via <a href="https://npmjs.com">npm</a></p>
+<pre class="prettyprint source lang-js"><code>npm install --save simbol</code></pre><p>Then import it using ES2015 Modules, CommonJS or with a <code>&lt;script&gt;</code> tag:</p>
+<pre class="prettyprint source lang-js"><code>import Simbol from 'simbol';
+const Simbol = require('simbol');
+&lt;script src=&quot;./node_modules/simbol/build/simbol.script.js&quot;>&lt;/script></code></pre><p>And finally, create a new <code>Simbol</code> instance and initialise it:</p>
+<pre class="prettyprint source lang-js"><code>const config = {
+    scene: {
+        canvas: document.querySelector('canvas'),
+        sceneToLoad: 'path/to/my/scene.gltf'
+    }
+};
+const simbol = new Simbol(config);
+simbol.init();</code></pre><h2>Configuration object</h2><p>Simbol accepts several configuration parameters detailed below:</p>
+<h3>hand</h3><p><code>string</code>, default: <code>'left'</code></p>
+<p>The main user's hand. It's value can be either <code>'left'</code> or <code>'right'</code></p>
+<h3>locomotion</h3><p><code>boolean</code>, default <code>true</code></p>
+<p>Whether Simbol should provide a default locomotion system</p>
+<h3>scene</h3><p><code>object</code></p>
+<p>All configuration properties related to setting up the scene</p>
+<h4>render</h4><p><code>boolean</code>, default: <code>true</code></p>
+<p>Whether it needs to take of Three.JS rendering by setting up a renderer and a camera. If this is set to <code>true</code>, <code>config.scene.camera</code> and <code>config.scene.renderer</code> should not be provided</p>
+<h4>animate</h4><p><code>boolean</code>, default: <code>true</code></p>
+<p>Whether Simbol should start and control the render loop</p>
+<h4>sceneToLoad</h4><p><code>THREE.Scene|string</code>, <strong>required</strong></p>
+<p>Either a THREE.Scene to be added, or a path to the .gltf/.glb file containing the scene</p>
+<h4>canvas</h4><p><code>HTMLCanvasElement</code></p>
+<p>Canvas element where the scene will be rendered. This should only be provided if <code>config.scene.render</code> is <code>true</code></p>
+<h4>renderer</h4><p><code>THREE.Renderer</code></p>
+<p>If you're rendering on your own, Simbol needs access to your renderer. This should only be provided if <code>config.scene.render</code> is <code>false</code></p>
+<h4>camera</h4><p><code>THREE.Camera</code></p>
+<p>If you're rendering on your own, Simbol needs access to your camera. This should only be provided if <code>config.scene.render</code> is <code>false</code></p>
+<h3>virtualPersona</h3><p><code>object</code></p>
+<p>All configuration properties related to setting up the Virtual Persona</p>
+<h4>signIn</h4><p><code>boolean</code>, default: <code>true</code></p>
+<p>Whether Simbol should attempt to sign the person in on #init</p>
+<h3>virtualPersona.multiVP</h3><p><code>object|boolean</code></p>
+<p>All configuration properties related to setting up the MultiVP component. This can be set to <code>false</code> if your site takes care of the multiuser experience</p>
+<h4>socketURL</h4><p><code>string</code>, default: <code>'ws://127.0.0.1'</code></p>
+<p>The URL to your WebSocket server</p>
+<h4>socketPort</h4><p><code>string|number</code>, default: <code>8091</code></p>
+<p>The port for your WebSocker server</p>
+<h4>channelName</h4><p><code>string</code>, default: <code>'default'</code></p>
+<p>The desired channel name to use for the WebRTC social experience</p>
+<h4>peer</h4><p><code>object</code>, default: <code>{trickle: true, objectMode: true}</code></p>
+<p>Configuration object for <a href="https://github.com/feross/simple-peer#api">simple-peer</a></p>
+<h3>Example Configuration Object</h3><pre class="prettyprint source lang-js"><code>{
+    hand: 'right',
+    locomotion: true,
+    virtualPersona: {
+        signIn: false,
+        multiVP: {
+            socketURL: 'wss://yourdomain/ws',
+            socketPort: '80',
+            channelName: 'coolchannel',
+            config: {
+                iceServers: [
+                    {urls:'stun:stun.l.google.com:19302'},
+                    {urls:'stun:stun1.l.google.com:19302'},
+                    {
+                        urls: 'turn:yourdomain:7788',
+                        username: 'testname',
+                        credential: 'testpassword'
+                    }
+                ]
+            }
+        }
+    },
+    scene: {
+        render: true,
+        animate: true,
+        canvas: document.querySelector('canvas'),
+        sceneToLoad: 'path/to/cool/scene.gltf',
+        renderer: new THREE.Renderer(), // Not necessary as render is true
+        camera: new THREE.PerspectiveCamera() // Not necessary as render is true
+    }
+}</code></pre><h2>Full API</h2><p>You can check out the API in our <a href="https://simbol.io/docs">JSDoc</a></p>
 <h2>Third party libraries</h2><p>Currently, <a href="https://simbol.io">simbol</a> is dependent on several third party libraries:</p>
 <ul>
+<li><a href="https://github.com/feross/simple-peer">simple-peer</a>: Helper for WebRTC</li>
 <li><a href="https://threejs.org">Three.js</a>: Most used WebGL library</li>
 <li><a href="https://github.com/mrdoob/three.js/blob/dev/examples/js/controls/VRControls.js">Three.VRControls</a>: VR Controls helper from Three.JS</li>
 <li><a href="https://github.com/mrdoob/three.js/blob/dev/examples/js/effects/VREffect.js">Three.VREffect</a>: WebVR helper to render to an HMD</li>
+<li><a href="https://github.com/Jam3/three-bmfont-text">three-bmfont-text</a>: Three.JS helper to render text</li>
 <li><a href="https://github.com/googlevr/webvr-polyfill">WebVR Polyfill</a>: Polyfill for mobile devices</li>
 <li><a href="https://github.com/uport-project/uport-connect">uport-connect</a>: Underlying identity system that Virtual Personas is currently based on</li>
-</ul></article>
+</ul>
+<h2>Contributing</h2><p>Check out the <a href="https://github.com/wearesimbol/simbol/blob/master/CONTRIBUTING.md">Contribution guide</a>! If you have any questions, we're also on <a href="https://join.slack.com/t/wearesimbol/shared_invite/enQtNDA4NTMzODc0NzU1LTQzYTBkMjI4NmRhYjFhNTM2YWIxNjhiMmRlZTM1OTBiM2Y4ZWNlNWUwY2Q1ZGYwZTY2YTBkOTU0YzUyMWZhZTg">Slack</a></p>
+<h2>License</h2><p>This program is free software and is distributed under an <a href="https://github.com/wearesimbol/simbol/blob/master/LICENSE">MIT License</a>.</p></article>
     </section>
 
 
@@ -79,7 +148,7 @@ const simbol = require('simbol');
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jul 17 2018 21:01:10 GMT-0500 (DST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Aug 10 2018 19:06:13 GMT-0500 (DST)
 </footer>
 
 <script> prettyPrint(); </script>
