@@ -27,7 +27,8 @@
     "lint": "eslint \"./src/**/*.js\"",
     "test": "karma start",
     "docs": "./node_modules/.bin/jsdoc -c jsdoc.conf.json",
-    "version": "npm run build && npm run docs && git add -A build/ docs/"
+    "version": "npm run build && npm run docs && git add -A build/ docs/",
+    "postversion": "git push && git push --tags"
   },
   "dependencies": {
     "eventemitter3": "^3.1.0",
