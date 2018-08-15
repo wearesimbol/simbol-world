@@ -132065,7 +132065,7 @@ class Identity extends eventemitter3 {
 
 		this.uPort = new uport.Connect('Simbol', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
-			network: 'rinkeby', // change to main net
+			network: 'rinkeby', // Change to main net
 			signer: uport.SimpleSigner('12856cfa7d87eca683cbccf3617c82c615b8cac4347db20b1874884c2bc6453d') // eslint-disable-line new-cap
 		});
 
@@ -139057,26 +139057,18 @@ class MultiVP extends eventemitter3 {
 	 *
 	 * @returns {undefined}
 	 */
-	animate(time) {
+	animate() {
 		for (const peerId of Object.keys(this.meshes)) {
 			const peerMesh = this.meshes[peerId];
-			if (peerId === 2) {
-				peerMesh.lookAt(this.vp.mesh);
-				peerMesh.position.set(
-					Math.cos(time * 0.0001) * 4,
-					0,
-					Math.sin(time * 0.0001) * 4
-				);
+			for (let i = 0; i < 3; i++) {
+				if (typeof peerMesh.position[i] !== 'number') {
+					peerMesh.position[i] = 0;
+				}
 			}
-			// for (let i = 0; i < 3; i++) {
-			// 	if (typeof peerMesh.position[i] !== 'number') {
-			// 		peerMesh.position[i] = 0;
-			// 	}
-			// }
-			// peerMesh.mesh.position.set(...peerMesh.position);
-			// if (typeof peerMesh.rotation === 'number') {
-			// 	peerMesh.mesh.rotation.y = peerMesh.rotation;
-			// }
+			peerMesh.mesh.position.set(...peerMesh.position);
+			if (typeof peerMesh.rotation === 'number') {
+				peerMesh.mesh.rotation.y = peerMesh.rotation;
+			}
 		}
 	}
 
