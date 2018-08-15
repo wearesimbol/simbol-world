@@ -205,7 +205,11 @@ describe('Identity', () => {
 		
 		beforeEach(() => {
 			sinon.stub(localStorage, 'setItem');
-			creds = {SimbolConfig: true};
+			creds = {
+				publicEncKey: 1,
+				pushToken: 2,
+				SimbolConfig: true
+			};
 
 			identity.setUPortData(creds, true);
 		});
@@ -216,9 +220,11 @@ describe('Identity', () => {
 
 		it('should save identity data', () => {
 			assert.isTrue(localStorage.setItem.calledOnce);
-			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"SimbolConfig":true}'));
+			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"publicEncKey":1,"pushToken":2,"SimbolConfig":true}'));
 			assert.equal(identity.avatarPath, Identity.prototype.avatarPath);
-			assert.equal(identity.uPortData, creds);
+			assert.deepEqual(identity.uPortData, creds);
+			assert.equal(identity.uPort.pushToken, 2);
+			assert.equal(identity.uPort.publicEncKey, 1);
 		});
 	});
 });

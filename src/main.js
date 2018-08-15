@@ -98,10 +98,20 @@ class Simbol extends EventEmitter {
 				this.vpMesh = this.virtualPersona.mesh;
 				this.controllers.init(this.vpMesh);
 
+				// Adds the UI from other components into the scene
 				this.addToScene([...this.interactions.getMeshes()]);
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
+
+				// Prepares multiVP for positional audio from other peers
+				if (this.virtualPersona.multiVP) {
+					this._scene.camera.add(this.virtualPersona.multiVP.audioListener);
+					document.body.addEventListener('click', () => {
+						this.virtualPersona.multiVP.audioListener.context.resume();
+					});
+				}
+
 				this.addAnimateFunctions([this.animate.bind(this)]);
 
 				return Promise.resolve();

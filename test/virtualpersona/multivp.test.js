@@ -330,28 +330,27 @@ describe('MultiVP', () => {
 		let stream;
 
 		beforeEach(() => {
-			sinon.stub(document.body, 'appendChild');
-			sinon.stub(HTMLMediaElement.prototype, 'play');
+			sinon.stub(AudioContext.prototype, 'createMediaStreamSource').returns(1);
+			sinon.stub(THREE.PositionalAudio.prototype, 'setNodeSource');
 			stream = new MediaStream();
+			multiVP.multiVP = multiVP;
 
 			multiVP._peerStream(stream);
 		});
 
 		afterEach(() => {
-			document.body.appendChild.restore();
-			HTMLMediaElement.prototype.play.restore();
+			THREE.PositionalAudio.prototype.setNodeSource.restore();
+			AudioContext.prototype.createMediaStreamSource.restore();
 		});
 
-		it('should create audio element', () => {
-			assert.instanceOf(multiVP.audioEl, HTMLAudioElement);
-			assert.isTrue(multiVP.audioEl.autoplay);
-			assert.equal(multiVP.audioEl.srcObject, stream);
-		});
-
-		it('should add audio element', () => {
-			assert.isTrue(document.body.appendChild.calledOnce);
-			assert.isTrue(document.body.appendChild.calledWith(multiVP.audioEl));
-			assert.isTrue(HTMLMediaElement.prototype.play.calledOnce);
+		it('should create positional audio', () => {
+			assert.instanceOf(multiVP.audioHelper, THREE.PositionalAudio);
+			assert.equal(multiVP.audioHelper.context, multiVP.audioListener.context);
+			assert.isTrue(AudioContext.prototype.createMediaStreamSource.calledOnce);
+			assert.isTrue(AudioContext.prototype.createMediaStreamSource.calledWith(stream));
+			console.log(multiVP.audioHelper)
+			assert.isTrue(THREE.PositionalAudio.prototype.setNodeSource.calledOnce);
+			assert.isTrue(THREE.PositionalAudio.prototype.setNodeSource.calledWith(1));
 		});
 	});
 
@@ -495,8 +494,6 @@ describe('MultiVP', () => {
 	describe('#_peerClose', () => {
 
 		beforeEach(() => {
-			sinon.stub(document.body, 'removeChild');
-
 			multiVP.id = 1;
 			multiVP.remotePeers[1] = true;
 			multiVP.meshes = {
@@ -505,22 +502,12 @@ describe('MultiVP', () => {
 				}
 			};
 			multiVP.multiVP = multiVP;
-			multiVP.audioEl = 1;
 
 			multiVP._peerClose();
 		});
 
-		afterEach(() => {
-			document.body.removeChild.restore();
-		});
-
 		it('should delete peer', () => {
 			assert.isUndefined(multiVP.remotePeers[1]);
-		});
-
-		it('should delete audio element', () => {
-			assert.isTrue(document.body.removeChild.calledOnce);
-			assert.isTrue(document.body.removeChild.calledWith(1));
 		});
 
 		it('should delete mesh', () => {

@@ -94,6 +94,7 @@ describe('Simbol', () => {
     describe('#init', () => {
 
         beforeEach((done) => {
+            sinon.stub(document.body, 'addEventListener');
             sinon.stub(simbol, 'addAnimateFunctions');
             sinon.stub(simbol._scene, 'init').resolves();
             sinon.stub(simbol.virtualPersona, 'init').resolves();
@@ -102,9 +103,19 @@ describe('Simbol', () => {
             sinon.stub(simbol.interactions, 'getMeshes').returns([1, 2]);
             sinon.stub(simbol.locomotion, 'getMeshes').returns([3, 4]);
             simbol.virtualPersona.mesh = 1;
+            simbol.virtualPersona.multiVP = {
+                audioListener: 1
+            };
+            simbol._scene.camera = {
+                add: sinon.stub()
+            };
 
             simbol.init().then(done);
         });
+
+        afterEach(() => {
+            document.body.addEventListener.restore();
+        })
 
         it('should initialise scene', () => {
             assert.isTrue(simbol._scene.init.calledOnce);
@@ -126,6 +137,13 @@ describe('Simbol', () => {
             assert.deepEqual(simbol.addToScene.secondCall.args, [[3, 4]]);
             assert.isTrue(simbol.interactions.getMeshes.calledOnce);
             assert.isTrue(simbol.locomotion.getMeshes.calledOnce);
+        });
+
+        it('should configure positional audio', () => {
+            assert.isTrue(simbol._scene.camera.add.calledOnce);
+            assert.isTrue(simbol._scene.camera.add.calledWith(1));
+            assert.isTrue(document.body.addEventListener.calledOnce);
+            assert.isTrue(document.body.addEventListener.calledWith('click'));
         });
 
         it('should add animate function', () => {

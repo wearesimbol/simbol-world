@@ -1,5 +1,6 @@
 import Peer from 'simple-peer';
 import EventEmitter from 'eventemitter3';
+import * as THREE from 'three';
 
 const defaultConfig = {
 	socketURL: 'ws://127.0.0.1',
@@ -50,6 +51,7 @@ class MultiVP extends EventEmitter {
 
 		this.config = Object.assign({}, defaultConfig, config);
 		this.vp = vp;
+		this.audioListener = new THREE.AudioListener();
 
 		this.getStream()
 			.then((stream) => {
@@ -116,8 +118,15 @@ class MultiVP extends EventEmitter {
 	animate() {
 		for (const peerId of Object.keys(this.meshes)) {
 			const peerMesh = this.meshes[peerId];
+			for (let i = 0; i < 3; i++) {
+				if (typeof peerMesh.position[i] !== 'number') {
+					peerMesh.position[i] = 0;
+				}
+			}
 			peerMesh.mesh.position.set(...peerMesh.position);
-			peerMesh.mesh.rotation.y = peerMesh.rotation;
+			if (typeof peerMesh.rotation === 'number') {
+				peerMesh.mesh.rotation.y = peerMesh.rotation;
+			}
 		}
 	}
 
@@ -227,11 +236,14 @@ class MultiVP extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	_peerStream(stream) {
-		this.audioEl = document.createElement('audio');
-		this.audioEl.autoplay = true;
-		this.audioEl.srcObject = stream;
-		document.body.appendChild(this.audioEl);
-		this.audioEl.play();
+		this.audioHelper = new THREE.PositionalAudio(this.multiVP.audioListener);
+		const sourceNode = this.audioHelper.context.createMediaStreamSource(stream);
+		this.audioHelper.setNodeSource(sourceNode);
+
+		// Workaround for Chrome to output audio
+		let audioObj = document.createElement('audio');
+		audioObj.srcObject = stream;
+		audioObj = null;
 	}
 
 	/**
@@ -302,6 +314,8 @@ class MultiVP extends EventEmitter {
 		if (data.type === 'connected') {
 			this.multiVP._loadAvatar(data.avatar, this.id)
 				.then((mesh) => {
+					// Adds the positional audio object to position it with the mesh
+					mesh.add(this.audioHelper);
 					/**
 					 * MultiVP add event that provides a mesh to be added to the scene
 					 *
@@ -337,15 +351,15 @@ class MultiVP extends EventEmitter {
 	_peerClose() {
 		console.log(`peer ${this.id} closing`);
 		delete this.multiVP.remotePeers[this.id];
-		document.body.removeChild(this.audioEl);
 		if (this.multiVP.meshes[this.id]) {
-			const mesh = this.multiVP.meshes[this.id].mesh;/**
-			* MultiVP remove event that provides a mesh to be removed
-			* from the scene
-			*
-			* @event MultiVP#remove
-			* @type {object}
-			* @property mesh - Mesh to be removed from the scene
+			const mesh = this.multiVP.meshes[this.id].mesh;
+			/**
+			 * MultiVP remove event that provides a mesh to be removed
+			 * from the scene
+			 *
+			 * @event MultiVP#remove
+			 * @type {object}
+			 * @property mesh - Mesh to be removed from the scene
 			*/
 			this.multiVP.emit('remove', {mesh});
 			delete this.multiVP.meshes[this.id];

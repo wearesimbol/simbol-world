@@ -132064,7 +132064,7 @@ var simbol = (function (exports) {
 
 			this.uPort = new uport.Connect('Simbol', {
 				clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
-				network: 'rinkeby',
+				network: 'rinkeby', // change to main net
 				signer: uport.SimpleSigner('12856cfa7d87eca683cbccf3617c82c615b8cac4347db20b1874884c2bc6453d') // eslint-disable-line new-cap
 			});
 
@@ -132178,7 +132178,13 @@ var simbol = (function (exports) {
 		 * @returns {undefined}
 		 */
 		setUPortData(credentials, save) {
-			this.uPortData = credentials;
+			this.uPortData = {
+				publicEncKey: credentials.publicEncKey,
+				pushToken: credentials.pushToken,
+				SimbolConfig: credentials.SimbolConfig
+			};
+			this.uPort.pushToken = credentials.pushToken;
+			this.uPort.publicEncKey = credentials.publicEncKey;
 			if (credentials.SimbolConfig) {
 				const config = JSON.parse(credentials.SimbolConfig);
 				this.avatarPath = config.avatar3D ||
@@ -138986,6 +138992,7 @@ var simbol = (function (exports) {
 
 			this.config = Object.assign({}, defaultConfig, config);
 			this.vp = vp;
+			this.audioListener = new AudioListener();
 
 			this.getStream()
 				.then((stream) => {
@@ -139049,11 +139056,26 @@ var simbol = (function (exports) {
 		 *
 		 * @returns {undefined}
 		 */
-		animate() {
+		animate(time) {
 			for (const peerId of Object.keys(this.meshes)) {
 				const peerMesh = this.meshes[peerId];
-				peerMesh.mesh.position.set(...peerMesh.position);
-				peerMesh.mesh.rotation.y = peerMesh.rotation;
+				if (peerId === 2) {
+					peerMesh.lookAt(this.vp.mesh);
+					peerMesh.position.set(
+						Math.cos(time * 0.0001) * 4,
+						0,
+						Math.sin(time * 0.0001) * 4
+					);
+				}
+				// for (let i = 0; i < 3; i++) {
+				// 	if (typeof peerMesh.position[i] !== 'number') {
+				// 		peerMesh.position[i] = 0;
+				// 	}
+				// }
+				// peerMesh.mesh.position.set(...peerMesh.position);
+				// if (typeof peerMesh.rotation === 'number') {
+				// 	peerMesh.mesh.rotation.y = peerMesh.rotation;
+				// }
 			}
 		}
 
@@ -139163,11 +139185,14 @@ var simbol = (function (exports) {
 		 * @returns {undefined}
 		 */
 		_peerStream(stream) {
-			this.audioEl = document.createElement('audio');
-			this.audioEl.autoplay = true;
-			this.audioEl.srcObject = stream;
-			document.body.appendChild(this.audioEl);
-			this.audioEl.play();
+			this.audioHelper = new PositionalAudio(this.multiVP.audioListener);
+			const sourceNode = this.audioHelper.context.createMediaStreamSource(stream);
+			this.audioHelper.setNodeSource(sourceNode);
+
+			// Workaround for Chrome to output audio
+			let audioObj = document.createElement('audio');
+			audioObj.srcObject = stream;
+			audioObj = null;
 		}
 
 		/**
@@ -139238,6 +139263,8 @@ var simbol = (function (exports) {
 			if (data.type === 'connected') {
 				this.multiVP._loadAvatar(data.avatar, this.id)
 					.then((mesh) => {
+						// Adds the positional audio object to position it with the mesh
+						mesh.add(this.audioHelper);
 						/**
 						 * MultiVP add event that provides a mesh to be added to the scene
 						 *
@@ -139273,15 +139300,15 @@ var simbol = (function (exports) {
 		_peerClose() {
 			console.log(`peer ${this.id} closing`);
 			delete this.multiVP.remotePeers[this.id];
-			document.body.removeChild(this.audioEl);
 			if (this.multiVP.meshes[this.id]) {
-				const mesh = this.multiVP.meshes[this.id].mesh;/**
-				* MultiVP remove event that provides a mesh to be removed
-				* from the scene
-				*
-				* @event MultiVP#remove
-				* @type {object}
-				* @property mesh - Mesh to be removed from the scene
+				const mesh = this.multiVP.meshes[this.id].mesh;
+				/**
+				 * MultiVP remove event that provides a mesh to be removed
+				 * from the scene
+				 *
+				 * @event MultiVP#remove
+				 * @type {object}
+				 * @property mesh - Mesh to be removed from the scene
 				*/
 				this.multiVP.emit('remove', {mesh});
 				delete this.multiVP.meshes[this.id];
@@ -142799,10 +142826,20 @@ var simbol = (function (exports) {
 					this.vpMesh = this.virtualPersona.mesh;
 					this.controllers.init(this.vpMesh);
 
+					// Adds the UI from other components into the scene
 					this.addToScene([...this.interactions.getMeshes()]);
 					if (this.locomotion) {
 						this.addToScene([...this.locomotion.getMeshes()]);
 					}
+
+					// Prepares multiVP for positional audio from other peers
+					if (this.virtualPersona.multiVP) {
+						this._scene.camera.add(this.virtualPersona.multiVP.audioListener);
+						document.body.addEventListener('click', () => {
+							this.virtualPersona.multiVP.audioListener.context.resume();
+						});
+					}
+
 					this.addAnimateFunctions([this.animate.bind(this)]);
 
 					return Promise.resolve();
