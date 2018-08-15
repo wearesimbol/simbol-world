@@ -39,7 +39,7 @@ class Identity extends EventEmitter {
 
 		this.uPort = new uport.Connect('Simbol', {
 			clientId: '2on1AwSMW48Asek7N5fT9aGf3voWqMkEAXJ',
-			network: 'rinkeby',
+			network: 'rinkeby', // Change to main net
 			signer: uport.SimpleSigner('12856cfa7d87eca683cbccf3617c82c615b8cac4347db20b1874884c2bc6453d') // eslint-disable-line new-cap
 		});
 
@@ -153,7 +153,13 @@ class Identity extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	setUPortData(credentials, save) {
-		this.uPortData = credentials;
+		this.uPortData = {
+			publicEncKey: credentials.publicEncKey,
+			pushToken: credentials.pushToken,
+			SimbolConfig: credentials.SimbolConfig
+		};
+		this.uPort.pushToken = credentials.pushToken;
+		this.uPort.publicEncKey = credentials.publicEncKey;
 		if (credentials.SimbolConfig) {
 			const config = JSON.parse(credentials.SimbolConfig);
 			this.avatarPath = config.avatar3D ||
