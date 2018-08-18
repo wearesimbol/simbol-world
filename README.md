@@ -27,7 +27,10 @@ const config = {
 		sceneToLoad: 'path/to/my/scene.gltf'
 	}
 };
-const simbol = new Simbol(config);
+const simbol = new Simbol(config); // If you're loading the ES Module or the CommonJS Module
+// or
+const simbol = new Simbol.default(config); // If you're loading simbol.script.js
+
 simbol.init();
 ```
 

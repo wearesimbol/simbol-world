@@ -8,7 +8,8 @@ const defaultConfig = {
 	channelName: 'default',
 	peer: {
 		trickle: true,
-		objectMode: false
+		objectMode: false,
+		config: {}
 	}
 };
 
@@ -211,6 +212,7 @@ class MultiVP extends EventEmitter {
 		this.config.peer.initiator = initiator;
 		this.config.peer.channelName = this.config.channelName;
 		this.config.peer.streams = [stream];
+		this.config.peer.config.iceServers = this.config.iceServers;
 
 		const peer = new Peer(this.config.peer);
 

@@ -70,15 +70,16 @@ class Scene {
 		}
 
 		this.canvas = this.renderer.domElement;
-		this.vrEffect = new VREffect(this.renderer, console.warn);
 
 		const sceneLoader = new Loader(config.sceneToLoad);
 		this._sceneLoader = sceneLoader;
 
-		window.addEventListener('vrdisplayactivate', () => {
-			this.vrEffect.requestPresent();
-		}, false);
-
+		if (config.animate) {
+			this.vrEffect = new VREffect(this.renderer, console.warn);
+			window.addEventListener('vrdisplayactivate', () => {
+				this.vrEffect.requestPresent();
+			}, false);
+		}
 		this._render = this._render.bind(this);
 	}
 
@@ -167,7 +168,7 @@ class Scene {
 			for (const child of mesh.children) {
 				this._setupMeshes(child, collidable, shadow);
 			}
-		} else if (mesh.isObject3D) {
+		} else if (mesh.isMesh) {
 			mesh.geometry && mesh.geometry.computeFaceNormals();
 			if (shadow) {
 				mesh.castShadow = true;
