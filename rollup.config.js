@@ -5,6 +5,31 @@ import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import replace from 'rollup-plugin-replace';
 
+/**
+ * Helper function to deep clone an object
+ *
+ * @param {object} obj - Object to clone
+ * @param {boolean} isArray - Whether it's cloning an array
+ *
+ * @returns {object} clone
+ */
+function cloneHelper(obj, isArray) {
+	let clone = {};
+	if (isArray) {
+		clone = [];
+	}
+	for (const i in obj) {
+		if (Array.isArray(obj[i])) {
+			clone[i] = cloneHelper(obj[i], true);
+		} else if (obj[i] !== null && typeof obj[i] === 'object') {
+			clone[i] = cloneHelper(obj[i]);
+		} else {
+			clone[i] = obj[i];
+		}
+	}
+	return clone;
+}
+
 const noThree = true;
 const noThreeReplace = replace({
 	'three': ``,
@@ -62,13 +87,14 @@ const config = {
 configs.push(config);
 
 if (noThree) {
-	const noThreeConfig = Object.assign({}, config);
-	noThreeConfig.plugins.push(noThreeReplace);
+	const noThreeConfig = cloneHelper(config);
+	noThreeConfig.plugins.unshift(noThreeReplace);
 	noThreeConfig.output = noThreeConfig.output.map((output) => {
 		output.file = output.file.replace('.js', '.nothree.js');
 		return output;
 	});
 	configs.push(noThreeConfig);
 }
+
 
 export default configs;

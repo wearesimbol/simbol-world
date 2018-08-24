@@ -159,7 +159,7 @@ class VirtualPersona extends EventEmitter {
 	 * @returns {Promise} promise - Promise that resolves when the mesh loads
 	*/
 	init() {
-		return this.loadMesh(this.identity.avatarPath, true)
+		return this.loadMesh("assets/models/AnonymousVP.glb", true)
 			.then(() => {
 				if (this.config.signIn && !this.identity.signedIn) {
 					return this.signIn();

@@ -1,4 +1,4 @@
-var simbol = (function (exports) {
+var Simbol = (function (exports) {
 	'use strict';
 
 	function unwrapExports (x) {
@@ -92274,7 +92274,7 @@ var simbol = (function (exports) {
 		 * @returns {Promise} promise - Promise that resolves when the mesh loads
 		*/
 		init() {
-			return this.loadMesh(this.identity.avatarPath, true)
+			return this.loadMesh("assets/models/AnonymousVP.glb", true)
 				.then(() => {
 					if (this.config.signIn && !this.identity.signedIn) {
 						return this.signIn();
@@ -93095,7 +93095,7 @@ var simbol = (function (exports) {
 				for (const child of mesh.children) {
 					this._setupMeshes(child, collidable, shadow);
 				}
-			} else if (mesh.isObject3D) {
+			} else if (mesh.isMesh) {
 				mesh.geometry && mesh.geometry.computeFaceNormals();
 				if (shadow) {
 					mesh.castShadow = true;
@@ -95687,6 +95687,9 @@ var simbol = (function (exports) {
 		const previousControllerQuaternion = new THREE.Quaternion();
 		previousControllerQuaternion.initialised = false;
 		const translationDirection = new THREE.Vector3();
+		const meshPosition = new THREE.Vector3();
+		const meshQuaternion = new THREE.Quaternion();
+		const meshRotation = new THREE.Euler();
 		let previousTime = 0;
 		let delta = 0;
 
@@ -95771,18 +95774,21 @@ var simbol = (function (exports) {
 				camera.rotation.order = 'YXZ';
 				camera.position.add(this.virtualPersona.fakeCamera.position);
 				camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
-
-				this.vpMesh.rotation.y = camera.rotation.y + Math.PI;
 			} else if (this.locomotion) {
-				this.vpMesh.rotation.y = this.locomotion.orientation.euler.y + Math.PI;
 				camera.rotation.order = 'XYZ';
 				camera.rotation.copy(this.locomotion.orientation.euler);
 			}
 
-			// Adjust the mesh's position
-			this.vpMesh.position.copy(camera.position);
-			const meshYPosition = camera.position.y - this.virtualPersona._meshHeight;
+			// Adjust the mesh's position and rotation
+			camera.matrixWorld.decompose(meshPosition, meshQuaternion, {});
+			this.vpMesh.position.copy(meshPosition);
+			const meshYPosition = meshPosition.y - this.virtualPersona._meshHeight;
 			this.vpMesh.position.setY(meshYPosition);
+
+			meshRotation.setFromQuaternion(meshQuaternion, 'YXZ');
+			console.log(meshRotation.y, camera.rotation.y);
+			// this.vpMesh.rotation.y = camera.rotation.y + Math.PI;
+			this.vpMesh.rotation.y = meshRotation.y + Math.PI;
 
 			// MultiVP
 			if (this.virtualPersona.multiVP) {
