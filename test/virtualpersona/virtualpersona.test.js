@@ -277,7 +277,11 @@ describe('VirtualPersona', () => {
 	describe('#render', () => {
 
 		let mesh;
-		const head = {};
+		const head = {
+			layers: {
+				set: sinon.stub()
+			}
+		};
 	
 		beforeEach(() => {
 			sinon.stub(THREE.Box3.prototype, 'setFromObject').returns({
@@ -289,6 +293,8 @@ describe('VirtualPersona', () => {
 			};
 			mesh.getObjectByName.withArgs('VirtualPersonaHead').returns(head);
 			mesh.getObjectByName.withArgs('VirtualPersonaBody').returns(2);
+			mesh.getObjectByName.withArgs('VirtualPersonaEyeBone').returns(3);
+			mesh.getObjectByName.withArgs('VirtualPersonaHeadBone').returns(4);
 		});
 
 		afterEach(() => {
@@ -303,11 +309,17 @@ describe('VirtualPersona', () => {
 
 			it('should save meshes', () => {
 				assert.equal(vp.mesh, mesh);
-				assert.isTrue(mesh.getObjectByName.calledTwice);
-				assert.isTrue(mesh.getObjectByName.firstCall.calledWith('VirtualPersonaHead'));
+				assert.equal(mesh.getObjectByName.callCount, 4);
+				assert.isTrue(mesh.getObjectByName.getCall(0).calledWith('VirtualPersonaHead'));
 				assert.equal(vp.headMesh, head);
-				assert.isTrue(mesh.getObjectByName.secondCall.calledWith('VirtualPersonaBody'));
+				assert.isTrue(vp.headMesh.layers.set.calledOnce);
+				assert.isTrue(vp.headMesh.layers.set.calledWith(3));
+				assert.isTrue(mesh.getObjectByName.getCall(1).calledWith('VirtualPersonaBody'));
 				assert.equal(vp.bodyMesh, 2);
+				assert.isTrue(mesh.getObjectByName.getCall(2).calledWith('VirtualPersonaEyeBone'));
+				assert.equal(vp.eyeBone, 3);
+				assert.isTrue(mesh.getObjectByName.getCall(3).calledWith('VirtualPersonaHeadBone'));
+				assert.equal(vp.headBone, 4);				
 			});
 
 			it('should add mesh to the scene', () => {
@@ -315,7 +327,8 @@ describe('VirtualPersona', () => {
 				assert.equal(EventEmitter.prototype.emit.callCount, 2);
 				assert.isTrue(EventEmitter.prototype.emit.calledWith('add'));
 				assert.deepEqual(EventEmitter.prototype.emit.secondCall.args[1], {
-					mesh: mesh
+					mesh: mesh,
+					type: 'VirtualPersona'
 				});
 			});
 		});

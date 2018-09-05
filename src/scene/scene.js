@@ -7,6 +7,11 @@ if (THREE) {
 import {VREffect} from '../libs/VREffect';
 import {Loader} from '../utils/loader';
 
+const defaultConfig = {
+	render: true,
+	animate: true
+};
+
 /** Class for the scene that will */
 class Scene {
 
@@ -48,7 +53,7 @@ class Scene {
 	 * @param {THREE.Camera} config.camera - If you're rendering on your own, Simbol needs access to your camera
 	 */
 	constructor(config = {render: true, animate: true}) {
-		this.config = config;
+		this.config = Object.assign({}, defaultConfig, config);
 		if (config.render) {
 			const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
 			const renderer = new THREE.WebGLRenderer({
@@ -210,11 +215,13 @@ class Scene {
 	 * @private
 	*/
 	_render(timestamp) {
-		for (const func of this.animateFunctions) {
-			func(timestamp);
-		}
+		if (this.scene && this.camera) {
+			for (const func of this.animateFunctions) {
+				func(timestamp);
+			}
 
-		this.vrEffect.render(this.scene, this.camera);
+			this.vrEffect.render(this.scene, this.camera);
+		}
 
 		this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
 	}

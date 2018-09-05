@@ -6,6 +6,11 @@ const defaultConfig = {
 	socketURL: 'ws://127.0.0.1',
 	socketPort: 8091,
 	channelName: 'default',
+	iceServers: [
+		{urls: 'stun:global.stun.twilio.com:3478?transport=udp'},
+		{urls:'stun:stun.l.google.com:19302'},
+		{urls:'stun:stun1.l.google.com:19302'}
+	],
 	peer: {
 		trickle: true,
 		objectMode: false,

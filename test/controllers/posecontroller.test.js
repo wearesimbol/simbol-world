@@ -239,7 +239,8 @@ describe('PoseController', () => {
 				play: sinon.stub()
 			};
 			previousAction = {
-				play: sinon.stub()
+				play: sinon.stub(),
+				crossFadeTo: sinon.stub()
 			};
 		});
 
@@ -373,6 +374,7 @@ describe('PoseController', () => {
 			it('should handle actions', () => {
 				assert.equal(previousAction.weight, 0.15);
 				assert.isTrue(previousAction.play.calledOnce);
+				assert.isTrue(previousAction.crossFadeTo.calledOnce);
 				assert.isTrue(clipAction.play.calledOnce);
 			});
 
@@ -440,9 +442,7 @@ describe('PoseController', () => {
 				sinon.stub(poseController._animationMixer, 'update');
 				sinon.stub(THREE.Vector3.prototype, 'fromArray');
 
-				camera = {
-					position: 0
-				};
+				camera = new THREE.Object3D();
 			});
 
 			afterEach(() => {

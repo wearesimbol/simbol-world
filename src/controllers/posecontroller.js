@@ -188,6 +188,7 @@ class PoseController extends EventEmitter {
 		}
 
 		const clipAction = this._animationMixer.clipAction(gestureName);
+
 		if (!clipAction) {
 			return;
 		}
@@ -213,16 +214,21 @@ class PoseController extends EventEmitter {
 				gesture: gestureName,
 				previousGesture: false
 			});
+
+			this.currentGesture = gestureName;
+
 			return;
 		}
 
 		const previousAction = this._animationMixer.clipAction(this.currentGesture);
+
 		if (!previousAction) {
 			return;
 		}
 		previousAction.weight = 0.15;
 		previousAction.play();
 		clipAction.play();
+		previousAction.crossFadeTo(clipAction, 0.15, true);
 
 		this.emit('gesturechange', {
 			gesture: gestureName,
@@ -231,47 +237,56 @@ class PoseController extends EventEmitter {
 
 		this.currentGesture = gestureName;
 	}
+}
 
-	/**
-	 * Gets latest information from gamepad and updates the model based on it
-	 * It applies an arm model if it's a 3DOF controller
-	 * It applies the correct hand gesture
-	 * It also emits events for different button states that have the structure:
-	 * "button""pressed/unpressed/touched/untouched" e.g. "triggerpressed"
-	 *
-	 * @param {number} delta - Delta from the animation frame
-	 * @param {THREE.Camera} camera - Scene camera
-	 * @param {number} userHeight - The user's set height
-	 *
-	 * @example
-	 * // This is executed in an animation loop
-	 * gamepadController.update();
-	 *
-	 * @return {undefined}
-	 *
-	 * @emits PoseController#controllerdisconnected
-	 * @emits PoseController#thumbpadpressed
-	 * @emits PoseController#thumbpadunpressed
-	 * @emits PoseController#thumbpadtouched
-	 * @emits PoseController#thumbpaduntouched
-	 * @emits PoseController#triggerpressed
-	 * @emits PoseController#triggerunpressed
-	 * @emits PoseController#triggertouched
-	 * @emits PoseController#triggeruntouched
-	 * @emits PoseController#grippressed
-	 * @emits PoseController#gripunpressed
-	 * @emits PoseController#griptouched
-	 * @emits PoseController#gripuntouched
-	 * @emits PoseController#apressed
-	 * @emits PoseController#aunpressed
-	 * @emits PoseController#atouched
-	 * @emits PoseController#auntouched
-	 * @emits PoseController#bpressed
-	 * @emits PoseController#bunpressed
-	 * @emits PoseController#btouched
-	 * @emits PoseController#buntouched
-	 */
-	update(delta, camera, userHeight) {
+/**
+ * Gets latest information from gamepad and updates the model based on it
+ * It applies an arm model if it's a 3DOF controller
+ * It applies the correct hand gesture
+ * It also emits events for different button states that have the structure:
+ * "button""pressed/unpressed/touched/untouched" e.g. "triggerpressed"
+ *
+ * @param {number} delta - Delta from the animation frame
+ * @param {THREE.Camera} camera - Scene camera
+ * @param {number} userHeight - The user's set height
+ *
+ * @example
+ * // This is executed in an animation loop
+ * gamepadController.update();
+ *
+ * @return {undefined}
+ *
+ * @emits PoseController#controllerdisconnected
+ * @emits PoseController#thumbpadpressed
+ * @emits PoseController#thumbpadunpressed
+ * @emits PoseController#thumbpadtouched
+ * @emits PoseController#thumbpaduntouched
+ * @emits PoseController#triggerpressed
+ * @emits PoseController#triggerunpressed
+ * @emits PoseController#triggertouched
+ * @emits PoseController#triggeruntouched
+ * @emits PoseController#grippressed
+ * @emits PoseController#gripunpressed
+ * @emits PoseController#griptouched
+ * @emits PoseController#gripuntouched
+ * @emits PoseController#apressed
+ * @emits PoseController#aunpressed
+ * @emits PoseController#atouched
+ * @emits PoseController#auntouched
+ * @emits PoseController#bpressed
+ * @emits PoseController#bunpressed
+ * @emits PoseController#btouched
+ * @emits PoseController#buntouched
+ */
+PoseController.prototype.update = (function() {
+
+	const cameraPosition = new THREE.Vector3();
+	const cameraQuaternion = new THREE.Quaternion();
+	const cameraRotation = new THREE.Euler();
+	const worldToLocal = new THREE.Matrix4();
+	const poseMatrix = new THREE.Matrix4();
+
+	return function update(delta, camera, userHeight) {
 		const gamepad = Controllers.getGamepad(this.id);
 
 		if (!gamepad) {
@@ -313,6 +328,7 @@ class PoseController extends EventEmitter {
 		}
 
 		const gesture = this.determineGesture();
+
 		this.setGesture(gesture);
 
 		this._animationMixer.update(delta);
@@ -325,19 +341,15 @@ class PoseController extends EventEmitter {
 			this.position.fromArray(gamepad.pose.position);
 		}
 
+		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
+		cameraRotation.setFromQuaternion(cameraQuaternion, 'YXZ');
+
 		if (this.handMesh) {
-			if (!this.worldToLocal) {
-				this.worldToLocal = new THREE.Matrix4().getInverse(this.handMesh.parent.matrixWorld);
-			} else {
-				this.worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
-			}
-			if (!this.poseMatrix) {
-				this.poseMatrix = new THREE.Matrix4();
-			}
+			worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
 
 			if (!gamepad.pose.position) {
 				// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-				this.position.copy(camera.position);
+				this.position.copy(cameraPosition);
 
 				if (!this.offset) {
 					this.offset = new THREE.Vector3();
@@ -350,7 +362,7 @@ class PoseController extends EventEmitter {
 				// Scale offset by user height
 				this.offset.multiplyScalar(userHeight);
 				// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-				this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
+				this.offset.applyAxisAngle(VERTICAL_VECTOR, cameraRotation.y);
 				// Apply rotated offset to camera position
 				this.position.add(this.offset);
 
@@ -366,16 +378,20 @@ class PoseController extends EventEmitter {
 				this.position.add(this.offset);
 			}
 
-			this.poseMatrix.makeRotationFromQuaternion(this.quaternion);
-			this.poseMatrix.setPosition(this.position);
-			this.poseMatrix.multiplyMatrices(this.worldToLocal, this.poseMatrix);
-			this.poseMatrix.decompose(this.handMesh.position, this.handMesh.quaternion, {});
+			poseMatrix.makeRotationFromQuaternion(this.quaternion);
+			poseMatrix.setPosition(this.position);
+			poseMatrix.multiplyMatrices(worldToLocal, poseMatrix);
+			poseMatrix.decompose(this.handMesh.position, this.handMesh.quaternion, {});
+			// Makes sure the hand is pointing in the same direction as how one holds the controller
+			this.handMesh.rotateX(-(Math.PI / 2));
+			this.handMesh.rotateY(-(Math.PI / 2));
+			this.handMesh.updateMatrixWorld();
 
 			if (gamepad.pose.position) {
-				this.handMesh.position.add(camera.position);
+				this.handMesh.position.add(cameraPosition);
 			}
 		}
-	}
-}
+	};
+}());
 
 export {PoseController};

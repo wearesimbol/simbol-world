@@ -33,6 +33,7 @@ describe('Simbol', () => {
             hand: 'right',
             scene: {
                 render: true,
+                animate: true,
                 canvas: document.createElement('canvas')
             }
         });
@@ -276,8 +277,13 @@ describe('Simbol', () => {
 			sinon.stub(THREE.Vector3.prototype, 'set');
             sinon.stub(THREE.Vector3.prototype, 'applyQuaternion');
             sinon.stub(THREE.Object3D.prototype, 'copy');
+            sinon.stub(THREE.Matrix4.prototype, 'getInverse');
+            sinon.stub(THREE.Matrix4.prototype, 'makeRotationFromEuler');
+            sinon.stub(THREE.Matrix4.prototype, 'multiplyMatrices');
+            sinon.stub(THREE.Matrix4.prototype, 'decompose');
+            sinon.stub(THREE.Euler.prototype, 'setFromQuaternion');
+            sinon.stub(THREE.Euler.prototype, 'copy');
 			sinon.stub(Physics, 'checkMeshCollision').returns(false);
-			// sinon.stub(Physics, 'checkRayCollision').returns(true);
 
 			simbol.locomotion = {
 				phi: 1,
@@ -321,7 +327,7 @@ describe('Simbol', () => {
             };
 
 			simbol.virtualPersona.fakeCamera = {
-				quaternion: 2,
+				rotation: 2,
 				position: {
 					applyQuaternion: sinon.stub()
 				}
@@ -331,27 +337,19 @@ describe('Simbol', () => {
 			simbol._scene = {
 				camera: {
 					rotation: {
-						set: sinon.stub(),
-						y: 1,
-						copy: sinon.stub()
+                        x: 1,
+                        z: 1
 					},
-					position: {
-						setX: sinon.stub(),
-						setY: sinon.stub(),
-						setZ: sinon.stub(),
-						copy: sinon.stub(),
-						equals: sinon.stub().returns(false),
-                        add: sinon.stub(),
-                        x: 0,
-                        y: 0,
-                        z: 0
-					},
-					quaternion: {
-						copy: sinon.stub(),
-						multiply: sinon.stub()
-					},
-					translateZ: sinon.stub(),
-					translateX: sinon.stub()
+                    quaternion: {},
+                    matrixWorld: {
+                        decompose: sinon.stub().callsFake((pos, quart) => {
+                            pos = 0;
+                            quart = 1;
+                        })
+                    },
+                    parent: {
+                        matrixWorld: 1
+                    }
 				},
 				vrEffect: {
 					isPresenting: false
@@ -379,11 +377,19 @@ describe('Simbol', () => {
 					y: 0
 				},
 				position: {
-					copy: sinon.stub(),
+                    add: sinon.stub(),
+                    copy: sinon.stub(),
+                    equals: sinon.stub(),
+                    setX: sinon.stub(),
                     setY: sinon.stub(),
-                    y: 0
+                    setZ: sinon.stub(),
+                    x: 0,
+                    y: 0,
+                    z: 0
                 },
-                children: []
+                children: [],
+                translateZ: sinon.stub(),
+                translateX: sinon.stub()
 			};
 			simbol.vpMesh.position.copy.returns(simbol.vpMesh.position);
 		});
@@ -392,6 +398,12 @@ describe('Simbol', () => {
 			THREE.Vector3.prototype.set.restore();
             THREE.Vector3.prototype.applyQuaternion.restore();
             THREE.Object3D.prototype.copy.restore();
+            THREE.Matrix4.prototype.getInverse.restore();
+            THREE.Matrix4.prototype.makeRotationFromEuler.restore();
+            THREE.Matrix4.prototype.multiplyMatrices.restore();
+            THREE.Matrix4.prototype.decompose.restore();
+            THREE.Euler.prototype.copy.restore();
+            THREE.Euler.prototype.setFromQuaternion.restore();
 			Physics.checkMeshCollision.restore();
 		});
 
@@ -400,17 +412,13 @@ describe('Simbol', () => {
 			beforeEach(() => {
 				simbol.animate(1000);
 			});
-
-			it('should handle position', () => {
-				assert.isTrue(simbol._scene.camera.position.copy.calledOnce);
-			});
 			
-			it('should update the camera\'s position', () => {
-				assert.isTrue(simbol._scene.camera.translateZ.calledOnce);
-				assert.isTrue(simbol._scene.camera.translateZ.calledWith(0));
+			it('should update the vpMesh\'s position', () => {
+				assert.isTrue(simbol.vpMesh.translateZ.calledOnce);
+				assert.isTrue(simbol.vpMesh.translateZ.calledWith(1));
 	
-				assert.isTrue(simbol._scene.camera.translateX.calledOnce);
-				assert.isTrue(simbol._scene.camera.translateX.calledWith(0));
+				assert.isTrue(simbol.vpMesh.translateX.calledOnce);
+				assert.isTrue(simbol.vpMesh.translateX.calledWith(1));
 			});
 
 			it('should handle collisions', () => {
@@ -424,12 +432,13 @@ describe('Simbol', () => {
 			});
 
 			it('should handle teleportation', () => {
-				assert.isTrue(simbol._scene.camera.position.setX.calledOnce);
-				assert.isTrue(simbol._scene.camera.position.setY.calledTwice);
-				assert.isTrue(simbol._scene.camera.position.setZ.calledOnce);
-				assert.isTrue(simbol._scene.camera.position.setX.calledWith(1));
-				assert.isTrue(simbol._scene.camera.position.setY.calledWith(1.7));
-				assert.isTrue(simbol._scene.camera.position.setZ.calledWith(2));
+                assert.isTrue(simbol.vpMesh.position.setX.calledOnce);
+                // Also called in VP height
+				assert.isTrue(simbol.vpMesh.position.setY.calledTwice);
+				assert.isTrue(simbol.vpMesh.position.setZ.calledOnce);
+				assert.isTrue(simbol.vpMesh.position.setX.calledWith(1));
+				assert.isTrue(simbol.vpMesh.position.setY.calledWith(0));
+				assert.isTrue(simbol.vpMesh.position.setZ.calledWith(2));
 				assert.isTrue(simbol.locomotion.teleportation.resetTeleport.calledOnce);
 			});
 
@@ -438,30 +447,33 @@ describe('Simbol', () => {
 			});
 
 			it('should fix the camera\'s height', () => {
-				assert.isTrue(simbol._scene.camera.position.setY.calledTwice);
-				assert.isTrue(simbol._scene.camera.position.setY.calledWith(1.7));
+				assert.isTrue(simbol.vpMesh.position.setY.calledTwice);
+				assert.isTrue(simbol.vpMesh.position.setY.calledWith(0));
             });
             
             it('should set the unalteredCamera', () => {
                 assert.isTrue(THREE.Object3D.prototype.copy.calledOnce);
                 assert.isTrue(THREE.Object3D.prototype.copy.calledWith(simbol._scene.camera));
-            })
-			
-			it('should set the camera\'s rotation', () => {
-				assert.isTrue(simbol._scene.camera.rotation.copy.calledOnce);
-				assert.isTrue(simbol._scene.camera.rotation.copy.calledWith(simbol.locomotion.orientation.euler));
-			});
+            });
 
 			it('should set the mesh\'s rotation', () => {
-				assert.equal(simbol.vpMesh.rotation.y, Math.PI + 1);
-			});
-
-			it('should set the mesh\'s position', () => {
-				assert.isTrue(simbol.vpMesh.position.copy.calledOnce);
-				assert.isTrue(simbol.vpMesh.position.copy.calledWith(simbol._scene.camera.position));
-
-                assert.isTrue(simbol.vpMesh.position.setY.calledOnce);
-				assert.isTrue(simbol.vpMesh.position.setY.calledWith(0));
+                assert.isTrue(THREE.Euler.prototype.copy.calledOnce);
+                assert.deepEqual(THREE.Euler.prototype.copy.firstCall.args[0], {y:1});
+				assert.equal(simbol.vpMesh.rotation.y, 0); // Can't change the this value of the THREE.Euler instance
+            });
+            
+            it('should set the camera\'s rotation', () => {
+                assert.isTrue(THREE.Matrix4.prototype.getInverse.calledOnce);
+                assert.isTrue(THREE.Matrix4.prototype.getInverse.calledWith(1));
+                assert.isTrue(THREE.Matrix4.prototype.makeRotationFromEuler.calledOnce);
+                assert.equal(THREE.Matrix4.prototype.makeRotationFromEuler.firstCall.args[0].y, 0); // Can't change the this value of the THREE.Euler instance
+                assert.isTrue(THREE.Matrix4.prototype.multiplyMatrices.calledOnce);
+                assert.isTrue(THREE.Matrix4.prototype.decompose.calledOnce);
+                assert.isTrue(THREE.Euler.prototype.setFromQuaternion.calledOnce);
+                assert.deepEqual(THREE.Euler.prototype.setFromQuaternion.firstCall.args[0], new THREE.Quaternion());
+				assert.equal(simbol._scene.camera.rotation.x, 0); // Can't change the this value of the THREE.Euler instance
+				assert.equal(simbol._scene.camera.rotation.z, 0); // Can't change the this value of the THREE.Euler instance
+                assert.isTrue(simbol._scene.camera.matrixWorld.decompose.calledOnce);
 			});
 
 			it('should send data via multiVP', () => {
@@ -470,8 +482,10 @@ describe('Simbol', () => {
 			});
 
 			it('should update interactions', () => {
-				assert.isTrue(simbol.interactions.update.calledOnce);
-				assert.isTrue(simbol.interactions.update.calledWith(simbol._scene.camera.position, simbol._scene.camera.quaternion));
+                assert.isTrue(simbol.interactions.update.calledOnce);
+                const args = simbol.interactions.update.firstCall.args;
+				assert.deepEqual(args[0], new THREE.Vector3());
+				assert.deepEqual(args[1], new THREE.Quaternion());
 			});
 
 			it('should update controllers', () => {
@@ -493,14 +507,10 @@ describe('Simbol', () => {
 			});
 
 			it('should set the camera\'s rotation', () => {
-				assert.isTrue(simbol._scene.camera.position.add.calledOnce);
-				assert.deepEqual(simbol._scene.camera.position.add.firstCall.args[0], simbol.virtualPersona.fakeCamera.position);
-				assert.isTrue(simbol._scene.camera.quaternion.copy.calledOnce);
-				assert.isTrue(simbol._scene.camera.quaternion.copy.calledWith(2));
-			});
-
-			it('should set the mesh\'s rotation', () => {
-				assert.equal(simbol.vpMesh.rotation.y, Math.PI + 1);
+				assert.isTrue(simbol.vpMesh.position.add.calledOnce);
+				assert.deepEqual(simbol.vpMesh.position.add.firstCall.args[0], simbol.virtualPersona.fakeCamera.position);
+                assert.isTrue(THREE.Euler.prototype.copy.calledOnce);
+                assert.deepEqual(THREE.Euler.prototype.copy.firstCall.args[0], 2);
 			});
 		});
 	});

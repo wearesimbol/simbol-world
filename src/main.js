@@ -134,6 +134,14 @@ class Simbol extends EventEmitter {
 	addListeners(...components) {
 		for (const component of components) {
 			component.on('add', (event) => {
+				if (event.type === 'VirtualPersona') {
+					this.vpMesh = event.mesh;
+					this.controllers.updateControllers(this.vpMesh);
+					this.virtualPersona.eyeBone.add(this._scene.camera);
+					// Fix so it doesn't look backwards
+					this._scene.camera.rotation.y = Math.PI;
+				}
+
 				this.addToScene([event.mesh]);
 			});
 
@@ -172,6 +180,10 @@ class Simbol extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	addToScene(meshes, collidable = false, shadow = false) {
+		if (!(meshes instanceof Array)) {
+			meshes = [meshes];
+		}
+
 		this._scene.addToScene([...meshes], collidable, shadow);
 	}
 
@@ -248,14 +260,18 @@ class Simbol extends EventEmitter {
 * @returns {undefined}
 */
 Simbol.prototype.animate = (function() {
+	let initialised = false;
 	const unalteredCamera = new THREE.Object3D();
-	const previousCameraPosition = new THREE.Vector3();
+	const previousPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
 	previousControllerQuaternion.initialised = false;
 	const translationDirection = new THREE.Vector3();
-	const meshPosition = new THREE.Vector3();
-	const meshQuaternion = new THREE.Quaternion();
-	const meshRotation = new THREE.Euler();
+
+	const locomotionRotation = new THREE.Euler();
+	const cameraWorldToLocal = new THREE.Matrix4();
+	const cameraPosition = new THREE.Vector3();
+	const cameraQuaternion = new THREE.Quaternion();
+	const poseMatrix = new THREE.Matrix4();
 	let previousTime = 0;
 	let delta = 0;
 
@@ -272,14 +288,15 @@ Simbol.prototype.animate = (function() {
 			controller = this.controllers.mainHandController;
 		}
 
-		if (!previousControllerQuaternion.initialised) {
+		if (!initialised) {
 			previousControllerQuaternion.copy(controller.quaternion);
-			previousControllerQuaternion.initialised = true;
+			initialised = true;
 		}
 
-		// Handle position
-		camera.position.copy(previousCameraPosition);
+		// Resets position, specially due to running #add methods on it
+		this.vpMesh.position.copy(previousPosition);
 
+		// Handle position
 		if (this.locomotion) {
 			// Translation
 			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
@@ -288,11 +305,11 @@ Simbol.prototype.animate = (function() {
 				const collision = Physics.checkMeshCollision(this.vpMesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
 				if (!collision) {
 					if (this.locomotion.translatingZ) {
-						camera.translateZ(this.locomotion.translatingZ * delta);
+						this.vpMesh.translateZ(this.locomotion.translatingZ * delta);
 					}
 
 					if (this.locomotion.translatingX) {
-						camera.translateX(this.locomotion.translatingX * delta);
+						this.vpMesh.translateX(this.locomotion.translatingX * delta);
 					}
 				}
 			}
@@ -303,9 +320,9 @@ Simbol.prototype.animate = (function() {
 			}
 
 			if (this.locomotion.teleportation.isTeleportActive) {
-				camera.position.setX(this.locomotion.teleportation.hitPoint.x);
-				camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.virtualPersona.userHeight);
-				camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
+				this.vpMesh.position.setX(this.locomotion.teleportation.hitPoint.x);
+				this.vpMesh.position.setY(this.locomotion.teleportation.hitPoint.y);
+				this.vpMesh.position.setZ(this.locomotion.teleportation.hitPoint.z);
 				this.locomotion.teleportation.resetTeleport();
 			}
 
@@ -319,14 +336,14 @@ Simbol.prototype.animate = (function() {
 			}
 		}
 
-		// Camera height
-		if (!camera.position.equals(previousCameraPosition)) {
+		// VP height
+		if (!this.vpMesh.position.equals(previousPosition)) {
 			this.virtualPersona.setFloorHeight(this._scene);
 		}
 
-		camera.position.setY(this.virtualPersona.floorHeight + this.virtualPersona.userHeight);
+		this.vpMesh.position.setY(this.virtualPersona.floorHeight);
 
-		previousCameraPosition.copy(camera.position);
+		previousPosition.copy(this.vpMesh.position);
 		if (controller.quaternion) {
 			previousControllerQuaternion.copy(controller.quaternion);
 		}
@@ -337,22 +354,25 @@ Simbol.prototype.animate = (function() {
 		if (Utils.isPresenting) {
 			this.virtualPersona.vrControls.update();
 
-			camera.rotation.order = 'YXZ';
-			camera.position.add(this.virtualPersona.fakeCamera.position);
-			camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
+			this.vpMesh.position.add(this.virtualPersona.fakeCamera.position);
+			locomotionRotation.copy(this.virtualPersona.fakeCamera.rotation);
 		} else if (this.locomotion) {
-			camera.rotation.order = 'XYZ';
-			camera.rotation.copy(this.locomotion.orientation.euler);
+			locomotionRotation.copy(this.locomotion.orientation.euler);
 		}
+		this.vpMesh.rotation.y = locomotionRotation.y;
 
-		// Adjust the mesh's position and rotation
-		camera.matrixWorld.decompose(meshPosition, meshQuaternion, {});
-		this.vpMesh.position.copy(meshPosition);
-		const meshYPosition = meshPosition.y - this.virtualPersona._meshHeight;
-		this.vpMesh.position.setY(meshYPosition);
-
-		meshRotation.setFromQuaternion(meshQuaternion, 'YXZ');
-		this.vpMesh.rotation.y = meshRotation.y + Math.PI;
+		// Handle camera rotation
+		if (this.locomotion) {
+			// Calculatw World-To-Local for the camera's rotation
+			cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
+			poseMatrix.makeRotationFromEuler(locomotionRotation);
+			poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
+			poseMatrix.decompose({}, cameraQuaternion, {});
+			locomotionRotation.setFromQuaternion(cameraQuaternion);
+			camera.rotation.x = -locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
+			camera.rotation.z = locomotionRotation.z;
+		}
+		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
 
 		// MultiVP
 		if (this.virtualPersona.multiVP) {
@@ -360,7 +380,9 @@ Simbol.prototype.animate = (function() {
 		}
 
 		// Interactions
-		this.interactions.update(controller.position, controller.quaternion);
+		const position = controller === camera ? cameraPosition : controller.position;
+		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+		this.interactions.update(position, quaternion);
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);
