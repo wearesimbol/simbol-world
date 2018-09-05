@@ -37,8 +37,8 @@ class Loader {
 			const gltfWorldLoader = new GLTFLoader();
 			gltfWorldLoader.setCrossOrigin('');
 			gltfWorldLoader.load(this.meshToLoad, (data) => {
-				const loadedScene = data.scene;
-				loadedScene.animations = data.animations;
+				const loadedScene = data.scene || data.scenes[0];
+				loadedScene.animations = data.animations || [];
 				resolve(loadedScene);
 			}, undefined, reject);
 		});

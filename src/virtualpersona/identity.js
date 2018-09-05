@@ -154,6 +154,8 @@ class Identity extends EventEmitter {
 	 */
 	setUPortData(credentials, save) {
 		this.uPortData = {
+			address: credentials.address,
+			did: credentials.did,
 			publicEncKey: credentials.publicEncKey,
 			pushToken: credentials.pushToken,
 			SimbolConfig: credentials.SimbolConfig

@@ -344,21 +344,26 @@ class Teleportation {
 
 		return hitCylinder;
 	}
+}
 
-	/**
-	 * Updates the ray, when active, depending on the world position by displaying it
-	 * and checking if it hits an object
-	 *
-	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
-	 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
-	 *
-	 * @example
-	 * teleporation.updateRayCurve();
-	 *
-	 * @return {undefined}
-	 */
-	updateRayCurve(controller, scene) {
-		if (!controller || !(controller instanceof THREE.Object3D) && !(controller.model instanceof THREE.Object3D)) {
+/**
+ * Updates the ray, when active, depending on the world position by displaying it
+ * and checking if it hits an object
+ *
+ * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
+ * @param {THREE.Scene} scene - Scene that the ray curve can collision with
+ *
+ * @example
+ * teleporation.updateRayCurve();
+ *
+ * @return {undefined}
+ */
+Teleportation.prototype.updateRayCurve = (function() {
+	const position = new THREE.Vector3();
+	const quaternion = new THREE.Quaternion();
+
+	return function(controller, scene) {
+		if (!controller || !(controller instanceof THREE.Object3D) && !(controller.handMesh instanceof THREE.Object3D)) {
 			this.setRayCurveState(false);
 			return;
 		}
@@ -374,11 +379,14 @@ class Teleportation {
 		this.rayCurve.visible = true;
 		this.rayCurve.material.color.set(this.missColor);
 
-		controller = controller.model || controller;
-		const quaternion = controller.getWorldQuaternion(new THREE.Quaternion());
+		const object = controller.handMesh || controller;
+
+		object.matrixWorld.decompose(position, quaternion, {});
+		if (controller.handMesh) {
+			this._shootAxis.set(0, 1, 0);
+		}
 		const direction = this._shootAxis.clone().applyQuaternion(quaternion).normalize();
 		this._setDirection(direction);
-		const position = controller.position.clone();
 		const velocity = direction.clone().multiplyScalar(this.velocity);
 
 		const lastSegment = position.clone();
@@ -420,7 +428,7 @@ class Teleportation {
 		if (!this.hitPoint) {
 			clearTimeout(this.activateTeleport.id);
 		}
-	}
-}
+	};
+}());
 
 export {Teleportation};

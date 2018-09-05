@@ -409,13 +409,13 @@ describe('Teleportation', () => {
 				assert.isTrue(rayCurve.visible);
 				assert.deepEqual(rayCurve.material.color.set.args[0], [teleportation.missColor]);
 				assert.isTrue(teleportation._setDirection.calledOnce);
-				assert.deepEqual(teleportation._setDirection.firstCall.args[0], new THREE.Vector3().set(-1, 0, 0));
+				assert.deepEqual(teleportation._setDirection.firstCall.args[0], new THREE.Vector3().set(0, 0, -1));
 			});
 
 			it('should set up the rayCaster', () => {
 				assert.equal(teleportation._parabolicCurve.callCount, 1);
-				assert.deepEqual(teleportation._parabolicCurve.lastCall.args[0].toArray(), [1, 1, 1]);
-				assert.deepEqual(teleportation._parabolicCurve.lastCall.args[1].toArray(), [-5, 0, 0]);
+				assert.deepEqual(teleportation._parabolicCurve.lastCall.args[0].toArray(), [0, 0, 0]);
+				assert.deepEqual(teleportation._parabolicCurve.lastCall.args[1].toArray(), [0, 0, -5]);
 				assert.equal(teleportation._parabolicCurve.lastCall.args[2], 1);
 				assert.equal(rayCaster.far, 1);
 				assert.equal(rayCaster.set.callCount, 1);

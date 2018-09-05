@@ -54345,8 +54345,8 @@ var Simbol = (function (exports) {
 				const gltfWorldLoader = new GLTFLoader();
 				gltfWorldLoader.setCrossOrigin('');
 				gltfWorldLoader.load(this.meshToLoad, (data) => {
-					const loadedScene = data.scene;
-					loadedScene.animations = data.animations;
+					const loadedScene = data.scene || data.scenes[0];
+					loadedScene.animations = data.animations || [];
 					resolve(loadedScene);
 				}, undefined, reject);
 			});
@@ -54855,6 +54855,7 @@ var Simbol = (function (exports) {
 			}
 
 			const clipAction = this._animationMixer.clipAction(gestureName);
+
 			if (!clipAction) {
 				return;
 			}
@@ -54880,16 +54881,21 @@ var Simbol = (function (exports) {
 					gesture: gestureName,
 					previousGesture: false
 				});
+
+				this.currentGesture = gestureName;
+
 				return;
 			}
 
 			const previousAction = this._animationMixer.clipAction(this.currentGesture);
+
 			if (!previousAction) {
 				return;
 			}
 			previousAction.weight = 0.15;
 			previousAction.play();
 			clipAction.play();
+			previousAction.crossFadeTo(clipAction, 0.15, true);
 
 			this.emit('gesturechange', {
 				gesture: gestureName,
@@ -54898,47 +54904,56 @@ var Simbol = (function (exports) {
 
 			this.currentGesture = gestureName;
 		}
+	}
 
-		/**
-		 * Gets latest information from gamepad and updates the model based on it
-		 * It applies an arm model if it's a 3DOF controller
-		 * It applies the correct hand gesture
-		 * It also emits events for different button states that have the structure:
-		 * "button""pressed/unpressed/touched/untouched" e.g. "triggerpressed"
-		 *
-		 * @param {number} delta - Delta from the animation frame
-		 * @param {THREE.Camera} camera - Scene camera
-		 * @param {number} userHeight - The user's set height
-		 *
-		 * @example
-		 * // This is executed in an animation loop
-		 * gamepadController.update();
-		 *
-		 * @return {undefined}
-		 *
-		 * @emits PoseController#controllerdisconnected
-		 * @emits PoseController#thumbpadpressed
-		 * @emits PoseController#thumbpadunpressed
-		 * @emits PoseController#thumbpadtouched
-		 * @emits PoseController#thumbpaduntouched
-		 * @emits PoseController#triggerpressed
-		 * @emits PoseController#triggerunpressed
-		 * @emits PoseController#triggertouched
-		 * @emits PoseController#triggeruntouched
-		 * @emits PoseController#grippressed
-		 * @emits PoseController#gripunpressed
-		 * @emits PoseController#griptouched
-		 * @emits PoseController#gripuntouched
-		 * @emits PoseController#apressed
-		 * @emits PoseController#aunpressed
-		 * @emits PoseController#atouched
-		 * @emits PoseController#auntouched
-		 * @emits PoseController#bpressed
-		 * @emits PoseController#bunpressed
-		 * @emits PoseController#btouched
-		 * @emits PoseController#buntouched
-		 */
-		update(delta, camera, userHeight) {
+	/**
+	 * Gets latest information from gamepad and updates the model based on it
+	 * It applies an arm model if it's a 3DOF controller
+	 * It applies the correct hand gesture
+	 * It also emits events for different button states that have the structure:
+	 * "button""pressed/unpressed/touched/untouched" e.g. "triggerpressed"
+	 *
+	 * @param {number} delta - Delta from the animation frame
+	 * @param {THREE.Camera} camera - Scene camera
+	 * @param {number} userHeight - The user's set height
+	 *
+	 * @example
+	 * // This is executed in an animation loop
+	 * gamepadController.update();
+	 *
+	 * @return {undefined}
+	 *
+	 * @emits PoseController#controllerdisconnected
+	 * @emits PoseController#thumbpadpressed
+	 * @emits PoseController#thumbpadunpressed
+	 * @emits PoseController#thumbpadtouched
+	 * @emits PoseController#thumbpaduntouched
+	 * @emits PoseController#triggerpressed
+	 * @emits PoseController#triggerunpressed
+	 * @emits PoseController#triggertouched
+	 * @emits PoseController#triggeruntouched
+	 * @emits PoseController#grippressed
+	 * @emits PoseController#gripunpressed
+	 * @emits PoseController#griptouched
+	 * @emits PoseController#gripuntouched
+	 * @emits PoseController#apressed
+	 * @emits PoseController#aunpressed
+	 * @emits PoseController#atouched
+	 * @emits PoseController#auntouched
+	 * @emits PoseController#bpressed
+	 * @emits PoseController#bunpressed
+	 * @emits PoseController#btouched
+	 * @emits PoseController#buntouched
+	 */
+	PoseController.prototype.update = (function() {
+
+		const cameraPosition = new Vector3();
+		const cameraQuaternion = new Quaternion();
+		const cameraRotation = new Euler();
+		const worldToLocal = new Matrix4();
+		const poseMatrix = new Matrix4();
+
+		return function update(delta, camera, userHeight) {
 			const gamepad = Controllers.getGamepad(this.id);
 
 			if (!gamepad) {
@@ -54980,6 +54995,7 @@ var Simbol = (function (exports) {
 			}
 
 			const gesture = this.determineGesture();
+
 			this.setGesture(gesture);
 
 			this._animationMixer.update(delta);
@@ -54992,19 +55008,15 @@ var Simbol = (function (exports) {
 				this.position.fromArray(gamepad.pose.position);
 			}
 
+			camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
+			cameraRotation.setFromQuaternion(cameraQuaternion, 'YXZ');
+
 			if (this.handMesh) {
-				if (!this.worldToLocal) {
-					this.worldToLocal = new Matrix4().getInverse(this.handMesh.parent.matrixWorld);
-				} else {
-					this.worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
-				}
-				if (!this.poseMatrix) {
-					this.poseMatrix = new Matrix4();
-				}
+				worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
 
 				if (!gamepad.pose.position) {
 					// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-					this.position.copy(camera.position);
+					this.position.copy(cameraPosition);
 
 					if (!this.offset) {
 						this.offset = new Vector3();
@@ -55017,7 +55029,7 @@ var Simbol = (function (exports) {
 					// Scale offset by user height
 					this.offset.multiplyScalar(userHeight);
 					// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-					this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
+					this.offset.applyAxisAngle(VERTICAL_VECTOR, cameraRotation.y);
 					// Apply rotated offset to camera position
 					this.position.add(this.offset);
 
@@ -55033,17 +55045,21 @@ var Simbol = (function (exports) {
 					this.position.add(this.offset);
 				}
 
-				this.poseMatrix.makeRotationFromQuaternion(this.quaternion);
-				this.poseMatrix.setPosition(this.position);
-				this.poseMatrix.multiplyMatrices(this.worldToLocal, this.poseMatrix);
-				this.poseMatrix.decompose(this.handMesh.position, this.handMesh.quaternion, {});
+				poseMatrix.makeRotationFromQuaternion(this.quaternion);
+				poseMatrix.setPosition(this.position);
+				poseMatrix.multiplyMatrices(worldToLocal, poseMatrix);
+				poseMatrix.decompose(this.handMesh.position, this.handMesh.quaternion, {});
+				// Makes sure the hand is pointing in the same direction as how one holds the controller
+				this.handMesh.rotateX(-(Math.PI / 2));
+				this.handMesh.rotateY(-(Math.PI / 2));
+				this.handMesh.updateMatrixWorld();
 
 				if (gamepad.pose.position) {
-					this.handMesh.position.add(camera.position);
+					this.handMesh.position.add(cameraPosition);
 				}
 			}
-		}
-	}
+		};
+	}());
 
 	const ControllerButtons$1 = {
 		'Trigger': 0
@@ -56587,21 +56603,26 @@ var Simbol = (function (exports) {
 
 			return hitCylinder;
 		}
+	}
 
-		/**
-		 * Updates the ray, when active, depending on the world position by displaying it
-		 * and checking if it hits an object
-		 *
-		 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
-		 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
-		 *
-		 * @example
-		 * teleporation.updateRayCurve();
-		 *
-		 * @return {undefined}
-		 */
-		updateRayCurve(controller, scene) {
-			if (!controller || !(controller instanceof Object3D) && !(controller.model instanceof Object3D)) {
+	/**
+	 * Updates the ray, when active, depending on the world position by displaying it
+	 * and checking if it hits an object
+	 *
+	 * @param {PoseController|GamepadController|THREE.Object3D} controller - Controller that will dispatch the ray curve
+	 * @param {THREE.Scene} scene - Scene that the ray curve can collision with
+	 *
+	 * @example
+	 * teleporation.updateRayCurve();
+	 *
+	 * @return {undefined}
+	 */
+	Teleportation.prototype.updateRayCurve = (function() {
+		const position = new Vector3();
+		const quaternion = new Quaternion();
+
+		return function(controller, scene) {
+			if (!controller || !(controller instanceof Object3D) && !(controller.handMesh instanceof Object3D)) {
 				this.setRayCurveState(false);
 				return;
 			}
@@ -56617,11 +56638,14 @@ var Simbol = (function (exports) {
 			this.rayCurve.visible = true;
 			this.rayCurve.material.color.set(this.missColor);
 
-			controller = controller.model || controller;
-			const quaternion = controller.getWorldQuaternion(new Quaternion());
+			const object = controller.handMesh || controller;
+
+			object.matrixWorld.decompose(position, quaternion, {});
+			if (controller.handMesh) {
+				this._shootAxis.set(0, 1, 0);
+			}
 			const direction = this._shootAxis.clone().applyQuaternion(quaternion).normalize();
 			this._setDirection(direction);
-			const position = controller.position.clone();
 			const velocity = direction.clone().multiplyScalar(this.velocity);
 
 			const lastSegment = position.clone();
@@ -56663,8 +56687,8 @@ var Simbol = (function (exports) {
 			if (!this.hitPoint) {
 				clearTimeout(this.activateTeleport.id);
 			}
-		}
-	}
+		};
+	}());
 
 	/** Class for all general locomotion purposes */
 	class Locomotion {
@@ -57093,7 +57117,6 @@ var Simbol = (function (exports) {
 				}
 
 				object.position.multiplyScalar( scope.scale );
-
 			}
 
 		};
@@ -132179,6 +132202,8 @@ var Simbol = (function (exports) {
 		 */
 		setUPortData(credentials, save) {
 			this.uPortData = {
+				address: credentials.address,
+				did: credentials.did,
 				publicEncKey: credentials.publicEncKey,
 				pushToken: credentials.pushToken,
 				SimbolConfig: credentials.SimbolConfig
@@ -138947,6 +138972,11 @@ var Simbol = (function (exports) {
 		socketURL: 'ws://127.0.0.1',
 		socketPort: 8091,
 		channelName: 'default',
+		iceServers: [
+			{urls: 'stun:global.stun.twilio.com:3478?transport=udp'},
+			{urls:'stun:stun.l.google.com:19302'},
+			{urls:'stun:stun1.l.google.com:19302'}
+		],
 		peer: {
 			trickle: true,
 			objectMode: false,
@@ -139563,7 +139593,7 @@ var Simbol = (function (exports) {
 		 * @returns {Promise} promise - Promise that resolves when the mesh loads
 		*/
 		init() {
-			return this.loadMesh("assets/models/AnonymousVP.glb", true)
+			return this.loadMesh(this.identity.avatarPath, true)
 				.then(() => {
 					if (this.config.signIn && !this.identity.signedIn) {
 						return this.signIn();
@@ -139656,16 +139686,16 @@ var Simbol = (function (exports) {
 
 			this.mesh = mesh;
 			this.headMesh = this.mesh.getObjectByName('VirtualPersonaHead');
-			// TODO: FIX HEADMESH with Mirrors
-			this.headMesh.onBeforeRender = () => {
-				this.headMesh.layers.set(3);
-			};
+			this.headMesh.layers.set(3);
 			this.bodyMesh = this.mesh.getObjectByName('VirtualPersonaBody');
+			this.eyeBone = this.mesh.getObjectByName('VirtualPersonaEyeBone');
+			this.headBone = this.mesh.getObjectByName('VirtualPersonaHeadBone');
 			const boundingBox = new Box3().setFromObject(this.mesh);
 			this._meshHeight = boundingBox.max.y - boundingBox.min.y;
 
 			this.emit('add', {
-				mesh: this.mesh
+				mesh: this.mesh,
+				type: 'VirtualPersona'
 			});
 		}
 
@@ -139685,7 +139715,13 @@ var Simbol = (function (exports) {
 		 */
 		signIn() {
 			return this.identity.signIn()
-				.then(() => this.loadMesh(this.identity.avatarPath, true))
+				.then((error) => {
+					if (error) {
+						return Promise.resolve(error);
+					} else {
+						return this.loadMesh(this.identity.avatarPath, true);
+					}
+				})
 				.catch((error) => Promise.reject(error));
 		}
 
@@ -140223,6 +140259,11 @@ var Simbol = (function (exports) {
 		window.THREE = t;
 	}
 
+	const defaultConfig$2 = {
+		render: true,
+		animate: true
+	};
+
 	/** Class for the scene that will */
 	class Scene$1 {
 
@@ -140264,7 +140305,7 @@ var Simbol = (function (exports) {
 		 * @param {THREE.Camera} config.camera - If you're rendering on your own, Simbol needs access to your camera
 		 */
 		constructor(config = {render: true, animate: true}) {
-			this.config = config;
+			this.config = Object.assign({}, defaultConfig$2, config);
 			if (config.render) {
 				const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
 				const renderer = new WebGLRenderer({
@@ -140426,11 +140467,13 @@ var Simbol = (function (exports) {
 		 * @private
 		*/
 		_render(timestamp) {
-			for (const func of this.animateFunctions) {
-				func(timestamp);
-			}
+			if (this.scene && this.camera) {
+				for (const func of this.animateFunctions) {
+					func(timestamp);
+				}
 
-			this.vrEffect.render(this.scene, this.camera);
+				this.vrEffect.render(this.scene, this.camera);
+			}
 
 			this._animationFrameID = this.vrEffect.requestAnimationFrame(this._render);
 		}
@@ -142740,7 +142783,7 @@ var Simbol = (function (exports) {
 	// Always polyfill as the polyfill itself checks if it's necessary
 	new WebVRPolyfill();
 
-	const defaultConfig$2 = {
+	const defaultConfig$3 = {
 		locomotion: true
 	};
 
@@ -142778,7 +142821,7 @@ var Simbol = (function (exports) {
 		constructor(config = {locomotion: true}) {
 			super();
 
-			config = Object.assign({}, defaultConfig$2, config);
+			config = Object.assign({}, defaultConfig$3, config);
 
 			this.hand = config.hand;
 
@@ -142857,6 +142900,14 @@ var Simbol = (function (exports) {
 		addListeners(...components) {
 			for (const component of components) {
 				component.on('add', (event) => {
+					if (event.type === 'VirtualPersona') {
+						this.vpMesh = event.mesh;
+						this.controllers.updateControllers(this.vpMesh);
+						this.virtualPersona.eyeBone.add(this._scene.camera);
+						// Fix so it doesn't look backwards
+						this._scene.camera.rotation.y = Math.PI;
+					}
+
 					this.addToScene([event.mesh]);
 				});
 
@@ -142895,6 +142946,10 @@ var Simbol = (function (exports) {
 		 * @returns {undefined}
 		 */
 		addToScene(meshes, collidable = false, shadow = false) {
+			if (!(meshes instanceof Array)) {
+				meshes = [meshes];
+			}
+
 			this._scene.addToScene([...meshes], collidable, shadow);
 		}
 
@@ -142971,14 +143026,18 @@ var Simbol = (function (exports) {
 	* @returns {undefined}
 	*/
 	Simbol.prototype.animate = (function() {
+		let initialised = false;
 		const unalteredCamera = new Object3D();
-		const previousCameraPosition = new Vector3();
+		const previousPosition = new Vector3();
 		const previousControllerQuaternion = new Quaternion();
 		previousControllerQuaternion.initialised = false;
 		const translationDirection = new Vector3();
-		const meshPosition = new Vector3();
-		const meshQuaternion = new Quaternion();
-		const meshRotation = new Euler();
+
+		const locomotionRotation = new Euler();
+		const cameraWorldToLocal = new Matrix4();
+		const cameraPosition = new Vector3();
+		const cameraQuaternion = new Quaternion();
+		const poseMatrix = new Matrix4();
 		let previousTime = 0;
 		let delta = 0;
 
@@ -142995,14 +143054,15 @@ var Simbol = (function (exports) {
 				controller = this.controllers.mainHandController;
 			}
 
-			if (!previousControllerQuaternion.initialised) {
+			if (!initialised) {
 				previousControllerQuaternion.copy(controller.quaternion);
-				previousControllerQuaternion.initialised = true;
+				initialised = true;
 			}
 
-			// Handle position
-			camera.position.copy(previousCameraPosition);
+			// Resets position, specially due to running #add methods on it
+			this.vpMesh.position.copy(previousPosition);
 
+			// Handle position
 			if (this.locomotion) {
 				// Translation
 				if (this.locomotion.translatingZ || this.locomotion.translatingX) {
@@ -143011,11 +143071,11 @@ var Simbol = (function (exports) {
 					const collision = Physics.checkMeshCollision(this.vpMesh, this._scene.collidableMeshes, this.virtualPersona.climbableHeight, translationDirection);
 					if (!collision) {
 						if (this.locomotion.translatingZ) {
-							camera.translateZ(this.locomotion.translatingZ * delta);
+							this.vpMesh.translateZ(this.locomotion.translatingZ * delta);
 						}
 
 						if (this.locomotion.translatingX) {
-							camera.translateX(this.locomotion.translatingX * delta);
+							this.vpMesh.translateX(this.locomotion.translatingX * delta);
 						}
 					}
 				}
@@ -143026,9 +143086,9 @@ var Simbol = (function (exports) {
 				}
 
 				if (this.locomotion.teleportation.isTeleportActive) {
-					camera.position.setX(this.locomotion.teleportation.hitPoint.x);
-					camera.position.setY(this.locomotion.teleportation.hitPoint.y + this.virtualPersona.userHeight);
-					camera.position.setZ(this.locomotion.teleportation.hitPoint.z);
+					this.vpMesh.position.setX(this.locomotion.teleportation.hitPoint.x);
+					this.vpMesh.position.setY(this.locomotion.teleportation.hitPoint.y);
+					this.vpMesh.position.setZ(this.locomotion.teleportation.hitPoint.z);
 					this.locomotion.teleportation.resetTeleport();
 				}
 
@@ -143042,14 +143102,14 @@ var Simbol = (function (exports) {
 				}
 			}
 
-			// Camera height
-			if (!camera.position.equals(previousCameraPosition)) {
+			// VP height
+			if (!this.vpMesh.position.equals(previousPosition)) {
 				this.virtualPersona.setFloorHeight(this._scene);
 			}
 
-			camera.position.setY(this.virtualPersona.floorHeight + this.virtualPersona.userHeight);
+			this.vpMesh.position.setY(this.virtualPersona.floorHeight);
 
-			previousCameraPosition.copy(camera.position);
+			previousPosition.copy(this.vpMesh.position);
 			if (controller.quaternion) {
 				previousControllerQuaternion.copy(controller.quaternion);
 			}
@@ -143060,24 +143120,25 @@ var Simbol = (function (exports) {
 			if (Utils.isPresenting) {
 				this.virtualPersona.vrControls.update();
 
-				camera.rotation.order = 'YXZ';
-				camera.position.add(this.virtualPersona.fakeCamera.position);
-				camera.quaternion.copy(this.virtualPersona.fakeCamera.quaternion);
+				this.vpMesh.position.add(this.virtualPersona.fakeCamera.position);
+				locomotionRotation.copy(this.virtualPersona.fakeCamera.rotation);
 			} else if (this.locomotion) {
-				camera.rotation.order = 'XYZ';
-				camera.rotation.copy(this.locomotion.orientation.euler);
+				locomotionRotation.copy(this.locomotion.orientation.euler);
 			}
+			this.vpMesh.rotation.y = locomotionRotation.y;
 
-			// Adjust the mesh's position and rotation
-			camera.matrixWorld.decompose(meshPosition, meshQuaternion, {});
-			this.vpMesh.position.copy(meshPosition);
-			const meshYPosition = meshPosition.y - this.virtualPersona._meshHeight;
-			this.vpMesh.position.setY(meshYPosition);
-
-			meshRotation.setFromQuaternion(meshQuaternion, 'YXZ');
-			console.log(meshRotation.y, camera.rotation.y);
-			// this.vpMesh.rotation.y = camera.rotation.y + Math.PI;
-			this.vpMesh.rotation.y = meshRotation.y + Math.PI;
+			// Handle camera rotation
+			if (this.locomotion) {
+				// Calculatw World-To-Local for the camera's rotation
+				cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
+				poseMatrix.makeRotationFromEuler(locomotionRotation);
+				poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
+				poseMatrix.decompose({}, cameraQuaternion, {});
+				locomotionRotation.setFromQuaternion(cameraQuaternion);
+				camera.rotation.x = -locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
+				camera.rotation.z = locomotionRotation.z;
+			}
+			camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
 
 			// MultiVP
 			if (this.virtualPersona.multiVP) {
@@ -143085,7 +143146,9 @@ var Simbol = (function (exports) {
 			}
 
 			// Interactions
-			this.interactions.update(controller.position, controller.quaternion);
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
 
 			// Controllers
 			const controllerIds = Object.keys(this.controllers.currentControllers);

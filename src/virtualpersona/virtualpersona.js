@@ -159,7 +159,7 @@ class VirtualPersona extends EventEmitter {
 	 * @returns {Promise} promise - Promise that resolves when the mesh loads
 	*/
 	init() {
-		return this.loadMesh("assets/models/AnonymousVP.glb", true)
+		return this.loadMesh(this.identity.avatarPath, true)
 			.then(() => {
 				if (this.config.signIn && !this.identity.signedIn) {
 					return this.signIn();
@@ -252,16 +252,16 @@ class VirtualPersona extends EventEmitter {
 
 		this.mesh = mesh;
 		this.headMesh = this.mesh.getObjectByName('VirtualPersonaHead');
-		// TODO: FIX HEADMESH with Mirrors
-		this.headMesh.onBeforeRender = () => {
-			this.headMesh.layers.set(3);
-		};
+		this.headMesh.layers.set(3);
 		this.bodyMesh = this.mesh.getObjectByName('VirtualPersonaBody');
+		this.eyeBone = this.mesh.getObjectByName('VirtualPersonaEyeBone');
+		this.headBone = this.mesh.getObjectByName('VirtualPersonaHeadBone');
 		const boundingBox = new THREE.Box3().setFromObject(this.mesh);
 		this._meshHeight = boundingBox.max.y - boundingBox.min.y;
 
 		this.emit('add', {
-			mesh: this.mesh
+			mesh: this.mesh,
+			type: 'VirtualPersona'
 		});
 	}
 
@@ -281,7 +281,13 @@ class VirtualPersona extends EventEmitter {
 	 */
 	signIn() {
 		return this.identity.signIn()
-			.then(() => this.loadMesh(this.identity.avatarPath, true))
+			.then((error) => {
+				if (error) {
+					return Promise.resolve(error);
+				} else {
+					return this.loadMesh(this.identity.avatarPath, true);
+				}
+			})
 			.catch((error) => Promise.reject(error));
 	}
 

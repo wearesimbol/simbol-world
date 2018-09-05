@@ -139,7 +139,6 @@ const VRControls = function ( object, onError ) {
 			}
 
 			object.position.multiplyScalar( scope.scale );
-
 		}
 
 	};

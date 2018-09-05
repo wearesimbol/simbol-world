@@ -3,7 +3,6 @@
 import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
 import Peer from 'simple-peer';
-import {VirtualPersona} from '../../src/virtualpersona/virtualpersona';
 import {MultiVP} from '../../src/virtualpersona/multivp';
 
 describe('MultiVP', () => {
@@ -68,10 +67,16 @@ describe('MultiVP', () => {
 				socketURL: 'ws://127.0.0.1',
 				socketPort: 8091,
 				channelName: 'default',
+				iceServers: [
+					{urls: 'stun:global.stun.twilio.com:3478?transport=udp'},
+					{urls:'stun:stun.l.google.com:19302'},
+					{urls:'stun:stun1.l.google.com:19302'}
+				],
 				test: false,
 				peer: {
 					trickle: true,
-					objectMode: false
+					objectMode: false,
+					config: {}
 				}
 			});
 			assert.equal(multiVP.stream, 1);
@@ -288,7 +293,9 @@ describe('MultiVP', () => {
 		beforeEach(() => {
 			multiVP.config = {
 				channelName: 'test',
-				peer: {}
+				peer: {
+					config: {}
+				}
 			};
 			sinon.stub(Peer, 'constructor');
 			sinon.stub(Peer.prototype, 'on');
@@ -348,7 +355,6 @@ describe('MultiVP', () => {
 			assert.equal(multiVP.audioHelper.context, multiVP.audioListener.context);
 			assert.isTrue(AudioContext.prototype.createMediaStreamSource.calledOnce);
 			assert.isTrue(AudioContext.prototype.createMediaStreamSource.calledWith(stream));
-			console.log(multiVP.audioHelper)
 			assert.isTrue(THREE.PositionalAudio.prototype.setNodeSource.calledOnce);
 			assert.isTrue(THREE.PositionalAudio.prototype.setNodeSource.calledWith(1));
 		});

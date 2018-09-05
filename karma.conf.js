@@ -82,6 +82,8 @@ module.exports = function(config) {
 		rollupPreprocessor: {
 			
 			// rollup settings. See Rollup documentation
+			
+			context: 'this',
 			plugins: [
 				replace({
 					[`readable-stream`]: `require('stream')`,

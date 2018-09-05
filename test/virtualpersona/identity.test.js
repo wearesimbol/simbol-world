@@ -2,7 +2,6 @@
 
 import EventEmitter from 'eventemitter3';
 import {Identity} from '../../src/virtualpersona/identity';
-import uPort from '../../src/libs/uport-connect';
 
 describe('Identity', () => {
 
@@ -206,6 +205,8 @@ describe('Identity', () => {
 		beforeEach(() => {
 			sinon.stub(localStorage, 'setItem');
 			creds = {
+				address: 0,
+				did: 0,
 				publicEncKey: 1,
 				pushToken: 2,
 				SimbolConfig: true
@@ -220,7 +221,7 @@ describe('Identity', () => {
 
 		it('should save identity data', () => {
 			assert.isTrue(localStorage.setItem.calledOnce);
-			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"publicEncKey":1,"pushToken":2,"SimbolConfig":true}'));
+			assert.isTrue(localStorage.setItem.calledWith('currentIdentity', '{"address":0,"did":0,"publicEncKey":1,"pushToken":2,"SimbolConfig":true}'));
 			assert.equal(identity.avatarPath, Identity.prototype.avatarPath);
 			assert.deepEqual(identity.uPortData, creds);
 			assert.equal(identity.uPort.pushToken, 2);

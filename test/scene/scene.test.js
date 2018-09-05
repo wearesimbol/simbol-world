@@ -16,6 +16,7 @@ describe('Scene', () => {
 
 		const config = {
 			render: true,
+			animate: true,
 			canvas,
 			sceneToLoad: 'test'
 		};
@@ -138,7 +139,7 @@ describe('Scene', () => {
 
 		const mesh = {
 			children: [{
-				isObject3D: true,
+				isMesh: true,
 				material: {},
 				geometry: {},
 				children: []

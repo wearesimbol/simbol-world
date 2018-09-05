@@ -4,7 +4,7 @@ We're an open project and really appreciate contributions of any kind
 
 ## Join the community
 
-We're on Slack for any questions and discussions. Join using [this link](https://join.slack.com/t/wearesimbol/shared_invite/enQtNDA4NTMzODc0NzU1LTQzYTBkMjI4NmRhYjFhNTM2YWIxNjhiMmRlZTM1OTBiM2Y4ZWNlNWUwY2Q1ZGYwZTY2YTBkOTU0YzUyMWZhZTg)!
+We're on Spectrum for any questions and discussions. Join [here	](http://spectrum.chat/simbol)!
 
 ## File an issue
 
