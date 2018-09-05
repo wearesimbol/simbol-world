@@ -1,6 +1,6 @@
 {
   "name": "simbol",
-  "version": "1.0.0-alpha.9",
+  "version": "1.0.0-beta.0",
   "description": "Easily create a social XR experience with a self-sovereign identity system",
   "main": "build/simbol.cjs.js",
   "module": "build/simbol.js",

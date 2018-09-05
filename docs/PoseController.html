@@ -436,6 +436,123 @@
 
 
         
+            
+<h4 class="name" id="update"><span class="type-signature"></span>update<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Gets latest information from gamepad and updates the model based on it
+It applies an arm model if it's a 3DOF controller
+It applies the correct hand gesture
+It also emits events for different button states that have the structure:
+&quot;button&quot;&quot;pressed/unpressed/touched/untouched&quot; e.g. &quot;triggerpressed&quot;</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line281">line 281</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5>Fires:</h5>
+    <ul>
+        <li><a href="PoseController.html#event:controllerdisconnected">PoseController#event:controllerdisconnected</a></li>
+    
+        <li>PoseController#event:thumbpadpressed</li>
+    
+        <li>PoseController#event:thumbpadunpressed</li>
+    
+        <li>PoseController#event:thumbpadtouched</li>
+    
+        <li>PoseController#event:thumbpaduntouched</li>
+    
+        <li>PoseController#event:triggerpressed</li>
+    
+        <li>PoseController#event:triggerunpressed</li>
+    
+        <li>PoseController#event:triggertouched</li>
+    
+        <li>PoseController#event:triggeruntouched</li>
+    
+        <li>PoseController#event:grippressed</li>
+    
+        <li>PoseController#event:gripunpressed</li>
+    
+        <li>PoseController#event:griptouched</li>
+    
+        <li>PoseController#event:gripuntouched</li>
+    
+        <li>PoseController#event:apressed</li>
+    
+        <li>PoseController#event:aunpressed</li>
+    
+        <li>PoseController#event:atouched</li>
+    
+        <li>PoseController#event:auntouched</li>
+    
+        <li>PoseController#event:bpressed</li>
+    
+        <li>PoseController#event:bunpressed</li>
+    
+        <li>PoseController#event:btouched</li>
+    
+        <li>PoseController#event:buntouched</li>
+    </ul>
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// This is executed in an animation loop
+gamepadController.update();</code></pre>
+
+
+
+        
     
 
     
@@ -881,260 +998,6 @@ e.g. &quot;Open&quot; =&gt; &quot;HandLeftOpen&quot;</p>
 
 
         
-            
-
-    
-
-    
-    <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(delta, camera, userHeight)</span><span class="type-signature"> &rarr; {undefined}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Gets latest information from gamepad and updates the model based on it
-It applies an arm model if it's a 3DOF controller
-It applies the correct hand gesture
-It also emits events for different button states that have the structure:
-&quot;button&quot;&quot;pressed/unpressed/touched/untouched&quot; e.g. &quot;triggerpressed&quot;</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>delta</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Delta from the animation frame</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>camera</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">THREE.Camera</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Scene camera</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>userHeight</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The user's set height</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line274">line 274</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<h5>Fires:</h5>
-<ul>
-    <li><a href="PoseController.html#event:controllerdisconnected">PoseController#event:controllerdisconnected</a></li>
-
-    <li>PoseController#event:thumbpadpressed</li>
-
-    <li>PoseController#event:thumbpadunpressed</li>
-
-    <li>PoseController#event:thumbpadtouched</li>
-
-    <li>PoseController#event:thumbpaduntouched</li>
-
-    <li>PoseController#event:triggerpressed</li>
-
-    <li>PoseController#event:triggerunpressed</li>
-
-    <li>PoseController#event:triggertouched</li>
-
-    <li>PoseController#event:triggeruntouched</li>
-
-    <li>PoseController#event:grippressed</li>
-
-    <li>PoseController#event:gripunpressed</li>
-
-    <li>PoseController#event:griptouched</li>
-
-    <li>PoseController#event:gripuntouched</li>
-
-    <li>PoseController#event:apressed</li>
-
-    <li>PoseController#event:aunpressed</li>
-
-    <li>PoseController#event:atouched</li>
-
-    <li>PoseController#event:auntouched</li>
-
-    <li>PoseController#event:bpressed</li>
-
-    <li>PoseController#event:bunpressed</li>
-
-    <li>PoseController#event:btouched</li>
-
-    <li>PoseController#event:buntouched</li>
-</ul>
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">undefined</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-    <h5>Example</h5>
-    
-    <pre class="prettyprint"><code>// This is executed in an animation loop
-gamepadController.update();</code></pre>
-
-
-
-        
     
 
     
@@ -1258,7 +1121,7 @@ PoseController controllerdisconnected event for when a gamepad is no longer avai
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line278">line 278</a>
+        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line293">line 293</a>
     </li></ul></dd>
     
 
@@ -1517,7 +1380,7 @@ there's a new hand gesture</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line203">line 203</a>
+        <a href="controllers_posecontroller.js.html">controllers/posecontroller.js</a>, <a href="controllers_posecontroller.js.html#line204">line 204</a>
     </li></ul></dd>
     
 
@@ -1563,7 +1426,7 @@ there's a new hand gesture</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Aug 14 2018 22:54:05 GMT-0500 (DST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Sep 05 2018 09:12:28 GMT-0500 (DST)
 </footer>
 
 <script> prettyPrint(); </script>
