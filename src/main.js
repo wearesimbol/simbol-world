@@ -363,7 +363,7 @@ Simbol.prototype.animate = (function() {
 
 		// Handle camera rotation
 		if (this.locomotion) {
-			// Calculatw World-To-Local for the camera's rotation
+			// Calculate World-To-Local for the camera's rotation
 			cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
 			poseMatrix.makeRotationFromEuler(locomotionRotation);
 			poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);

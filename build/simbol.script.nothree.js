@@ -7058,6 +7058,7 @@ var Simbol = (function (exports) {
 				gltfWorldLoader.load(this.meshToLoad, (data) => {
 					const loadedScene = data.scene || data.scenes[0];
 					loadedScene.animations = data.animations || [];
+					loadedScene.path = this.meshToLoad;
 					resolve(loadedScene);
 				}, undefined, reject);
 			});
@@ -95840,7 +95841,7 @@ var Simbol = (function (exports) {
 
 			// Handle camera rotation
 			if (this.locomotion) {
-				// Calculatw World-To-Local for the camera's rotation
+				// Calculate World-To-Local for the camera's rotation
 				cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
 				poseMatrix.makeRotationFromEuler(locomotionRotation);
 				poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
