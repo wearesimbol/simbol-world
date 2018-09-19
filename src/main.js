@@ -347,8 +347,16 @@ Simbol.prototype.animate = (function() {
 		if (controller.quaternion) {
 			previousControllerQuaternion.copy(controller.quaternion);
 		}
-
-		unalteredCamera.copy(camera);
+		
+		/* 
+		 * Sets a camera to position controllers properly
+		 * It needs to not include the added position by the 
+		 * fakeCamera and position the y axis with the camera
+		 */
+		this.vpMesh.updateMatrixWorld(true);
+		unalteredCamera.copy(this.vpMesh, false);
+		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
+		unalteredCamera.position.y = cameraPosition.y;
 
 		// Immersive mode + Rotation
 		if (Utils.isPresenting) {
@@ -389,6 +397,7 @@ Simbol.prototype.animate = (function() {
 		for (const controllerId of controllerIds) {
 			// Gets the controller from the list with this id and updates it
 			const controller = this.controllers.currentControllers[controllerId];
+			this.vpMesh.updateMatrixWorld(true);
 			controller.update && controller.update(
 				delta,
 				// Uses a camera that hasn't been applied the HMD data
