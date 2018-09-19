@@ -7659,8 +7659,6 @@ var Simbol = (function (exports) {
 	PoseController.prototype.update = (function() {
 
 		const cameraPosition = new THREE.Vector3();
-		const cameraQuaternion = new THREE.Quaternion();
-		const cameraRotation = new THREE.Euler();
 		const worldToLocal = new THREE.Matrix4();
 		const poseMatrix = new THREE.Matrix4();
 
@@ -7719,15 +7717,12 @@ var Simbol = (function (exports) {
 				this.position.fromArray(gamepad.pose.position);
 			}
 
-			camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
-			cameraRotation.setFromQuaternion(cameraQuaternion, 'YXZ');
-
 			if (this.handMesh) {
 				worldToLocal.getInverse(this.handMesh.parent.matrixWorld);
 
 				if (!gamepad.pose.position) {
 					// Arm model from https://github.com/ryanbetts/aframe-daydream-controller-component
-					this.position.copy(cameraPosition);
+					this.position.copy(camera.position);
 
 					if (!this.offset) {
 						this.offset = new THREE.Vector3();
@@ -7740,7 +7735,7 @@ var Simbol = (function (exports) {
 					// Scale offset by user height
 					this.offset.multiplyScalar(userHeight);
 					// Apply camera Y rotation (not X or Z, so you can look down at your hand)
-					this.offset.applyAxisAngle(VERTICAL_VECTOR, cameraRotation.y);
+					this.offset.applyAxisAngle(VERTICAL_VECTOR, camera.rotation.y);
 					// Apply rotated offset to camera position
 					this.position.add(this.offset);
 
@@ -7754,6 +7749,10 @@ var Simbol = (function (exports) {
 					this.offset.applyEuler(this.euler);
 					// Apply rotated offset to camera position
 					this.position.add(this.offset);
+				} else {
+					cameraPosition.copy(camera.position);
+					cameraPosition.add(this.position);
+					this.position.copy(cameraPosition);
 				}
 
 				poseMatrix.makeRotationFromQuaternion(this.quaternion);
@@ -7763,11 +7762,6 @@ var Simbol = (function (exports) {
 				// Makes sure the hand is pointing in the same direction as how one holds the controller
 				this.handMesh.rotateX(-(Math.PI / 2));
 				this.handMesh.rotateY(-(Math.PI / 2));
-				this.handMesh.updateMatrixWorld();
-
-				if (gamepad.pose.position) {
-					this.handMesh.position.add(cameraPosition);
-				}
 			}
 		};
 	}());
@@ -95824,8 +95818,16 @@ var Simbol = (function (exports) {
 			if (controller.quaternion) {
 				previousControllerQuaternion.copy(controller.quaternion);
 			}
-
-			unalteredCamera.copy(camera);
+			
+			/* 
+			 * Sets a camera to position controllers properly
+			 * It needs to not include the added position by the 
+			 * fakeCamera and position the y axis with the camera
+			 */
+			this.vpMesh.updateMatrixWorld(true);
+			unalteredCamera.copy(this.vpMesh, false);
+			camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
+			unalteredCamera.position.y = cameraPosition.y;
 
 			// Immersive mode + Rotation
 			if (Utils.isPresenting) {
@@ -95840,7 +95842,7 @@ var Simbol = (function (exports) {
 
 			// Handle camera rotation
 			if (this.locomotion) {
-				// Calculatw World-To-Local for the camera's rotation
+				// Calculate World-To-Local for the camera's rotation
 				cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
 				poseMatrix.makeRotationFromEuler(locomotionRotation);
 				poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
@@ -95866,6 +95868,7 @@ var Simbol = (function (exports) {
 			for (const controllerId of controllerIds) {
 				// Gets the controller from the list with this id and updates it
 				const controller = this.controllers.currentControllers[controllerId];
+				this.vpMesh.updateMatrixWorld(true);
 				controller.update && controller.update(
 					delta,
 					// Uses a camera that hasn't been applied the HMD data
