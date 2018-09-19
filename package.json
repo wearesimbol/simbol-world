@@ -2,6 +2,13 @@
   "name": "simbol",
   "version": "1.0.0-beta.0",
   "description": "Easily create a social XR experience with a self-sovereign identity system",
+  "keywords": [
+    "vr",
+    "webxr",
+    "identity",
+    "social",
+    "avatar"
+  ],
   "main": "build/simbol.cjs.js",
   "module": "build/simbol.js",
   "repository": {
@@ -19,8 +26,8 @@
   },
   "scripts": {
     "js": "rollup -c",
-    "minify-script": "terser ./build/simbol.script.js --stats -c -m -o ./build/simbol.min.script.js",
-    "minify-script-nothree": "terser ./build/simbol.nothree.script.js --stats -c -m -o ./build/simbol.nothree.min.script.js",
+    "minify-script": "terser ./build/simbol.script.js --stats -c -m -o ./build/simbol.script.min.js",
+    "minify-script-nothree": "terser ./build/simbol.script.nothree.js --stats -c -m -o ./build/simbol.script.nothree.min.js",
     "minify": "npm run minify-script-nothree && npm run minify-script",
     "build": "npm run js && npm run minify",
     "lint": "eslint \"./src/**/*.js\"",

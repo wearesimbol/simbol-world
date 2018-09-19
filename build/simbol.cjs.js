@@ -54348,6 +54348,7 @@ class Loader$1 {
 			gltfWorldLoader.load(this.meshToLoad, (data) => {
 				const loadedScene = data.scene || data.scenes[0];
 				loadedScene.animations = data.animations || [];
+				loadedScene.path = this.meshToLoad;
 				resolve(loadedScene);
 			}, undefined, reject);
 		});
