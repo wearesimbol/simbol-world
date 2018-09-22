@@ -54,10 +54,10 @@ class Scene {
 	 */
 	constructor(config = {render: true, animate: true}) {
 		this.config = Object.assign({}, defaultConfig, config);
-		if (config.render) {
+		if (this.config.render) {
 			const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
 			const renderer = new THREE.WebGLRenderer({
-				canvas: config.canvas,
+				canvas: this.config.canvas,
 				antialias: true
 			});
 			// Last parameter adds pixel units to canvas element
@@ -70,16 +70,16 @@ class Scene {
 
 			window.addEventListener('resize', this.onResize.bind(this), false);
 		} else {
-			this.camera = config.camera;
-			this.renderer = config.renderer;
+			this.camera = this.config.camera;
+			this.renderer = this.config.renderer;
 		}
 
 		this.canvas = this.renderer.domElement;
 
-		const sceneLoader = new Loader(config.sceneToLoad);
+		const sceneLoader = new Loader(this.config.sceneToLoad);
 		this._sceneLoader = sceneLoader;
 
-		if (config.animate) {
+		if (this.config.animate) {
 			this.vrEffect = new VREffect(this.renderer, console.warn);
 			window.addEventListener('vrdisplayactivate', () => {
 				this.vrEffect.requestPresent();

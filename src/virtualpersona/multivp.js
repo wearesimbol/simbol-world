@@ -3,13 +3,17 @@ import EventEmitter from 'eventemitter3';
 import * as THREE from 'three';
 
 const defaultConfig = {
-	socketURL: 'ws://127.0.0.1',
-	socketPort: 8091,
+	socketURL: 'wss://ws.simbol.io',
+	socketPort: 443,
 	channelName: 'default',
 	iceServers: [
 		{urls: 'stun:global.stun.twilio.com:3478?transport=udp'},
 		{urls:'stun:stun.l.google.com:19302'},
-		{urls:'stun:stun1.l.google.com:19302'}
+		{
+			urls: 'turn:albertoelias.me:3478?transport=udp',
+			username: 'alberto',
+			credential: 'pzqmtestinglol'
+		}
 	],
 	peer: {
 		trickle: true,

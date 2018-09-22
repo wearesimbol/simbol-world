@@ -7158,16 +7158,21 @@ class Link {
 	}
 
 	/**
-	 * Builds a Link instance with its mesh at the se
+	 * Builds a Link instance with its mesh at the set position
 	 *
+	 * @param {string} name - Identifier for the link (Simbol for https://simbol.io)
 	 * @param {string} path - Where the link will point to
 	 * @param {array} position - 3 element array indicating the x, y and z position of the link in the scene
+	 * @param {Simbol.Identity} identity - The identity instance for the current Virtual Persona
 	 */
-	constructor(path, position) {
+	constructor(name, path, position, identity) {
+		this.name = name;
 		this.path = path;
 		this.position = position;
+		this.identity = identity;
 
 		this.mesh = this._constructMesh();
+		this.aEl = this._constructAEl();
 	}
 
 	/**
@@ -7186,6 +7191,21 @@ class Link {
 		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.copy(this.position);
 		return mesh;
+	}
+
+	/**
+	 * Builds an <a> element that points to the path and adds it to the <body>
+	 *
+	 * @returns {HTMLAnchorElement} aEl
+	 *
+	 * @private
+	 */
+	_constructAEl() {
+		const aEl = document.createElement('a');
+		aEl.href = this.path;
+		aEl.textContent = this.name;
+		document.body.appendChild(aEl);
+		return aEl;
 	}
 
 	/**
@@ -7210,6 +7230,18 @@ class Link {
 	}
 
 	/**
+	 * Adds identity information to the path for seamless site-to-site transversal
+	 *
+	 * @returns {string} path
+	 */
+	getPath() {
+		const ampersandOrQuestion = this.path.includes('?') ? '&' : '?';
+		const seriealisedIdentity = encodeURIComponent(JSON.stringify(this.identity.uPortData));
+		const path = `${this.path}${ampersandOrQuestion}simbolIdentity=${seriealisedIdentity}`;
+		return path;
+	}
+
+	/**
 	 * Performs the action of redirecting to the link's path
 	 *
 	 * @example
@@ -7218,7 +7250,7 @@ class Link {
 	 * @returns {undefined}
 	*/
 	navigate() {
-		window.location = this.path;
+		window.location = this.getPath();
 	}
 }
 
@@ -84872,15 +84904,14 @@ class Identity extends eventemitter3 {
 			return this.uPortData;
 		}
 
-		const savedIdentity = localStorage.getItem('currentIdentity');
-
+		const savedIdentity = this.getIdentityFromSource();
 		if (!savedIdentity) {
 			return;
 		}
 
 		try {
 			const identity = JSON.parse(savedIdentity);
-			this.setUPortData(identity);
+			this.setUPortData(identity, true);
 			return identity;
 		} catch (error) {
 			/**
@@ -84892,6 +84923,23 @@ class Identity extends eventemitter3 {
 			 */
 			this.emit('error', error);
 		}
+	}
+
+	/**
+	 * Retrieves the identity information from the correct source
+	 * It first tries from the URL paramater 'simbolIdentity', if it's a site-to-site navigation
+	 * Then tries from LocalStorage if the site has been visited previously
+	 *
+	 * @returns {object} identity
+	 */
+	getIdentityFromSource() {
+		const urlParams = new URLSearchParams(location.search);
+		const simbolIdentityParams = urlParams.get('simbolIdentity');
+		if (simbolIdentityParams !== null) {
+			return decodeURIComponent(simbolIdentityParams);
+		}
+
+		return localStorage.getItem('currentIdentity');
 	}
 
 	/**
@@ -91676,13 +91724,17 @@ function makeError (message, code) {
 function noop$1 () {}
 
 const defaultConfig = {
-	socketURL: 'ws://127.0.0.1',
-	socketPort: 8091,
+	socketURL: 'wss://ws.simbol.io',
+	socketPort: 443,
 	channelName: 'default',
 	iceServers: [
 		{urls: 'stun:global.stun.twilio.com:3478?transport=udp'},
 		{urls:'stun:stun.l.google.com:19302'},
-		{urls:'stun:stun1.l.google.com:19302'}
+		{
+			urls: 'turn:albertoelias.me:3478?transport=udp',
+			username: 'alberto',
+			credential: 'pzqmtestinglol'
+		}
 	],
 	peer: {
 		trickle: true,
@@ -92236,7 +92288,7 @@ class VirtualPersona extends eventemitter3 {
 			this.emit('error', event);
 		});
 
-		if (config.multiVP) {
+		if (config.multiVP !== false) {
 			this.multiVP = new MultiVP(config.multiVP, this);
 			this.multiVP.on('add', (event) => {
 				/**
@@ -93013,10 +93065,10 @@ class Scene {
 	 */
 	constructor(config = {render: true, animate: true}) {
 		this.config = Object.assign({}, defaultConfig$2, config);
-		if (config.render) {
+		if (this.config.render) {
 			const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
 			const renderer = new THREE.WebGLRenderer({
-				canvas: config.canvas,
+				canvas: this.config.canvas,
 				antialias: true
 			});
 			// Last parameter adds pixel units to canvas element
@@ -93029,16 +93081,16 @@ class Scene {
 
 			window.addEventListener('resize', this.onResize.bind(this), false);
 		} else {
-			this.camera = config.camera;
-			this.renderer = config.renderer;
+			this.camera = this.config.camera;
+			this.renderer = this.config.renderer;
 		}
 
 		this.canvas = this.renderer.domElement;
 
-		const sceneLoader = new Loader(config.sceneToLoad);
+		const sceneLoader = new Loader(this.config.sceneToLoad);
 		this._sceneLoader = sceneLoader;
 
-		if (config.animate) {
+		if (this.config.animate) {
 			this.vrEffect = new VREffect(this.renderer, console.warn);
 			window.addEventListener('vrdisplayactivate', () => {
 				this.vrEffect.requestPresent();
@@ -95766,11 +95818,11 @@ Simbol.prototype.animate = (function() {
 			initialised = true;
 		}
 
-		// Resets position, specially due to running #add methods on it
-		this.vpMesh.position.copy(previousPosition);
-
 		// Handle position
 		if (this.locomotion) {
+			// Resets position, specially due to running #add methods on it
+			this.vpMesh.position.copy(previousPosition);
+
 			// Translation
 			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
 				translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
@@ -95820,8 +95872,8 @@ Simbol.prototype.animate = (function() {
 		if (controller.quaternion) {
 			previousControllerQuaternion.copy(controller.quaternion);
 		}
-		
-		/* 
+
+		/*
 		 * Sets a camera to position controllers properly
 		 * It needs to not include the added position by the 
 		 * fakeCamera and position the y axis with the camera
@@ -95840,10 +95892,10 @@ Simbol.prototype.animate = (function() {
 		} else if (this.locomotion) {
 			locomotionRotation.copy(this.locomotion.orientation.euler);
 		}
-		this.vpMesh.rotation.y = locomotionRotation.y;
 
 		// Handle camera rotation
 		if (this.locomotion) {
+			this.vpMesh.rotation.y = locomotionRotation.y;
 			// Calculate World-To-Local for the camera's rotation
 			cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
 			poseMatrix.makeRotationFromEuler(locomotionRotation);

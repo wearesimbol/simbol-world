@@ -293,11 +293,11 @@ Simbol.prototype.animate = (function() {
 			initialised = true;
 		}
 
-		// Resets position, specially due to running #add methods on it
-		this.vpMesh.position.copy(previousPosition);
-
 		// Handle position
 		if (this.locomotion) {
+			// Resets position, specially due to running #add methods on it
+			this.vpMesh.position.copy(previousPosition);
+
 			// Translation
 			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
 				translationDirection.set(Math.sign(this.locomotion.translatingX || 0), 0, Math.sign(this.locomotion.translatingZ || 0));
@@ -347,8 +347,8 @@ Simbol.prototype.animate = (function() {
 		if (controller.quaternion) {
 			previousControllerQuaternion.copy(controller.quaternion);
 		}
-		
-		/* 
+
+		/*
 		 * Sets a camera to position controllers properly
 		 * It needs to not include the added position by the 
 		 * fakeCamera and position the y axis with the camera
@@ -367,10 +367,10 @@ Simbol.prototype.animate = (function() {
 		} else if (this.locomotion) {
 			locomotionRotation.copy(this.locomotion.orientation.euler);
 		}
-		this.vpMesh.rotation.y = locomotionRotation.y;
 
 		// Handle camera rotation
 		if (this.locomotion) {
+			this.vpMesh.rotation.y = locomotionRotation.y;
 			// Calculate World-To-Local for the camera's rotation
 			cameraWorldToLocal.getInverse(camera.parent.matrixWorld);
 			poseMatrix.makeRotationFromEuler(locomotionRotation);

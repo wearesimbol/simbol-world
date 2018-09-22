@@ -6,19 +6,27 @@ import {Link} from '../../src/utils/link';
 describe('Link', () => {
 
 	let link;
+	let name;
 	let path;
 	let position;
+	let identity;
 
 	beforeEach(() => {
-		path = 'mypath';
+		name = 'path';
+		path = 'http://example.com';
 		position = [1, 2, 3];
+		identity = {
+			uPortData: 'test'
+		};
 		sinon.stub(Link.prototype, '_constructMesh').returns(1);
+		sinon.stub(Link.prototype, '_constructAEl').returns(2);
 
-		link = new Link(path, position);
+		link = new Link(name, path, position, identity);
 	});
 
 	afterEach(() => {
 		Link.prototype._constructMesh.restore && Link.prototype._constructMesh.restore();
+		Link.prototype._constructAEl.restore && Link.prototype._constructAEl.restore();
 	})
 
 	it('should be a class', () => {
@@ -27,8 +35,10 @@ describe('Link', () => {
 
 	it('should have a set of methods', () => {
 		assert.isFunction(Link.prototype._constructMesh);
+		assert.isFunction(Link.prototype._constructAEl);
 		assert.isFunction(Link.prototype.render);
 		assert.isFunction(Link.prototype.hover);
+		assert.isFunction(Link.prototype.getPath);
 		assert.isFunction(Link.prototype.navigate);
 	});
 
@@ -62,8 +72,10 @@ describe('Link', () => {
 	describe('#constructor', () => {
 
 		it('should set properties', () => {
+			assert.equal(link.name, name);
 			assert.equal(link.path, path);
 			assert.deepEqual(link.position, new THREE.Vector3(1, 2, 3));
+			assert.equal(link.identity, identity);
 		});
 
 		it('should call _consturctMesh', () => {
@@ -85,6 +97,22 @@ describe('Link', () => {
 		it('should return a mesh', () => {
 			assert.instanceOf(mesh, THREE.Mesh);
 			assert.deepEqual(mesh.position, new THREE.Vector3(1, 2, 3));
+		});
+	});
+
+	describe('#_constructAEl', () => {
+
+		let aEl;
+
+		beforeEach(() => {
+			Link.prototype._constructAEl.restore();
+			aEl = link._constructAEl();
+		});
+
+		it('should return a mesh', () => {
+			assert.instanceOf(aEl, HTMLAnchorElement);
+			assert.equal(aEl.href, 'http://example.com/');
+			assert.equal(aEl.textContent, 'path');
 		});
 	});
 	
@@ -109,6 +137,20 @@ describe('Link', () => {
 		
 	xdescribe('#hover', () => {
 
+	});
+
+	describe('#getPath', () => {
+
+		let path;
+
+		beforeEach(() => {
+			path = link.getPath();
+		});
+
+		it('should generate path with url parameters', () => {
+			console.log(path)
+			assert.equal(path, 'http://example.com?simbolIdentity=%22test%22');
+		});
 	});
 	
 	xdescribe('#navigate', () => {

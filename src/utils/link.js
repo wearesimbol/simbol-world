@@ -44,16 +44,21 @@ class Link {
 	}
 
 	/**
-	 * Builds a Link instance with its mesh at the se
+	 * Builds a Link instance with its mesh at the set position
 	 *
+	 * @param {string} name - Identifier for the link (Simbol for https://simbol.io)
 	 * @param {string} path - Where the link will point to
 	 * @param {array} position - 3 element array indicating the x, y and z position of the link in the scene
+	 * @param {Simbol.Identity} identity - The identity instance for the current Virtual Persona
 	 */
-	constructor(path, position) {
+	constructor(name, path, position, identity) {
+		this.name = name;
 		this.path = path;
 		this.position = position;
+		this.identity = identity;
 
 		this.mesh = this._constructMesh();
+		this.aEl = this._constructAEl();
 	}
 
 	/**
@@ -72,6 +77,21 @@ class Link {
 		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.copy(this.position);
 		return mesh;
+	}
+
+	/**
+	 * Builds an <a> element that points to the path and adds it to the <body>
+	 *
+	 * @returns {HTMLAnchorElement} aEl
+	 *
+	 * @private
+	 */
+	_constructAEl() {
+		const aEl = document.createElement('a');
+		aEl.href = this.path;
+		aEl.textContent = this.name;
+		document.body.appendChild(aEl);
+		return aEl;
 	}
 
 	/**
@@ -96,6 +116,18 @@ class Link {
 	}
 
 	/**
+	 * Adds identity information to the path for seamless site-to-site transversal
+	 *
+	 * @returns {string} path
+	 */
+	getPath() {
+		const ampersandOrQuestion = this.path.includes('?') ? '&' : '?';
+		const seriealisedIdentity = encodeURIComponent(JSON.stringify(this.identity.uPortData));
+		const path = `${this.path}${ampersandOrQuestion}simbolIdentity=${seriealisedIdentity}`;
+		return path;
+	}
+
+	/**
 	 * Performs the action of redirecting to the link's path
 	 *
 	 * @example
@@ -104,7 +136,7 @@ class Link {
 	 * @returns {undefined}
 	*/
 	navigate() {
-		window.location = this.path;
+		window.location = this.getPath();
 	}
 }
 

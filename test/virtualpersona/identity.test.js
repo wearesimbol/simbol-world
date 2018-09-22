@@ -24,6 +24,7 @@ describe('Identity', () => {
 		assert.isFunction(Identity.prototype.signIn);
 		assert.isFunction(Identity.prototype.signOut);
 		assert.isFunction(Identity.prototype.getIdentity);
+		assert.isFunction(Identity.prototype.getIdentityFromSource);
 		assert.isFunction(Identity.prototype.setUPortData);
 	});
 
@@ -137,6 +138,7 @@ describe('Identity', () => {
 
 		beforeEach(() => {
 			Identity.prototype.getIdentity.restore();
+			sinon.stub(identity, 'getIdentityFromSource').returns(JSON.stringify(data));
 		});
 
 		describe('instance data', () => {
@@ -152,26 +154,21 @@ describe('Identity', () => {
 			})
 		});
 
-		describe('localStorage data', () => {
+		describe('source data', () => {
 			
 			beforeEach(() => {
-				sinon.stub(localStorage, 'getItem').returns('{}');
 				sinon.stub(identity, 'setUPortData');
 
 				returnedData = identity.getIdentity();
 			});
 
-			afterEach(() => {
-				localStorage.getItem.restore();
-			});
-
-			it('should return localStorageData', () => {
+			it('should return source data', () => {
 				assert.deepEqual(returnedData, data);
 			});
 
 			it('should save instance data', () => {
 				assert.isTrue(identity.setUPortData.calledOnce);
-				assert.isTrue(identity.setUPortData.calledWith(returnedData));
+				assert.isTrue(identity.setUPortData.calledWith(returnedData, true));
 			});
 		});
 
@@ -184,7 +181,7 @@ describe('Identity', () => {
 					caughtError = error;
 					done();
 				});
-				sinon.stub(localStorage, 'getItem').returns('{a:a}');
+				identity.getIdentityFromSource.returns('{a:a}');
 				sinon.spy(identity, 'emit');
 
 				identity.getIdentity();
@@ -194,6 +191,33 @@ describe('Identity', () => {
 				assert.isTrue(identity.emit.calledOnce);
 				assert.isTrue(identity.emit.calledWith('error', caughtError));
 				assert.instanceOf(caughtError, Error);
+			});
+		});
+	});
+
+	describe('#getIdentityFromSource', () => {
+
+		let returnedData;
+
+		// Can't test URL params
+		xdescribe('url param', () => {
+
+		});
+
+		describe('localstorage data', () => {
+			
+			beforeEach(() => {
+				sinon.stub(localStorage, 'getItem').returns('{}');
+
+				returnedData = identity.getIdentityFromSource();
+			});
+
+			afterEach(() => {
+				localStorage.getItem.restore();
+			});
+
+			it('should return localStorageData', () => {
+				assert.equal(returnedData, '{}');
 			});
 		});
 	});

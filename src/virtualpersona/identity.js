@@ -117,15 +117,14 @@ class Identity extends EventEmitter {
 			return this.uPortData;
 		}
 
-		const savedIdentity = localStorage.getItem('currentIdentity');
-
+		const savedIdentity = this.getIdentityFromSource();
 		if (!savedIdentity) {
 			return;
 		}
 
 		try {
 			const identity = JSON.parse(savedIdentity);
-			this.setUPortData(identity);
+			this.setUPortData(identity, true);
 			return identity;
 		} catch (error) {
 			/**
@@ -137,6 +136,23 @@ class Identity extends EventEmitter {
 			 */
 			this.emit('error', error);
 		}
+	}
+
+	/**
+	 * Retrieves the identity information from the correct source
+	 * It first tries from the URL paramater 'simbolIdentity', if it's a site-to-site navigation
+	 * Then tries from LocalStorage if the site has been visited previously
+	 *
+	 * @returns {object} identity
+	 */
+	getIdentityFromSource() {
+		const urlParams = new URLSearchParams(location.search);
+		const simbolIdentityParams = urlParams.get('simbolIdentity');
+		if (simbolIdentityParams !== null) {
+			return decodeURIComponent(simbolIdentityParams);
+		}
+
+		return localStorage.getItem('currentIdentity');
 	}
 
 	/**

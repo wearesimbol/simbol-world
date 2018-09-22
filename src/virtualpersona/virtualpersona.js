@@ -95,7 +95,7 @@ class VirtualPersona extends EventEmitter {
 			this.emit('error', event);
 		});
 
-		if (config.multiVP) {
+		if (config.multiVP !== false) {
 			this.multiVP = new MultiVP(config.multiVP, this);
 			this.multiVP.on('add', (event) => {
 				/**
