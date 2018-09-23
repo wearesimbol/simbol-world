@@ -245,6 +245,18 @@ class Simbol extends EventEmitter {
 		this._scene.vrEffect.exitPresent();
 		Utils.isPresenting = false;
 	}
+
+	/**
+	 * Helper function that wraps VirtualPersona.prototype.startSocial
+	 *
+	 * @example
+	 * simbol.startSocial();
+	 *
+	 * @returns {undefined}
+	 */
+	startSocial() {
+		this.virtualPersona.startSocial();
+	}
 }
 
 /**

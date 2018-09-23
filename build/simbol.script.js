@@ -139576,48 +139576,60 @@ var Simbol = (function (exports) {
 				this.emit('error', event);
 			});
 
-			if (config.multiVP !== false) {
-				this.multiVP = new MultiVP(config.multiVP, this);
-				this.multiVP.on('add', (event) => {
-					/**
-					 * VirtualPersona add event that provides a mesh
-					 * to be added to the scene. Sometimes forwarded
-					 * by other subcomponents
-					 *
-					 * @event VirtualPersona#add
-					 * @type {object}
-					 * @property mesh - Mesh to add to the scene
-					 */
-					this.emit('add', event);
-				});
-				this.multiVP.on('remove', (event) => {
-					/**
-					 * VirtualPersona remove event that provides a mesh
-					 * to be removed to the scene. Sometimes forwarded
-					 * by other subcomponents
-					 *
-					 * @event VirtualPersona#remove
-					 * @type {object}
-					 * @property mesh - Mesh to be removed from the scene
-					 */
-					this.emit('remove', event);
-				});
-				this.multiVP.on('addanimatefunctions', (event) => {
-					/**
-					 * VirtualPersona addanimatefunctions event that provides a function
-					 * to be added to the animation loop. Sometimes forwarded
-					 * by other subcomponents
-					 *
-					 * @event VirtualPersona#addanimatefunctions
-					 * @type {object}
-					 * @property functions - Array of functions
-					 */
-					this.emit('addanimatefunctions', event);
-				});
-				this.multiVP.on('error', (event) => {
-					this.emit('error', event);
-				});
+			if (config.multiVP !== false && config.multiVP.instantiate !== false) {
+				this.startSocial();
 			}
+		}
+
+		/**
+		 * Instantiates multiVP
+		 *
+		 * @example
+		 * virtualPersona.startSocial();
+		 *
+		 * @returns {undefined}
+		 */
+		startSocial() {
+			this.multiVP = new MultiVP(this.config.multiVP, this);
+			this.multiVP.on('add', (event) => {
+				/**
+				 * VirtualPersona add event that provides a mesh
+				 * to be added to the scene. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#add
+				 * @type {object}
+				 * @property mesh - Mesh to add to the scene
+				 */
+				this.emit('add', event);
+			});
+			this.multiVP.on('remove', (event) => {
+				/**
+				 * VirtualPersona remove event that provides a mesh
+				 * to be removed to the scene. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#remove
+				 * @type {object}
+				 * @property mesh - Mesh to be removed from the scene
+				 */
+				this.emit('remove', event);
+			});
+			this.multiVP.on('addanimatefunctions', (event) => {
+				/**
+				 * VirtualPersona addanimatefunctions event that provides a function
+				 * to be added to the animation loop. Sometimes forwarded
+				 * by other subcomponents
+				 *
+				 * @event VirtualPersona#addanimatefunctions
+				 * @type {object}
+				 * @property functions - Array of functions
+				 */
+				this.emit('addanimatefunctions', event);
+			});
+			this.multiVP.on('error', (event) => {
+				this.emit('error', event);
+			});
 		}
 
 		/**
@@ -143057,6 +143069,18 @@ var Simbol = (function (exports) {
 		stopPresenting() {
 			this._scene.vrEffect.exitPresent();
 			Utils.isPresenting = false;
+		}
+
+		/**
+		 * Helper function that wraps VirtualPersona.prototype.startSocial
+		 *
+		 * @example
+		 * simbol.startSocial();
+		 *
+		 * @returns {undefined}
+		 */
+		startSocial() {
+			this.virtualPersona.startSocial();
 		}
 	}
 

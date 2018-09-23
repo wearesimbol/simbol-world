@@ -4,6 +4,11 @@ Easily create social virtual worlds that anyone can interact with using Virtual 
 
 ## Quick Start
 
+<!-- Remix Button -->
+<a href="https://glitch.com/edit/#!/remix/simbol-example">
+  <img src="https://cdn.glitch.com/2bdfb3f8-05ef-4035-a06e-2043962a3a13%2Fremix%402x.png?1513093958726" alt="remix button" aria-label="remix" height="33">
+</a>
+
 Install via [npm](https://npmjs.com)
 
 ```js
@@ -109,6 +114,12 @@ Whether Simbol should attempt to sign the person in on #init
 `object|boolean`
 
 All configuration properties related to setting up the MultiVP component. This can be set to `false` if your site takes care of the multiuser experience
+
+#### instantiate
+
+`boolean`, default: `true`
+
+Whether multiVP should be instantiated at the same time as Simbol. It will trigger the permission dialog to access the microphone, so you could might want to defer this to later
 
 #### socketURL
 
