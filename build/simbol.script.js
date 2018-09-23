@@ -139576,7 +139576,10 @@ var Simbol = (function (exports) {
 				this.emit('error', event);
 			});
 
-			if (config.multiVP !== false && config.multiVP.instantiate !== false) {
+			if (typeof config.multiVP === 'undefined' ||
+				config.multiVP !== false &&
+				config.multiVP.instantiate !== false) {
+
 				this.startSocial();
 			}
 		}
