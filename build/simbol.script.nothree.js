@@ -84150,6 +84150,7 @@ var Simbol = (function (exports) {
 					if (event.type === 'VirtualPersona') {
 						this.vpMesh = event.mesh;
 						this.controllers.updateControllers(this.vpMesh);
+						this._scene.camera.rotation.order = 'YXZ';
 						this.virtualPersona.eyeBone.add(this._scene.camera);
 						// Fix so it doesn't look backwards
 						this._scene.camera.rotation.y = Math.PI;
@@ -84315,6 +84316,8 @@ var Simbol = (function (exports) {
 
 			if (!initialised) {
 				previousControllerQuaternion.copy(controller.quaternion);
+				// Hack to fix initial rotation due to Euler(0,0,0) being converted world-to-local is not 0
+				this.locomotion.orientation.euler.set(0.0001, 0.0001, 0, 'YXZ');
 				initialised = true;
 			}
 
@@ -84375,7 +84378,7 @@ var Simbol = (function (exports) {
 
 			/*
 			 * Sets a camera to position controllers properly
-			 * It needs to not include the added position by the 
+			 * It needs to not include the added position by the
 			 * fakeCamera and position the y axis with the camera
 			 */
 			this.vpMesh.updateMatrixWorld(true);
@@ -84402,7 +84405,7 @@ var Simbol = (function (exports) {
 				poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
 				poseMatrix.decompose({}, cameraQuaternion, {});
 				locomotionRotation.setFromQuaternion(cameraQuaternion);
-				camera.rotation.x = -locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
+				camera.rotation.x = locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
 				camera.rotation.z = locomotionRotation.z;
 			}
 			camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
