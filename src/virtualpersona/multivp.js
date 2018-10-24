@@ -36,6 +36,18 @@ class MultiVP extends EventEmitter {
 		this._meshes = meshes;
 	}
 
+	/** @property {Object} objects - Map of all networked objects */
+	get objects() {
+		if (!this._objects) {
+			this._objects = {};
+		}
+		return this._objects;
+	}
+
+	set objects(objects) {
+		this._objects = objects;
+	}
+
 	/** @property {Object} remotePeer - Map of all peers to their ids */
 	get remotePeers() {
 		if (!this._remotePeers) {
@@ -93,6 +105,39 @@ class MultiVP extends EventEmitter {
 	}
 
 	/**
+	 * Adds a new networked object
+	 *
+	 * @param {THREE.Object3D} object - Object to be networked
+	 *
+	 * @returns {undefined}
+	 */
+	addObject(object) {
+		console.log(this)
+		this.objects[object] = {
+			position: [],
+			rotation: []
+		};
+
+		for (const childObject of object.children) {
+			this.addObject(childObject);
+		}
+	}
+
+	/**
+	 * Removes a networked object
+	 *
+	 * @param {THREE.Object3D} object - Object to be removed
+	 *
+	 * @returns {undefined}
+	 */
+	removeObject(object) {
+		for (const childObject of object.children) {
+			this.removeObject(childObject);
+		}
+		delete this.objects[object];
+	}
+
+	/**
 	 * Wrapper around getUserMedia
 	 *
 	 * @example
@@ -137,6 +182,11 @@ class MultiVP extends EventEmitter {
 			if (typeof peerMesh.rotation === 'number') {
 				peerMesh.mesh.rotation.y = peerMesh.rotation;
 			}
+		}
+
+		for (const object of Object.keys(this.objects)) {
+			object.position.set(...this.objects[object].position);
+			object.rotation.set(...this.objects[object].rotation);
 		}
 	}
 
