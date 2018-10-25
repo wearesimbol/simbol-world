@@ -56992,13 +56992,15 @@ class Locomotion {
 			this.stopTranslateZ();
 		});
 
-		interactions.selection.on('selected', () => {
-			if (this.teleportation.isRayCurveActive) {
-				this.teleportation.resetTeleport();
-			} else {
-				this._cancelTeleportation = true;
-			}
-		});
+		if (interactions) {
+			interactions.selection.on('selected', () => {
+				if (this.teleportation.isRayCurveActive) {
+					this.teleportation.resetTeleport();
+				} else {
+					this._cancelTeleportation = true;
+				}
+			});
+		}
 	}
 }
 
@@ -131364,8 +131366,10 @@ class Simbol extends eventemitter3 {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.interactions = new Interactions();
-		this.interactions.setUpEventListeners(this.controllers);
+		if (config.interactions) {
+			this.interactions = new Interactions();
+			this.interactions.setUpEventListeners(this.controllers);
+		}
 
 		if (config.locomotion) {
 			this.locomotion = new Locomotion();
@@ -131398,7 +131402,9 @@ class Simbol extends eventemitter3 {
 				this.controllers.init(this.vpMesh);
 
 				// Adds the UI from other components into the scene
-				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.interactions) {
+					this.addToScene([...this.interactions.getMeshes()]);
+				}
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
@@ -131432,6 +131438,10 @@ class Simbol extends eventemitter3 {
 	 */
 	addListeners(...components) {
 		for (const component of components) {
+			if (!component) {
+				return;
+			}
+
 			component.on('add', (event) => {
 				if (event.type === 'VirtualPersona') {
 					this.vpMesh = event.mesh;
@@ -131702,9 +131712,11 @@ Simbol.prototype.animate = (function() {
 		}
 
 		// Interactions
-		const position = controller === camera ? cameraPosition : controller.position;
-		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-		this.interactions.update(position, quaternion);
+		if (this.interactions) {
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
+		}
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);

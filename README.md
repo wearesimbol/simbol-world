@@ -55,6 +55,12 @@ The main user's hand. It's value can be either `'left'` or `'right'`
 
 Whether Simbol should provide a default locomotion system
 
+### interactions
+
+`boolean`, default `true`
+
+Whether Simbol should provide a default interaction system
+
 ### scene
 
 `object`

@@ -279,13 +279,15 @@ class Locomotion {
 			this.stopTranslateZ();
 		});
 
-		interactions.selection.on('selected', () => {
-			if (this.teleportation.isRayCurveActive) {
-				this.teleportation.resetTeleport();
-			} else {
-				this._cancelTeleportation = true;
-			}
-		});
+		if (interactions) {
+			interactions.selection.on('selected', () => {
+				if (this.teleportation.isRayCurveActive) {
+					this.teleportation.resetTeleport();
+				} else {
+					this._cancelTeleportation = true;
+				}
+			});
+		}
 	}
 }
 
