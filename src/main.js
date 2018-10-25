@@ -211,6 +211,18 @@ class Simbol extends EventEmitter {
 		this._scene.scene && this._scene.scene.remove(mesh);
 	}
 
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Helper function that wraps Simbol.Scene.prototype.addAnimateFunctions
 	 *

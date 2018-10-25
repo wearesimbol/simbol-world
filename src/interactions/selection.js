@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import EventEmitter from 'eventemitter3';
 import {Physics} from '../physics/physics';
 
-const RETICLE_DISTANCE = 3;
+const RETICLE_DISTANCE = 2.5;
 
 /** Class for the Selection intraction */
 class Selection extends EventEmitter {
@@ -95,6 +95,10 @@ class Selection extends EventEmitter {
 	add(object) {
 		const id = object.id;
 		if (!this.objects[id]) {
+			for (const property in EventEmitter.prototype) {
+				object[property] = EventEmitter.prototype[property];
+			}
+			EventEmitter.call(object);
 			this.objects[id] = object;
 		}
 	}
@@ -182,7 +186,7 @@ class Selection extends EventEmitter {
 		 * @type {object}
 		 * @property mesh - Selected mesh
 		 */
-		this.emit('selected', {
+		mesh.emit('selected', {
 			mesh
 		});
 	}
@@ -207,7 +211,7 @@ class Selection extends EventEmitter {
 		 * @type {object}
 		 * @property mesh - Unselected mesh
 		 */
-		this.emit('unselected', {
+		mesh.emit('unselected', {
 			mesh
 		});
 	}
@@ -234,6 +238,7 @@ class Selection extends EventEmitter {
 		for (const id in this.objects) {
 			const object = this.objects[id];
 			const intersection = Physics.checkRayCollision(this.rayCaster, object);
+			console.log(intersection)
 			const isHovering = this.hovering[id];
 
 			if (intersection && !isHovering) {
@@ -247,7 +252,7 @@ class Selection extends EventEmitter {
 				 * @type {object}
 				 * @property mesh - Hovered mesh
 				 */
-				this.emit('hover', {
+				object.emit('hover', {
 					mesh: object
 				});
 				this.isHovering = true;
@@ -264,7 +269,7 @@ class Selection extends EventEmitter {
 				 * @type {object}
 				 * @property mesh - Unhovered mesh
 				 */
-				this.emit('unhover', {
+				object.emit('unhover', {
 					mesh: object
 				});
 				this.isHovering = false;
