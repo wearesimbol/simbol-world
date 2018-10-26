@@ -56027,23 +56027,6 @@ class Selection extends eventemitter3 {
 	}
 
 	/**
-	 * Returns the currently hovered mesh
-	 *
-	 * @example
-	 * const currentHoveredMesh = selection.getHoveredMesh();
-	 *
-	 * @returns {THREE.Mesh} mesh
-	 */
-	getHoveredMesh() {
-		let mesh;
-		for (const id in this.hovering) {
-			mesh = this.objects[id];
-		}
-
-		return mesh;
-	}
-
-	/**
 	 * Selects the currently hovered mesh and emits a 'selected' event
 	 *
 	 * @example
@@ -56054,20 +56037,29 @@ class Selection extends eventemitter3 {
 	 * @emits Selection#selected
 	 */
 	select() {
-		const mesh = this.getHoveredMesh();
-		/**
-		 * Selection selected event that's emitted with
-		 * the selected mesh
-		 *
-		 * @event Selection#selected
-		 * @type {object}
-		 * @property mesh - Selected mesh
-		 */
-		mesh.emit('selected', {
-			mesh
-		});
-		// Used, for example, to cancel teleportation
-		this.emit('selected');
+		const mesh = this.hoveredMesh;
+		if (this.selectedMesh && mesh !== this.selectedMesh) {
+			this.selectedMesh.emit('unselected', {
+				mesh: this.selectedMesh
+			});
+		}
+		this.selectedMesh = mesh;
+
+		if (mesh) {
+			/**
+			 * Selection selected event that's emitted with
+			 * the selected mesh
+			 *
+			 * @event Selection#selected
+			 * @type {object}
+			 * @property mesh - Selected mesh
+			 */
+			mesh.emit('selected', {
+				mesh
+			});
+			// Used, for example, to cancel teleportation
+			this.emit('selected');
+		}
 	}
 
 	/**
@@ -56081,7 +56073,7 @@ class Selection extends eventemitter3 {
 	 * @emits Selection#unselected
 	*/
 	unselect() {
-		const mesh = this.getHoveredMesh();
+		const mesh = this.hoveredMesh;
 		/**
 		 * Selection unselected event that's emitted with
 		 * the unselected mesh
@@ -56114,6 +56106,8 @@ class Selection extends eventemitter3 {
 		this.setOrigin(position);
 		this.setDirection(orientation);
 
+		let intersectionDistance = 0;
+
 		for (const id in this.objects) {
 			const object = this.objects[id];
 			const intersection = Physics.checkRayCollision(this.rayCaster, object);
@@ -56137,6 +56131,9 @@ class Selection extends eventemitter3 {
 			}
 
 			if (!intersection && isHovering) {
+				if (object === this.hoveredMesh) {
+					delete this.hoveredMesh;
+				}
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
 				/**
@@ -56154,10 +56151,17 @@ class Selection extends eventemitter3 {
 			}
 
 			if (intersection) {
-				this._moveReticle(intersection);
-			} else {
-				this._moveReticle(null);
+				if (intersectionDistance === 0 || intersection.distance < intersectionDistance) {
+					intersectionDistance = intersection.distance;
+					this.hoveredMesh = object;
+				}
 			}
+		}
+
+		if (intersectionDistance > 0) {
+			this._moveReticle(intersectionDistance);
+		} else {
+			this._moveReticle(null);
 		}
 	}
 
@@ -56208,14 +56212,14 @@ class Selection extends eventemitter3 {
 	/**
      * Moves the reticle to a position so that it's just in front of the mesh that it intersected with.
 	 *
-	 * @param {object} intersection - An intersection
+	 * @param {number} intersectionDistance - The intersection distance
 	 *
 	 * @returns {undefined}
 	 * @private
      */
-	_moveReticle(intersection) {
-		if (intersection) {
-			this.reticleDistance = intersection.distance;
+	_moveReticle(intersectionDistance) {
+		if (intersectionDistance) {
+			this.reticleDistance = intersectionDistance;
 		} else {
 			this.reticleDistance = RETICLE_DISTANCE;
 		}
@@ -56291,7 +56295,7 @@ class Interactions extends eventemitter3 {
 	 * @returns {undefined}
 	 */
 	setUpEventListeners(emitter) {
-		emitter.on('triggerpressed', this.selection.handleSelection.bind(this.selection));
+		emitter.on('triggerpressed', this.selection.select.bind(this.selection));
 	}
 }
 
@@ -56782,6 +56786,18 @@ class Locomotion {
 		this._currentRotation = currentRotation;
 	}
 
+	/** @property {boolean} translationEnabled - is translation enabled */
+	get translationEnabled() {
+		if (typeof this._translationEnabled === 'undefined') {
+			this._translationEnabled = true;
+		}
+		return this._translationEnabled;
+	}
+
+	set translationEnabled(translationEnabled) {
+		this._translationEnabled = translationEnabled;
+	}
+
 	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
 	get translatingZ() {
 		if (typeof this._translatingZ === 'undefined') {
@@ -56839,6 +56855,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateZ(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingZ = velocity;
 	}
 
@@ -56853,6 +56873,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateX(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingX = velocity;
 	}
 
@@ -56878,6 +56902,24 @@ class Locomotion {
 	 */
 	stopTranslateX() {
 		this.translatingX = false;
+	}
+
+	/**
+	 * Allows translation to occur
+	 *
+	 * @returns {undefined}
+	 */
+	enableTranslation() {
+		this.translationEnabled = true;
+	}
+
+	/**
+	 * Disables translation from happening
+	 *
+	 * @returns {undefined}
+	 */
+	disableTranslation() {
+		this.translationEnabled = false;
 	}
 
 	/**
@@ -120559,7 +120601,7 @@ module.exports = transfer;
 
 var uport = unwrapExports(uportConnect);
 
-const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.glb';
+const ANONYMOUS_AVATAR_PATH = '/examples/AnonymousVP.glb';
 
 class Identity extends eventemitter3 {
 

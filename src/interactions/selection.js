@@ -150,23 +150,6 @@ class Selection extends EventEmitter {
 	}
 
 	/**
-	 * Returns the currently hovered mesh
-	 *
-	 * @example
-	 * const currentHoveredMesh = selection.getHoveredMesh();
-	 *
-	 * @returns {THREE.Mesh} mesh
-	 */
-	getHoveredMesh() {
-		let mesh;
-		for (const id in this.hovering) {
-			mesh = this.objects[id];
-		}
-
-		return mesh;
-	}
-
-	/**
 	 * Selects the currently hovered mesh and emits a 'selected' event
 	 *
 	 * @example
@@ -177,20 +160,29 @@ class Selection extends EventEmitter {
 	 * @emits Selection#selected
 	 */
 	select() {
-		const mesh = this.getHoveredMesh();
-		/**
-		 * Selection selected event that's emitted with
-		 * the selected mesh
-		 *
-		 * @event Selection#selected
-		 * @type {object}
-		 * @property mesh - Selected mesh
-		 */
-		mesh.emit('selected', {
-			mesh
-		});
-		// Used, for example, to cancel teleportation
-		this.emit('selected');
+		const mesh = this.hoveredMesh;
+		if (this.selectedMesh && mesh !== this.selectedMesh) {
+			this.selectedMesh.emit('unselected', {
+				mesh: this.selectedMesh
+			});
+		}
+		this.selectedMesh = mesh;
+
+		if (mesh) {
+			/**
+			 * Selection selected event that's emitted with
+			 * the selected mesh
+			 *
+			 * @event Selection#selected
+			 * @type {object}
+			 * @property mesh - Selected mesh
+			 */
+			mesh.emit('selected', {
+				mesh
+			});
+			// Used, for example, to cancel teleportation
+			this.emit('selected');
+		}
 	}
 
 	/**
@@ -204,7 +196,7 @@ class Selection extends EventEmitter {
 	 * @emits Selection#unselected
 	*/
 	unselect() {
-		const mesh = this.getHoveredMesh();
+		const mesh = this.hoveredMesh;
 		/**
 		 * Selection unselected event that's emitted with
 		 * the unselected mesh
@@ -237,6 +229,8 @@ class Selection extends EventEmitter {
 		this.setOrigin(position);
 		this.setDirection(orientation);
 
+		let intersectionDistance = 0;
+
 		for (const id in this.objects) {
 			const object = this.objects[id];
 			const intersection = Physics.checkRayCollision(this.rayCaster, object);
@@ -260,6 +254,9 @@ class Selection extends EventEmitter {
 			}
 
 			if (!intersection && isHovering) {
+				if (object === this.hoveredMesh) {
+					delete this.hoveredMesh;
+				}
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
 				/**
@@ -277,10 +274,17 @@ class Selection extends EventEmitter {
 			}
 
 			if (intersection) {
-				this._moveReticle(intersection);
-			} else {
-				this._moveReticle(null);
+				if (intersectionDistance === 0 || intersection.distance < intersectionDistance) {
+					intersectionDistance = intersection.distance;
+					this.hoveredMesh = object;
+				}
 			}
+		}
+
+		if (intersectionDistance > 0) {
+			this._moveReticle(intersectionDistance);
+		} else {
+			this._moveReticle(null);
 		}
 	}
 
@@ -331,14 +335,14 @@ class Selection extends EventEmitter {
 	/**
      * Moves the reticle to a position so that it's just in front of the mesh that it intersected with.
 	 *
-	 * @param {object} intersection - An intersection
+	 * @param {number} intersectionDistance - The intersection distance
 	 *
 	 * @returns {undefined}
 	 * @private
      */
-	_moveReticle(intersection) {
-		if (intersection) {
-			this.reticleDistance = intersection.distance;
+	_moveReticle(intersectionDistance) {
+		if (intersectionDistance) {
+			this.reticleDistance = intersectionDistance;
 		} else {
 			this.reticleDistance = RETICLE_DISTANCE;
 		}

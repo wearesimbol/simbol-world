@@ -59,6 +59,18 @@ class Locomotion {
 		this._currentRotation = currentRotation;
 	}
 
+	/** @property {boolean} translationEnabled - is translation enabled */
+	get translationEnabled() {
+		if (typeof this._translationEnabled === 'undefined') {
+			this._translationEnabled = true;
+		}
+		return this._translationEnabled;
+	}
+
+	set translationEnabled(translationEnabled) {
+		this._translationEnabled = translationEnabled;
+	}
+
 	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
 	get translatingZ() {
 		if (typeof this._translatingZ === 'undefined') {
@@ -116,6 +128,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateZ(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingZ = velocity;
 	}
 
@@ -130,6 +146,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateX(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingX = velocity;
 	}
 
@@ -155,6 +175,24 @@ class Locomotion {
 	 */
 	stopTranslateX() {
 		this.translatingX = false;
+	}
+
+	/**
+	 * Allows translation to occur
+	 *
+	 * @returns {undefined}
+	 */
+	enableTranslation() {
+		this.translationEnabled = true;
+	}
+
+	/**
+	 * Disables translation from happening
+	 *
+	 * @returns {undefined}
+	 */
+	disableTranslation() {
+		this.translationEnabled = false;
 	}
 
 	/**
