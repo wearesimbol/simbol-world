@@ -18,7 +18,8 @@ import {Scene} from './scene/scene';
 new WebVRPolyfill();
 
 const defaultConfig = {
-	locomotion: true
+	locomotion: true,
+	interactions: true
 };
 
 /**
@@ -65,8 +66,10 @@ class Simbol extends EventEmitter {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.interactions = new Interactions();
-		this.interactions.setUpEventListeners(this.controllers);
+		if (config.interactions) {
+			this.interactions = new Interactions();
+			this.interactions.setUpEventListeners(this.controllers);
+		}
 
 		if (config.locomotion) {
 			this.locomotion = new Locomotion();
@@ -99,7 +102,9 @@ class Simbol extends EventEmitter {
 				this.controllers.init(this.vpMesh);
 
 				// Adds the UI from other components into the scene
-				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.interactions) {
+					this.addToScene([...this.interactions.getMeshes()]);
+				}
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
@@ -133,6 +138,10 @@ class Simbol extends EventEmitter {
 	 */
 	addListeners(...components) {
 		for (const component of components) {
+			if (!component) {
+				return;
+			}
+
 			component.on('add', (event) => {
 				if (event.type === 'VirtualPersona') {
 					this.vpMesh = event.mesh;
@@ -152,6 +161,10 @@ class Simbol extends EventEmitter {
 
 			component.on('addanimatefunctions', (event) => {
 				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('addinteraction', (event) => {
+				this.addInteraction(event);
 			});
 
 			component.on('error', (event) => {
@@ -200,6 +213,18 @@ class Simbol extends EventEmitter {
 	 */
 	removeFromScene(mesh) {
 		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
 	}
 
 	/**
@@ -403,9 +428,11 @@ Simbol.prototype.animate = (function() {
 		}
 
 		// Interactions
-		const position = controller === camera ? cameraPosition : controller.position;
-		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-		this.interactions.update(position, quaternion);
+		if (this.interactions) {
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
+		}
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);

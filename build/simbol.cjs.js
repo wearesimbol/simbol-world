@@ -55879,7 +55879,7 @@ class Controllers extends eventemitter3 {
 	}
 }
 
-const RETICLE_DISTANCE = 3;
+const RETICLE_DISTANCE = 2.5;
 
 /** Class for the Selection intraction */
 class Selection extends eventemitter3 {
@@ -55972,6 +55972,10 @@ class Selection extends eventemitter3 {
 	add(object) {
 		const id = object.id;
 		if (!this.objects[id]) {
+			for (const property in eventemitter3.prototype) {
+				object[property] = eventemitter3.prototype[property];
+			}
+			eventemitter3.call(object);
 			this.objects[id] = object;
 		}
 	}
@@ -56059,9 +56063,11 @@ class Selection extends eventemitter3 {
 		 * @type {object}
 		 * @property mesh - Selected mesh
 		 */
-		this.emit('selected', {
+		mesh.emit('selected', {
 			mesh
 		});
+		// Used, for example, to cancel teleportation
+		this.emit('selected');
 	}
 
 	/**
@@ -56084,7 +56090,7 @@ class Selection extends eventemitter3 {
 		 * @type {object}
 		 * @property mesh - Unselected mesh
 		 */
-		this.emit('unselected', {
+		mesh.emit('unselected', {
 			mesh
 		});
 	}
@@ -56124,7 +56130,7 @@ class Selection extends eventemitter3 {
 				 * @type {object}
 				 * @property mesh - Hovered mesh
 				 */
-				this.emit('hover', {
+				object.emit('hover', {
 					mesh: object
 				});
 				this.isHovering = true;
@@ -56141,7 +56147,7 @@ class Selection extends eventemitter3 {
 				 * @type {object}
 				 * @property mesh - Unhovered mesh
 				 */
-				this.emit('unhover', {
+				object.emit('unhover', {
 					mesh: object
 				});
 				this.isHovering = false;
@@ -56996,13 +57002,15 @@ class Locomotion {
 			this.stopTranslateZ();
 		});
 
-		interactions.selection.on('selected', () => {
-			if (this.teleportation.isRayCurveActive) {
-				this.teleportation.resetTeleport();
-			} else {
-				this._cancelTeleportation = true;
-			}
-		});
+		if (interactions) {
+			interactions.selection.on('selected', () => {
+				if (this.teleportation.isRayCurveActive) {
+					this.teleportation.resetTeleport();
+				} else {
+					this._cancelTeleportation = true;
+				}
+			});
+		}
 	}
 }
 
@@ -131321,7 +131329,8 @@ if (THREE$1) {
 new WebVRPolyfill();
 
 const defaultConfig$3 = {
-	locomotion: true
+	locomotion: true,
+	interactions: true
 };
 
 /**
@@ -131368,8 +131377,10 @@ class Simbol extends eventemitter3 {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.interactions = new Interactions();
-		this.interactions.setUpEventListeners(this.controllers);
+		if (config.interactions) {
+			this.interactions = new Interactions();
+			this.interactions.setUpEventListeners(this.controllers);
+		}
 
 		if (config.locomotion) {
 			this.locomotion = new Locomotion();
@@ -131402,7 +131413,9 @@ class Simbol extends eventemitter3 {
 				this.controllers.init(this.vpMesh);
 
 				// Adds the UI from other components into the scene
-				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.interactions) {
+					this.addToScene([...this.interactions.getMeshes()]);
+				}
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
@@ -131436,6 +131449,10 @@ class Simbol extends eventemitter3 {
 	 */
 	addListeners(...components) {
 		for (const component of components) {
+			if (!component) {
+				return;
+			}
+
 			component.on('add', (event) => {
 				if (event.type === 'VirtualPersona') {
 					this.vpMesh = event.mesh;
@@ -131455,6 +131472,10 @@ class Simbol extends eventemitter3 {
 
 			component.on('addanimatefunctions', (event) => {
 				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('addinteraction', (event) => {
+				this.addInteraction(event);
 			});
 
 			component.on('error', (event) => {
@@ -131503,6 +131524,18 @@ class Simbol extends eventemitter3 {
 	 */
 	removeFromScene(mesh) {
 		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
 	}
 
 	/**
@@ -131706,9 +131739,11 @@ Simbol.prototype.animate = (function() {
 		}
 
 		// Interactions
-		const position = controller === camera ? cameraPosition : controller.position;
-		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-		this.interactions.update(position, quaternion);
+		if (this.interactions) {
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
+		}
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);

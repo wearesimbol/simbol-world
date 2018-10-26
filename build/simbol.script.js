@@ -55878,7 +55878,7 @@ var Simbol = (function (exports) {
 		}
 	}
 
-	const RETICLE_DISTANCE = 3;
+	const RETICLE_DISTANCE = 2.5;
 
 	/** Class for the Selection intraction */
 	class Selection extends eventemitter3 {
@@ -55971,6 +55971,10 @@ var Simbol = (function (exports) {
 		add(object) {
 			const id = object.id;
 			if (!this.objects[id]) {
+				for (const property in eventemitter3.prototype) {
+					object[property] = eventemitter3.prototype[property];
+				}
+				eventemitter3.call(object);
 				this.objects[id] = object;
 			}
 		}
@@ -56058,9 +56062,11 @@ var Simbol = (function (exports) {
 			 * @type {object}
 			 * @property mesh - Selected mesh
 			 */
-			this.emit('selected', {
+			mesh.emit('selected', {
 				mesh
 			});
+			// Used, for example, to cancel teleportation
+			this.emit('selected');
 		}
 
 		/**
@@ -56083,7 +56089,7 @@ var Simbol = (function (exports) {
 			 * @type {object}
 			 * @property mesh - Unselected mesh
 			 */
-			this.emit('unselected', {
+			mesh.emit('unselected', {
 				mesh
 			});
 		}
@@ -56123,7 +56129,7 @@ var Simbol = (function (exports) {
 					 * @type {object}
 					 * @property mesh - Hovered mesh
 					 */
-					this.emit('hover', {
+					object.emit('hover', {
 						mesh: object
 					});
 					this.isHovering = true;
@@ -56140,7 +56146,7 @@ var Simbol = (function (exports) {
 					 * @type {object}
 					 * @property mesh - Unhovered mesh
 					 */
-					this.emit('unhover', {
+					object.emit('unhover', {
 						mesh: object
 					});
 					this.isHovering = false;
@@ -56995,13 +57001,15 @@ var Simbol = (function (exports) {
 				this.stopTranslateZ();
 			});
 
-			interactions.selection.on('selected', () => {
-				if (this.teleportation.isRayCurveActive) {
-					this.teleportation.resetTeleport();
-				} else {
-					this._cancelTeleportation = true;
-				}
-			});
+			if (interactions) {
+				interactions.selection.on('selected', () => {
+					if (this.teleportation.isRayCurveActive) {
+						this.teleportation.resetTeleport();
+					} else {
+						this._cancelTeleportation = true;
+					}
+				});
+			}
 		}
 	}
 
@@ -131320,7 +131328,8 @@ var Simbol = (function (exports) {
 	new WebVRPolyfill();
 
 	const defaultConfig$3 = {
-		locomotion: true
+		locomotion: true,
+		interactions: true
 	};
 
 	/**
@@ -131367,8 +131376,10 @@ var Simbol = (function (exports) {
 
 			this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-			this.interactions = new Interactions();
-			this.interactions.setUpEventListeners(this.controllers);
+			if (config.interactions) {
+				this.interactions = new Interactions();
+				this.interactions.setUpEventListeners(this.controllers);
+			}
 
 			if (config.locomotion) {
 				this.locomotion = new Locomotion();
@@ -131401,7 +131412,9 @@ var Simbol = (function (exports) {
 					this.controllers.init(this.vpMesh);
 
 					// Adds the UI from other components into the scene
-					this.addToScene([...this.interactions.getMeshes()]);
+					if (this.interactions) {
+						this.addToScene([...this.interactions.getMeshes()]);
+					}
 					if (this.locomotion) {
 						this.addToScene([...this.locomotion.getMeshes()]);
 					}
@@ -131435,6 +131448,10 @@ var Simbol = (function (exports) {
 		 */
 		addListeners(...components) {
 			for (const component of components) {
+				if (!component) {
+					return;
+				}
+
 				component.on('add', (event) => {
 					if (event.type === 'VirtualPersona') {
 						this.vpMesh = event.mesh;
@@ -131454,6 +131471,10 @@ var Simbol = (function (exports) {
 
 				component.on('addanimatefunctions', (event) => {
 					this.addAnimateFunctions(event.functions);
+				});
+
+				component.on('addinteraction', (event) => {
+					this.addInteraction(event);
 				});
 
 				component.on('error', (event) => {
@@ -131502,6 +131523,18 @@ var Simbol = (function (exports) {
 		 */
 		removeFromScene(mesh) {
 			this._scene.scene && this._scene.scene.remove(mesh);
+		}
+
+		addInteraction(config) {
+			switch(config.interaction) {
+			case 'selection':
+				this.interactions.selection.add(config.mesh);
+				if (config.callbacks) {
+					for (const callback of config.callbacks) {
+						config.mesh.on(callback.event, callback.callback);
+					}
+				}
+			}
 		}
 
 		/**
@@ -131705,9 +131738,11 @@ var Simbol = (function (exports) {
 			}
 
 			// Interactions
-			const position = controller === camera ? cameraPosition : controller.position;
-			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-			this.interactions.update(position, quaternion);
+			if (this.interactions) {
+				const position = controller === camera ? cameraPosition : controller.position;
+				const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+				this.interactions.update(position, quaternion);
+			}
 
 			// Controllers
 			const controllerIds = Object.keys(this.controllers.currentControllers);
