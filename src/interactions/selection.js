@@ -189,6 +189,8 @@ class Selection extends EventEmitter {
 		mesh.emit('selected', {
 			mesh
 		});
+		// Used, for example, to cancel teleportation
+		this.emit('selected');
 	}
 
 	/**
@@ -238,7 +240,6 @@ class Selection extends EventEmitter {
 		for (const id in this.objects) {
 			const object = this.objects[id];
 			const intersection = Physics.checkRayCollision(this.rayCaster, object);
-			console.log(intersection)
 			const isHovering = this.hovering[id];
 
 			if (intersection && !isHovering) {
