@@ -163,6 +163,10 @@ class Simbol extends EventEmitter {
 				this.addAnimateFunctions(event.functions);
 			});
 
+			component.on('addinteraction', (event) => {
+				this.addInteraction(event);
+			});
+
 			component.on('error', (event) => {
 				/**
 				 * Simbol error event that forwards an error event from any of its components
@@ -209,6 +213,18 @@ class Simbol extends EventEmitter {
 	 */
 	removeFromScene(mesh) {
 		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
 	}
 
 	/**
