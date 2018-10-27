@@ -73311,7 +73311,7 @@ var Simbol = (function (exports) {
 
 	var uport = unwrapExports(uportConnect);
 
-	const ANONYMOUS_AVATAR_PATH = '/examples/AnonymousVP.glb';
+	const ANONYMOUS_AVATAR_PATH = 'https://simbol.io/assets/models/AnonymousVP.glb';
 
 	class Identity extends eventemitter3 {
 
