@@ -11,6 +11,7 @@ import {Physics} from './physics/physics';
 import {Controllers} from './controllers/controllers';
 import {Interactions} from './interactions/interactions';
 import {Locomotion} from './locomotion/locomotion';
+import {MultiUser} from './multiuser/multiuser';
 import {VirtualPersona} from './virtualpersona/virtualpersona';
 import {Scene} from './scene/scene';
 
@@ -49,13 +50,14 @@ class Simbol extends EventEmitter {
 	 * @param {string} config.hand - The user's preferred hand
 	 * @param {object} config.scene - Configuration object for a Simbol scene
 	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
-	 * @param {object} config.virtualPersona.multiVP - Configuration object for a WebRTC based social experience
+	 * @param {object} config.virtualPersona.multiUser - Configuration object for a WebRTC based social experience. Can be set to false if you configure your own multiuser experience
 	 * @param {boolean} config.locomtion - Whether Simbol should provide locomotion utilities
 	 */
 	constructor(config = {locomotion: true}) {
 		super();
 
 		config = Object.assign({}, defaultConfig, config);
+		this.config = config;
 
 		this.hand = config.hand;
 
@@ -104,15 +106,14 @@ class Simbol extends EventEmitter {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
 
-				// Prepares multiVP for positional audio from other peers
-				if (this.virtualPersona.multiVP) {
-					this._scene.camera.add(this.virtualPersona.multiVP.audioListener);
-					document.body.addEventListener('click', () => {
-						this.virtualPersona.multiVP.audioListener.context.resume();
-					});
-				}
-
 				this.addAnimateFunctions([this.animate.bind(this)]);
+
+				if (typeof this.config.multiUser === 'undefined' ||
+					this.config.multiUser !== false &&
+					this.config.multiUser.instantiate !== false) {
+
+					this.startSocial();
+				}
 
 				return Promise.resolve();
 			})
@@ -140,6 +141,10 @@ class Simbol extends EventEmitter {
 					this.virtualPersona.eyeBone.add(this._scene.camera);
 					// Fix so it doesn't look backwards
 					this._scene.camera.rotation.y = Math.PI;
+
+					if (this.multiUser) {
+						this.multiUser.setLocalAvatar(this.vpMesh);
+					}
 				}
 
 				this.addToScene([event.mesh]);
@@ -147,10 +152,6 @@ class Simbol extends EventEmitter {
 
 			component.on('remove', (event) => {
 				this.removeFromScene(event.mesh);
-			});
-
-			component.on('addanimatefunctions', (event) => {
-				this.addAnimateFunctions(event.functions);
 			});
 
 			component.on('error', (event) => {
@@ -164,6 +165,31 @@ class Simbol extends EventEmitter {
 				this.emit('error', event);
 			});
 		}
+	}
+
+	/**
+	 * Instantiates multiUser
+	 *
+	 * @example
+	 * simbol.startSocial();
+	 *
+	 * @returns {undefined}
+	 */
+	startSocial() {
+		this.config.multiUser.scene = this._scene.scene;
+		this.multiUser = new MultiUser(this.config.multiUser);
+		this.addListeners(this.multiUser);
+		if (this.vpMesh) {
+			this.multiUser.setLocalAvatar(this.vpMesh);
+		}
+
+		// Prepares multiUser for positional audio from other peers
+		this._scene.camera.add(this.multiUser.audioListener);
+		document.body.addEventListener('click', () => {
+			this.multiUser.audioListener.context.resume();
+		});
+
+		this.addAnimateFunctions([this.multiUser.animate.bind(this.multiUser)]);
 	}
 
 	/**
@@ -244,18 +270,6 @@ class Simbol extends EventEmitter {
 	stopPresenting() {
 		this._scene.vrEffect.exitPresent();
 		Utils.isPresenting = false;
-	}
-
-	/**
-	 * Helper function that wraps VirtualPersona.prototype.startSocial
-	 *
-	 * @example
-	 * simbol.startSocial();
-	 *
-	 * @returns {undefined}
-	 */
-	startSocial() {
-		this.virtualPersona.startSocial();
 	}
 }
 
@@ -393,11 +407,6 @@ Simbol.prototype.animate = (function() {
 			camera.rotation.z = locomotionRotation.z;
 		}
 		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
-
-		// MultiVP
-		if (this.virtualPersona.multiVP) {
-			this.virtualPersona.multiVP.sendData(this.vpMesh);
-		}
 
 		// Interactions
 		const position = controller === camera ? cameraPosition : controller.position;

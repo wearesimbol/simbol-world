@@ -4,7 +4,6 @@ import {VRControls} from '../libs/VRControls';
 import {Loader} from '../utils/loader';
 import {Physics} from '../physics/physics';
 import {Identity} from './identity';
-import {MultiVP} from './multivp';
 
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 const defaultConfig = {
@@ -55,7 +54,6 @@ class VirtualPersona extends EventEmitter {
 	 *
 	 * @param {object} config - Configuration parameters for different elements
 	 * @param {boolean} config.signIn - Whether Simbol should attempt to sign the person in on #init
-	 * @param {object|boolean} config.multiVP - MultiVP options. Can be set to false if you configure your own multiuser experience
 	 *
 	 * @returns {undefined}
 	 *
@@ -92,64 +90,6 @@ class VirtualPersona extends EventEmitter {
 
 		this.identity = new Identity();
 		this.identity.on('error', (event) => {
-			this.emit('error', event);
-		});
-
-		if (typeof config.multiVP === 'undefined' ||
-			config.multiVP !== false &&
-			config.multiVP.instantiate !== false) {
-
-			this.startSocial();
-		}
-	}
-
-	/**
-	 * Instantiates multiVP
-	 *
-	 * @example
-	 * virtualPersona.startSocial();
-	 *
-	 * @returns {undefined}
-	 */
-	startSocial() {
-		this.multiVP = new MultiVP(this.config.multiVP, this);
-		this.multiVP.on('add', (event) => {
-			/**
-			 * VirtualPersona add event that provides a mesh
-			 * to be added to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#add
-			 * @type {object}
-			 * @property mesh - Mesh to add to the scene
-			 */
-			this.emit('add', event);
-		});
-		this.multiVP.on('remove', (event) => {
-			/**
-			 * VirtualPersona remove event that provides a mesh
-			 * to be removed to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#remove
-			 * @type {object}
-			 * @property mesh - Mesh to be removed from the scene
-			 */
-			this.emit('remove', event);
-		});
-		this.multiVP.on('addanimatefunctions', (event) => {
-			/**
-			 * VirtualPersona addanimatefunctions event that provides a function
-			 * to be added to the animation loop. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#addanimatefunctions
-			 * @type {object}
-			 * @property functions - Array of functions
-			 */
-			this.emit('addanimatefunctions', event);
-		});
-		this.multiVP.on('error', (event) => {
 			this.emit('error', event);
 		});
 	}
@@ -207,6 +147,7 @@ class VirtualPersona extends EventEmitter {
 		return vpLoader.load()
 			.then((mesh) => {
 				mesh = this._setUpMesh(mesh);
+				mesh.avatarPath = path;
 
 				if (render) {
 					this.render(mesh);
@@ -322,6 +263,9 @@ class VirtualPersona extends EventEmitter {
 	 */
 	signOut() {
 		this.identity.signOut();
+		this.emit('avatarchange', {
+			avatarPath: this.identity.avatarPath
+		});
 		return this.loadMesh(this.identity.avatarPath, true)
 			.catch((error) => Promise.reject(error));
 	}

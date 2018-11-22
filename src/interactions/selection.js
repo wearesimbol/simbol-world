@@ -287,6 +287,7 @@ class Selection extends EventEmitter {
 	 * @returns {undefined}
 	 */
 	handleSelection() {
+		console.log(this.isHovering)
 		if (this.isHovering) {
 			this.select();
 		}
