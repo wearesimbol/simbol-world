@@ -32,7 +32,6 @@ import {VRControls} from '../libs/VRControls';
 import {Loader} from '../utils/loader';
 import {Physics} from '../physics/physics';
 import {Identity} from './identity';
-import {MultiVP} from './multivp';
 
 const VERTICAL_VECTOR = new THREE.Vector3(0, -1, 0);
 const defaultConfig = {
@@ -83,7 +82,6 @@ class VirtualPersona extends EventEmitter {
 	 *
 	 * @param {object} config - Configuration parameters for different elements
 	 * @param {boolean} config.signIn - Whether Simbol should attempt to sign the person in on #init
-	 * @param {object|boolean} config.multiVP - MultiVP options. Can be set to false if you configure your own multiuser experience
 	 *
 	 * @returns {undefined}
 	 *
@@ -120,64 +118,6 @@ class VirtualPersona extends EventEmitter {
 
 		this.identity = new Identity();
 		this.identity.on('error', (event) => {
-			this.emit('error', event);
-		});
-
-		if (typeof config.multiVP === 'undefined' ||
-			config.multiVP !== false &amp;&amp;
-			config.multiVP.instantiate !== false) {
-
-			this.startSocial();
-		}
-	}
-
-	/**
-	 * Instantiates multiVP
-	 *
-	 * @example
-	 * virtualPersona.startSocial();
-	 *
-	 * @returns {undefined}
-	 */
-	startSocial() {
-		this.multiVP = new MultiVP(this.config.multiVP, this);
-		this.multiVP.on('add', (event) => {
-			/**
-			 * VirtualPersona add event that provides a mesh
-			 * to be added to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#add
-			 * @type {object}
-			 * @property mesh - Mesh to add to the scene
-			 */
-			this.emit('add', event);
-		});
-		this.multiVP.on('remove', (event) => {
-			/**
-			 * VirtualPersona remove event that provides a mesh
-			 * to be removed to the scene. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#remove
-			 * @type {object}
-			 * @property mesh - Mesh to be removed from the scene
-			 */
-			this.emit('remove', event);
-		});
-		this.multiVP.on('addanimatefunctions', (event) => {
-			/**
-			 * VirtualPersona addanimatefunctions event that provides a function
-			 * to be added to the animation loop. Sometimes forwarded
-			 * by other subcomponents
-			 *
-			 * @event VirtualPersona#addanimatefunctions
-			 * @type {object}
-			 * @property functions - Array of functions
-			 */
-			this.emit('addanimatefunctions', event);
-		});
-		this.multiVP.on('error', (event) => {
 			this.emit('error', event);
 		});
 	}
@@ -235,6 +175,7 @@ class VirtualPersona extends EventEmitter {
 		return vpLoader.load()
 			.then((mesh) => {
 				mesh = this._setUpMesh(mesh);
+				mesh.avatarPath = path;
 
 				if (render) {
 					this.render(mesh);
@@ -350,6 +291,9 @@ class VirtualPersona extends EventEmitter {
 	 */
 	signOut() {
 		this.identity.signOut();
+		this.emit('avatarchange', {
+			avatarPath: this.identity.avatarPath
+		});
 		return this.loadMesh(this.identity.avatarPath, true)
 			.catch((error) => Promise.reject(error));
 	}
@@ -393,13 +337,13 @@ export {VirtualPersona};
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiVP.html">MultiVP</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiVP.html#event:add">add</a></li><li><a href="MultiVP.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="MultiVP.html#event:error">error</a></li><li><a href="MultiVP.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:add">add</a></li><li><a href="VirtualPersona.html#event:addanimatefunctions">addanimatefunctions</a></li><li><a href="VirtualPersona.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:remove">remove</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Controllers.html">Controllers</a></li><li><a href="GamepadController.html">GamepadController</a></li><li><a href="Identity.html">Identity</a></li><li><a href="Interactions.html">Interactions</a></li><li><a href="KeyboardController.html">KeyboardController</a></li><li><a href="Link.html">Link</a></li><li><a href="Loader.html">Loader</a></li><li><a href="Locomotion.html">Locomotion</a></li><li><a href="MultiUser.html">MultiUser</a></li><li><a href="NodeSimbol.html">NodeSimbol</a></li><li><a href="Physics.html">Physics</a></li><li><a href="PointerController.html">PointerController</a></li><li><a href="PoseController.html">PoseController</a></li><li><a href="Scene.html">Scene</a></li><li><a href="Selection.html">Selection</a></li><li><a href="Simbol.html">Simbol</a></li><li><a href="Teleportation.html">Teleportation</a></li><li><a href="TextSimbol.html">TextSimbol</a></li><li><a href="Utils.html">Utils</a></li><li><a href="VirtualPersona.html">VirtualPersona</a></li></ul><h3>Events</h3><ul><li><a href="Controllers.html#event:currentorientation">currentorientation</a></li><li><a href="Controllers.html#event:error">error</a></li><li><a href="Controllers.html#event:gesturechange">gesturechange</a></li><li><a href="Controllers.html#event:orientation">orientation</a></li><li><a href="Controllers.html#event:thumbpadpressed">thumbpadpressed</a></li><li><a href="Controllers.html#event:thumbpadtouched">thumbpadtouched</a></li><li><a href="Controllers.html#event:thumbpaduntouched">thumbpaduntouched</a></li><li><a href="Controllers.html#event:triggerpressed">triggerpressed</a></li><li><a href="Controllers.html#event:xtranslationend">xtranslationend</a></li><li><a href="Controllers.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="Controllers.html#event:ztranslationend">ztranslationend</a></li><li><a href="Controllers.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="GamepadController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="GamepadController.html#event:triggerpressed">triggerpressed</a></li><li><a href="GamepadController.html#event:triggerunpressed">triggerunpressed</a></li><li><a href="Identity.html#event:error">error</a></li><li><a href="KeyboardController.html#event:xtranslationend">xtranslationend</a></li><li><a href="KeyboardController.html#event:xtranslationstart">xtranslationstart</a></li><li><a href="KeyboardController.html#event:ztranslationend">ztranslationend</a></li><li><a href="KeyboardController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="MultiUser.html#event:add">add</a></li><li><a href="MultiUser.html#event:error">error</a></li><li><a href="MultiUser.html#event:remove">remove</a></li><li><a href="PointerController.html#event:currentorientation">currentorientation</a></li><li><a href="PointerController.html#event:orientation">orientation</a></li><li><a href="PointerController.html#event:triggerpressed">triggerpressed</a></li><li><a href="PointerController.html#event:ztranslationend">ztranslationend</a></li><li><a href="PointerController.html#event:ztranslationstart">ztranslationstart</a></li><li><a href="PoseController.html#event:controllerdisconnected">controllerdisconnected</a></li><li><a href="PoseController.html#event:error">error</a></li><li><a href="PoseController.html#event:gesturechange">gesturechange</a></li><li><a href="Selection.html#event:hover">hover</a></li><li><a href="Selection.html#event:selected">selected</a></li><li><a href="Selection.html#event:unhover">unhover</a></li><li><a href="Selection.html#event:unselected">unselected</a></li><li><a href="Simbol.html#event:error">error</a></li><li><a href="TextSimbol.html#event:error">error</a></li><li><a href="VirtualPersona.html#event:error">error</a></li></ul><h3>Global</h3><ul><li><a href="global.html#getDeepValue">getDeepValue</a></li><li><a href="global.html#setDeepValue">setDeepValue</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Oct 27 2018 06:07:58 GMT+0200 (DST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Nov 29 2018 18:26:22 GMT+0100 (STD)
 </footer>
 
 <script> prettyPrint(); </script>
