@@ -55875,7 +55875,7 @@ class Controllers extends eventemitter3 {
 	}
 }
 
-const RETICLE_DISTANCE = 3;
+const RETICLE_DISTANCE = 2.5;
 
 /** Class for the Selection intraction */
 class Selection extends eventemitter3 {
@@ -55968,6 +55968,10 @@ class Selection extends eventemitter3 {
 	add(object) {
 		const id = object.id;
 		if (!this.objects[id]) {
+			for (const property in eventemitter3.prototype) {
+				object[property] = eventemitter3.prototype[property];
+			}
+			eventemitter3.call(object);
 			this.objects[id] = object;
 		}
 	}
@@ -56019,23 +56023,6 @@ class Selection extends eventemitter3 {
 	}
 
 	/**
-	 * Returns the currently hovered mesh
-	 *
-	 * @example
-	 * const currentHoveredMesh = selection.getHoveredMesh();
-	 *
-	 * @returns {THREE.Mesh} mesh
-	 */
-	getHoveredMesh() {
-		let mesh;
-		for (const id in this.hovering) {
-			mesh = this.objects[id];
-		}
-
-		return mesh;
-	}
-
-	/**
 	 * Selects the currently hovered mesh and emits a 'selected' event
 	 *
 	 * @example
@@ -56046,18 +56033,29 @@ class Selection extends eventemitter3 {
 	 * @emits Selection#selected
 	 */
 	select() {
-		const mesh = this.getHoveredMesh();
-		/**
-		 * Selection selected event that's emitted with
-		 * the selected mesh
-		 *
-		 * @event Selection#selected
-		 * @type {object}
-		 * @property mesh - Selected mesh
-		 */
-		this.emit('selected', {
-			mesh
-		});
+		const mesh = this.hoveredMesh;
+		if (this.selectedMesh && mesh !== this.selectedMesh) {
+			this.selectedMesh.emit('unselected', {
+				mesh: this.selectedMesh
+			});
+		}
+		this.selectedMesh = mesh;
+
+		if (mesh) {
+			/**
+			 * Selection selected event that's emitted with
+			 * the selected mesh
+			 *
+			 * @event Selection#selected
+			 * @type {object}
+			 * @property mesh - Selected mesh
+			 */
+			mesh.emit('selected', {
+				mesh
+			});
+			// Used, for example, to cancel teleportation
+			this.emit('selected');
+		}
 	}
 
 	/**
@@ -56071,7 +56069,7 @@ class Selection extends eventemitter3 {
 	 * @emits Selection#unselected
 	*/
 	unselect() {
-		const mesh = this.getHoveredMesh();
+		const mesh = this.hoveredMesh;
 		/**
 		 * Selection unselected event that's emitted with
 		 * the unselected mesh
@@ -56080,7 +56078,7 @@ class Selection extends eventemitter3 {
 		 * @type {object}
 		 * @property mesh - Unselected mesh
 		 */
-		this.emit('unselected', {
+		mesh.emit('unselected', {
 			mesh
 		});
 	}
@@ -56104,6 +56102,8 @@ class Selection extends eventemitter3 {
 		this.setOrigin(position);
 		this.setDirection(orientation);
 
+		let intersectionDistance = 0;
+
 		for (const id in this.objects) {
 			const object = this.objects[id];
 			const intersection = Physics.checkRayCollision(this.rayCaster, object);
@@ -56120,13 +56120,16 @@ class Selection extends eventemitter3 {
 				 * @type {object}
 				 * @property mesh - Hovered mesh
 				 */
-				this.emit('hover', {
+				object.emit('hover', {
 					mesh: object
 				});
 				this.isHovering = true;
 			}
 
 			if (!intersection && isHovering) {
+				if (object === this.hoveredMesh) {
+					delete this.hoveredMesh;
+				}
 				delete this.hovering[id];
 				this.reticle.children[0].material.color.setHex(0xFFFFFF);
 				/**
@@ -56137,17 +56140,24 @@ class Selection extends eventemitter3 {
 				 * @type {object}
 				 * @property mesh - Unhovered mesh
 				 */
-				this.emit('unhover', {
+				object.emit('unhover', {
 					mesh: object
 				});
 				this.isHovering = false;
 			}
 
 			if (intersection) {
-				this._moveReticle(intersection);
-			} else {
-				this._moveReticle(null);
+				if (intersectionDistance === 0 || intersection.distance < intersectionDistance) {
+					intersectionDistance = intersection.distance;
+					this.hoveredMesh = object;
+				}
 			}
+		}
+
+		if (intersectionDistance > 0) {
+			this._moveReticle(intersectionDistance);
+		} else {
+			this._moveReticle(null);
 		}
 	}
 
@@ -56199,14 +56209,14 @@ class Selection extends eventemitter3 {
 	/**
      * Moves the reticle to a position so that it's just in front of the mesh that it intersected with.
 	 *
-	 * @param {object} intersection - An intersection
+	 * @param {number} intersectionDistance - The intersection distance
 	 *
 	 * @returns {undefined}
 	 * @private
      */
-	_moveReticle(intersection) {
-		if (intersection) {
-			this.reticleDistance = intersection.distance;
+	_moveReticle(intersectionDistance) {
+		if (intersectionDistance) {
+			this.reticleDistance = intersectionDistance;
 		} else {
 			this.reticleDistance = RETICLE_DISTANCE;
 		}
@@ -56282,7 +56292,7 @@ class Interactions extends eventemitter3 {
 	 * @returns {undefined}
 	 */
 	setUpEventListeners(emitter) {
-		emitter.on('triggerpressed', this.selection.handleSelection.bind(this.selection));
+		emitter.on('triggerpressed', this.selection.select.bind(this.selection));
 	}
 }
 
@@ -56773,6 +56783,18 @@ class Locomotion {
 		this._currentRotation = currentRotation;
 	}
 
+	/** @property {boolean} translationEnabled - is translation enabled */
+	get translationEnabled() {
+		if (typeof this._translationEnabled === 'undefined') {
+			this._translationEnabled = true;
+		}
+		return this._translationEnabled;
+	}
+
+	set translationEnabled(translationEnabled) {
+		this._translationEnabled = translationEnabled;
+	}
+
 	/** @property {boolean|number} translatingZ - is there translation in the Z axis and by how much */
 	get translatingZ() {
 		if (typeof this._translatingZ === 'undefined') {
@@ -56830,6 +56852,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateZ(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingZ = velocity;
 	}
 
@@ -56844,6 +56870,10 @@ class Locomotion {
 	 * @returns {undefined}
 	 */
 	translateX(velocity) {
+		if (!this.translationEnabled) {
+			this.translatingZ = false;
+			return;
+		}
 		this.translatingX = velocity;
 	}
 
@@ -56869,6 +56899,24 @@ class Locomotion {
 	 */
 	stopTranslateX() {
 		this.translatingX = false;
+	}
+
+	/**
+	 * Allows translation to occur
+	 *
+	 * @returns {undefined}
+	 */
+	enableTranslation() {
+		this.translationEnabled = true;
+	}
+
+	/**
+	 * Disables translation from happening
+	 *
+	 * @returns {undefined}
+	 */
+	disableTranslation() {
+		this.translationEnabled = false;
 	}
 
 	/**
@@ -56993,13 +57041,15 @@ class Locomotion {
 			this.stopTranslateZ();
 		});
 
-		interactions.selection.on('selected', () => {
-			if (this.teleportation.isRayCurveActive) {
-				this.teleportation.resetTeleport();
-			} else {
-				this._cancelTeleportation = true;
-			}
-		});
+		if (interactions) {
+			interactions.selection.on('selected', () => {
+				if (this.teleportation.isRayCurveActive) {
+					this.teleportation.resetTeleport();
+				} else {
+					this._cancelTeleportation = true;
+				}
+			});
+		}
 	}
 }
 
@@ -63769,6 +63819,52 @@ const defaultConfig = {
 	}
 };
 
+/**
+ * Utility function to get a value from a nested object based on a string representing that nesting
+ *
+ * @param {Object} object - The object to get the nested value from
+ * @param {string} value - String representing the path to the value e.g. 'b.c'
+ *
+ * @example
+ * const object = { inner: { mostInner: 1 } };
+ * const retrievedValue = getDeepValue(object, 'inner.mostInner');
+ *
+ * @returns {*} value
+ */
+function getDeepValue(object, value) {
+	const pathArray = value.split('.');
+	return pathArray.reduce((innerObject, key) =>
+		innerObject && innerObject[key] !== 'undefined' ? innerObject[key] : undefined, object
+	);
+}
+
+/**
+ * Utility function to get a value from a nested object based on a string representing that nesting
+ *
+ * @param {Object} object - The object to get the nested value from
+ * @param {string} key - String representing the path to the key e.g. 'b.c'
+ * @param {*} value - The value to set the key to
+ *
+ * @example
+ * const object = { inner: { mostInner: 1 } };
+ * const retrievedValue = setDeepValue(object, 'inner.mostInner', 2);
+ *
+ * @returns {*} value
+ */
+function setDeepValue(object, key, value) {
+	const pathArray = key.split('.');
+	if (object[pathArray[0]]) {
+		if (pathArray.length === 1) {
+			object[pathArray[0]] = value;
+			return object[pathArray[0]];
+		} else {
+			return setDeepValue(object[pathArray[0]], pathArray.slice(1).join('.'), value);
+		}
+	} else {
+		return undefined;
+	}
+}
+
 class MultiUser extends eventemitter3 {
 
 	/** @property {Object} objects - Map of all networked objects */
@@ -63860,11 +63956,15 @@ class MultiUser extends eventemitter3 {
 	 * @param {string} data.type - The object's type ('path', 'name', 'Object3D')
 	 * @param {string|THREE.Object3D} data.value - The path, object name or instance of THREE.Object3D to fetch the object
 	 * @param {boolean} data.isAvatar - Whether the object corresponds to one of the peer's avatar
+	 * @param {boolean} data.parent - Whether it's a synced object that's a child of another
+	 * @param {number} data.parent.id - The ID of the parent object
+	 * @param {array} data.animatedValues - The keys of the object to be animated
 	 * @param {number} data.id - The id of the networked object
 	 * @param {number} data.lastUpdate - Time in ms when the object data was last changed
+	 * @param {number|string} data.owner - The peer id of the owner. If it's the local peer, it can use the string 'self'
 	 * @param {number} peerId - Id corresponding to the peer that is sharing the object
 	 *
-	 * @returns {undefined}
+	 * @returns {Promise} promise
 	 *
 	 * @emits MultiUser#add
 	 * @emits MultiUser#error
@@ -63879,8 +63979,19 @@ class MultiUser extends eventemitter3 {
 			return Promise.resolve();
 		}
 
+		if (data.parent && data.parent.id && !this.objects[data.parent.id]) {
+			setTimeout(() => {
+				this.addObject(data, peerId);
+			}, 200);
+			return Promise.resolve();
+		}
+
 		if (typeof peerId === 'undefined') {
 			peerId = this.id;
+		}
+
+		if (data.owner === 'self') {
+			data.owner = this.id;
 		}
 
 		return this._loadObject(data).then((object) => {
@@ -63900,9 +64011,10 @@ class MultiUser extends eventemitter3 {
 			}
 
 			if (peerId === this.id) {
-				if (data.isAvatar) {
+				if (data.isAvatar && !data.parent) {
 					this.broadcast(JSON.stringify({
 						type: 'update',
+						firstUpdate: true,
 						object: {
 							type: 'path',
 							value: this.localAvatar.avatarPath,
@@ -63915,16 +64027,19 @@ class MultiUser extends eventemitter3 {
 				} else {
 					this.broadcast(JSON.stringify({
 						type: 'update',
+						firstUpdate: true,
 						object: {
 							type: data.type,
 							value: data.value,
 							lastUpdate: now,
 							id: data.id,
+							parent: data.parent,
+							isAvatar: data.isAvatar,
 							owner: this.id
 						}
 					}));
 				}
-			} else {
+			} else if (!data.parent || !data.parent.id) {
 				/**
 				 * MultiUser add event that provides a mesh to be added to the scene
 				 *
@@ -63937,12 +64052,30 @@ class MultiUser extends eventemitter3 {
 				});
 			}
 
+			const animatedValues = {};
+			for (const value of data.animatedValues || []) {
+				animatedValues[value] = undefined;
+			}
+
+			if (data.parent && data.parent.id) {
+				const parent = this.objects[data.parent.id];
+				parent && parent.children.push(data.id);
+			}
+
 			this.objects[data.id] = {
+				id: data.id,
 				object3D: object,
-				owner: data.owner || '',
+				type: data.type,
+				value: data.value,
+				isAvatar: data.isAvatar,
+				parent: data.parent || {},
+				children: [],
+				owner: typeof data.owner !== 'undefined' ? data.owner : '',
 				lastUpdate: data.lastUpdate || now,
+				animatedValues: animatedValues,
 				position: [],
-				rotation: []
+				rotation: [],
+				scale: []
 			};
 		}).catch((error) => {
 			this.emit('error', error);
@@ -63957,7 +64090,44 @@ class MultiUser extends eventemitter3 {
 	 * @returns {undefined}
 	 */
 	removeObject(id) {
+		const object = this.objects[id];
+		if (!object || object.owner !== this.id) {
+			return;
+		}
+
+		if (object.children) {
+			for (const childId of object.children) {
+				this.removeObject(childId);
+			}
+		}
+
+		if (object.parent && object.parent.id) {
+			this._removeFromParent(object);
+		}
+
 		delete this.objects[id];
+		this.broadcast(JSON.stringify({
+			type: 'remove',
+			object: {
+				id,
+				owner: this.id
+			}
+		}));
+	}
+
+	/**
+	 * Helper function that removes a reference to the child object from the parent
+	 *
+	 * @param {object} object - The object to be removed from the parent
+	 *
+	 * @returns {undefined}
+	 */
+	_removeFromParent(object) {
+		const parent = this.objects[object.parent.id];
+		const index = parent.children.indexOf(object.id);
+		if (index !== -1) {
+			parent.children.splice(index, 1);
+		}
 	}
 
 	/**
@@ -63974,19 +64144,22 @@ class MultiUser extends eventemitter3 {
 	 * @private
 	 */
 	_loadObject(data) {
+		const parentId = data.parent ? data.parent.id : undefined;
+		const parentObject = this.objects[parentId];
+		const parent = parentObject ? parentObject.object3D : this.config.scene;
 		return new Promise((resolve, reject) => {
 			switch (data.type) {
 			case 'path':
 				this._loadObjectFromPath(data.value).then(resolve, reject);
 				break;
 			case 'name':
-				this._loadObjectFromName(data.value).then(resolve, reject);
+				this._loadObjectFromName(data.value, parent).then(resolve, reject);
 				break;
 			case 'Object3D':
 				resolve(data.value);
 				break;
 			default:
-				reject(new Error('Shared object wrong'));
+				reject(new Error('Shared object wrong ' + data.type + data.value));
 			}
 		});
 	}
@@ -63995,14 +64168,15 @@ class MultiUser extends eventemitter3 {
 	 * Helper function to fetch an object in the scene based on its name
 	 *
 	 * @param {string} name - Name of the object
+	 * @param {Object3D} parent - The mesh from where to search for the object
 	 *
 	 * @returns {Promise} promise
 	 *
 	 * @private
 	 */
-	_loadObjectFromName(name) {
+	_loadObjectFromName(name, parent) {
 		return new Promise((resolve, reject) => {
-			const object = this.config.scene.getObjectByName(name);
+			const object = parent.getObjectByName(name);
 			if (!object) {
 				reject(`Simbol.MultiUser: No object found with name ${name} in the scene to be networked`);
 			} else {
@@ -64037,6 +64211,10 @@ class MultiUser extends eventemitter3 {
 	grabOwnership(object) {
 		for (const objectId of Object.keys(this.objects)) {
 			const objectData = this.objects[objectId];
+			if (objectData.isAvatar) {
+				continue;
+			}
+
 			if (objectData.object3D === object) {
 				const now = performance.now();
 				if (objectData.owner !== this.id &&
@@ -64101,11 +64279,18 @@ class MultiUser extends eventemitter3 {
 					if (typeof object.rotation[i] !== 'number') {
 						object.rotation[i] = 0;
 					}
+					if (typeof object.rotation[i] !== 'number') {
+						object.scale[i] = 0;
+					}
 				}
 				object.object3D.position.set(...object.position);
 				object.object3D.rotation.set(...object.rotation);
+
+				for (const key of Object.keys(object.animatedValues)) {
+					setDeepValue(object.object3D, key, object.animatedValues[key]);
+				}
 			} else {
-				this.sendData(object.object3D);
+				this.sendData(object);
 			}
 		}
 	}
@@ -64277,17 +64462,40 @@ class MultiUser extends eventemitter3 {
 	 * @private
 	 */
 	_peerConnect() {
-		console.log('peer connect');
+		console.log('peer connected');
 		this.connected = true;
-		this.multiUser.broadcast(JSON.stringify({
-			type: 'update',
-			object: {
-				type: 'path',
-				id: this.multiUser.localAvatar.uuid,
-				isAvatar: true,
-				value: this.multiUser.localAvatar.avatarPath
+		for (const object of Object.values(this.multiUser.objects)) {
+			if (object.owner === this.multiUser.id) {
+				if (object.object3D === this.multiUser.localAvatar) {
+					this.send(JSON.stringify({
+						type: 'update',
+						firstUpdate: true,
+						object: {
+							type: 'path',
+							value: this.multiUser.localAvatar.avatarPath,
+							isAvatar: true,
+							id: object.id,
+							owner: object.owner,
+							lastUpdate: object.lastUpdate
+						}
+					}));
+				} else {
+					this.send(JSON.stringify({
+						type: 'update',
+						firstUpdate: true,
+						object: {
+							type: object.type,
+							value: object.value,
+							id: object.id,
+							parent: object.parent,
+							isAvatar: object.isAvatar,
+							owner: object.owner,
+							lastUpdate: object.lastUpdate
+						}
+					}));
+				}
 			}
-		}));
+		}
 	}
 
 	/**
@@ -64321,20 +64529,28 @@ class MultiUser extends eventemitter3 {
 	 */
 	_peerClose() {
 		console.log(`peer ${this.id} closing`);
-		// multiuser-todo
 		delete this.multiUser.remotePeers[this.id];
-		if (this.multiUser.objects[this.id]) {
-			const mesh = this.multiUser.objects[this.id].object;
-			/**
-			 * MultiUser remove event that provides a mesh to be removed
-			 * from the scene
-			 *
-			 * @event MultiUser#remove
-			 * @type {object}
-			 * @property mesh - Mesh to be removed from the scene
-			*/
-			this.multiUser.emit('remove', {mesh});
-			delete this.multiUser.objects[this.id];
+		for (const object of Object.values(this.multiUser.objects)) {
+			if (object.owner === this.id) {
+				object.owner = '';
+
+				if (object.isAvatar) {
+					delete this.multiUser.objects[object.id];
+
+					if (!object.parent.id) {
+						const mesh = object.object3D;
+						/**
+						 * MultiUser remove event that provides a mesh to be removed
+						 * from the scene
+						 *
+						 * @event MultiUser#remove
+						 * @type {object}
+						 * @property mesh - Mesh to be removed from the scene
+						*/
+						this.multiUser.emit('remove', {mesh});
+					}
+				}
+			}
 		}
 	}
 
@@ -64346,20 +64562,36 @@ class MultiUser extends eventemitter3 {
 	 * @param {number} data.object.id - The object's id
 	 * @param {number} data.object.owner - The owner's peerID
 	 * @param {number} data.object.lastUpdate - Date in ms when the object was last updated
-	 * @param {array} data.position - New object position
-	 * @param {array} data.rotation - New object rotation
+	 * @param {array} data.position - Object position
+	 * @param {array} data.rotation - Object rotation
+	 * @param {array} data.scale - Object scale
+	 * @param {object} data.animatedValues - The key to a nested object key with the value to apply
 	 * @param {number} peerId - The peer's id who's sending the information
 	 *
 	 * @returns {undefined}
 	 */
 	update(data, peerId) {
+		if (data.object.owner !== peerId) {
+			return;
+		}
+
 		if (!this.objects[data.object.id]) {
-			this.addObject(data.object, peerId);
+			if (data.object.type && data.object.value) {
+				this.addObject(data.object, peerId);
+			} else {
+				return;
+			}
 		}
 
 		const object = this.objects[data.object.id];
 		if (object) {
-			if (!this.remotePeers[peerId].initiator && object.firstUpdate) ;
+			if (object.owner !== data.object.owner &&
+				!this.remotePeers[peerId].initiator &&
+				data.firstUpdate) {
+
+				object.owner = data.object.owner;
+				object.lastUpdate = data.object.lastUpdate;
+			}
 
 			if (data.position) {
 				object.position = [...data.position];
@@ -64369,7 +64601,18 @@ class MultiUser extends eventemitter3 {
 				object.rotation = [...data.rotation];
 			}
 
-			if (data.object.owner && data.object.lastUpdate) {
+			if (data.scale) {
+				object.scale = [...data.scale];
+			}
+
+			for (const key of Object.keys(data.animatedValues || {})) {
+				object.animatedValues[key] = data.animatedValues[key];
+			}
+
+			if (typeof data.object.owner !== 'undefined' &&
+				typeof data.object.lastUpdate !== 'undefined' &&
+				!data.firstUpdate) {
+
 				object.owner = data.object.owner;
 				object.lastUpdate = data.object.lastUpdate;
 			}
@@ -64377,38 +64620,76 @@ class MultiUser extends eventemitter3 {
 	}
 
 	/**
-	 * 
+	 * Removes a networked object
+	 *
+	 * @param {object} data - Data about the object
+	 * @param {object} data.object - Data about the object
+	 * @param {number} data.object.id - The object's id
+	 * @param {number} data.object.owner - The owner's peerID
+	 * @param {number} data.object.isAvatar - Date in ms when the object was last updated
+	 * @param {number} peerId - The peer's id who's sending the information
+	 *
+	 * @returns {undefined}
 	 */
 	remove(data, peerId) {
-		// multiuser-todo
+		const object = this.objects[data.object.id];
+		if (!object || object.owner !== peerId) {
+			return;
+		}
+
+		object.owner = '';
+
+		if (object.children) {
+			for (const childId of object.children) {
+				delete this.objects[childId];
+			}
+		}
+
+		if (object.parent && object.parent.id) {
+			this._removeFromParent(object);
+		}
+
+		if (object.isAvatar && !object.parent.id) {
+			const mesh = object.object3D;
+			this.emit('remove', {mesh});
+		}
+
+		delete this.objects[object.id];
 	}
 
 	/**
 	 * Sends data from an object to all peers
 	 *
-	 * @param {THREE.Mesh} object - Mesh from where to get the data
+	 * @param {Object} object - Object from where to get the data
 	 *
 	 * @example
-	 * multiUser.sendData(simbol.vpMesh);
+	 * multiUser.sendData(Object.values(multiuser.objects)[0]);
 	 *
 	 * @returns {undefined}
 	 */
 	sendData(object) {
+		const object3D = object.object3D;
 		const payload = {
 			type: 'update',
 			object: {
-				id: object.uuid,
-				owner: this.id
+				id: object.id,
+				owner: object.owner
 			},
-			position: [object.position.x, object.position.y, object.position.z],
-			rotation: [object.rotation.x, object.rotation.y, object.rotation.z]
+			position: [object3D.position.x, object3D.position.y, object3D.position.z],
+			rotation: [object3D.rotation.x, object3D.rotation.y, object3D.rotation.z],
+			scale: [object3D.scale.x, object3D.scale.y, object3D.scale.z],
+			animatedValues: {}
 		};
 
+		for (const key of Object.keys(object.animatedValues)) {
+			payload.animatedValues[key] = getDeepValue(object.object3D, key);
+		}
+
 		const positionBuffer = new ArrayBuffer(16);
-		positionBuffer[0] = object.position.x;
-		positionBuffer[1] = object.position.y;
-		positionBuffer[2] = object.position.z;
-		positionBuffer[3] = object.rotation.y;
+		positionBuffer[0] = object3D.position.x;
+		positionBuffer[1] = object3D.position.y;
+		positionBuffer[2] = object3D.position.z;
+		positionBuffer[3] = object3D.rotation.y;
 
 		this.broadcast(JSON.stringify(payload));
 	}
@@ -64444,14 +64725,44 @@ class MultiUser extends eventemitter3 {
 		if (!avatar) {
 			return;
 		}
+
 		this.localAvatar = avatar;
 		this.addObject({
 			type: 'Object3D',
 			value: this.localAvatar,
-			id: avatar.uuid,
+			id: this.localAvatar.uuid,
 			isAvatar: true,
-			owner: this.id
-		}, this.id);
+			owner: 'self'
+		}).then(() => {
+			const leftHand = this.localAvatar.getObjectByName('VirtualPersonaHandLeft');
+			const rightHand = this.localAvatar.getObjectByName('VirtualPersonaHandRight');
+			if (leftHand) {
+				this.addObject({
+					type: 'name',
+					value: 'VirtualPersonaHandLeft',
+					id: leftHand.uuid,
+					isAvatar: true,
+					parent: {
+						id: this.localAvatar.uuid
+					},
+					owner: 'self'
+				});
+			}
+			if (rightHand) {
+				this.addObject({
+					type: 'name',
+					value: 'VirtualPersonaHandRight',
+					id: rightHand.uuid,
+					isAvatar: true,
+					parent: {
+						id: this.localAvatar.uuid
+					},
+					owner: 'self'
+				});
+			}
+		}).catch((error) => {
+			this.emit('error', error);
+		});
 	}
 
 	/**
@@ -131535,7 +131846,8 @@ if (THREE$1) {
 new WebVRPolyfill();
 
 const defaultConfig$3 = {
-	locomotion: true
+	locomotion: true,
+	interactions: true
 };
 
 /**
@@ -131583,8 +131895,10 @@ class Simbol extends eventemitter3 {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.interactions = new Interactions();
-		this.interactions.setUpEventListeners(this.controllers);
+		if (config.interactions) {
+			this.interactions = new Interactions();
+			this.interactions.setUpEventListeners(this.controllers);
+		}
 
 		if (config.locomotion) {
 			this.locomotion = new Locomotion();
@@ -131617,7 +131931,9 @@ class Simbol extends eventemitter3 {
 				this.controllers.init(this.vpMesh);
 
 				// Adds the UI from other components into the scene
-				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.interactions) {
+					this.addToScene([...this.interactions.getMeshes()]);
+				}
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
@@ -131650,10 +131966,15 @@ class Simbol extends eventemitter3 {
 	 */
 	addListeners(...components) {
 		for (const component of components) {
+			if (!component) {
+				return;
+			}
+
 			component.on('add', (event) => {
 				if (event.type === 'VirtualPersona') {
 					this.vpMesh = event.mesh;
 					this.controllers.updateControllers(this.vpMesh);
+					this._scene.camera.rotation.order = 'YXZ';
 					this.virtualPersona.eyeBone.add(this._scene.camera);
 					// Fix so it doesn't look backwards
 					this._scene.camera.rotation.y = Math.PI;
@@ -131668,6 +131989,14 @@ class Simbol extends eventemitter3 {
 
 			component.on('remove', (event) => {
 				this.removeFromScene(event.mesh);
+			});
+
+			component.on('addanimatefunctions', (event) => {
+				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('addinteraction', (event) => {
+				this.addInteraction(event);
 			});
 
 			component.on('error', (event) => {
@@ -131741,6 +132070,18 @@ class Simbol extends eventemitter3 {
 	 */
 	removeFromScene(mesh) {
 		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
 	}
 
 	/**
@@ -131832,6 +132173,8 @@ Simbol.prototype.animate = (function() {
 
 		if (!initialised) {
 			previousControllerQuaternion.copy(controller.quaternion);
+			// Hack to fix initial rotation due to Euler(0,0,0) being converted world-to-local is not 0
+			this.locomotion.orientation.euler.set(0.0001, 0.0001, 0, 'YXZ');
 			initialised = true;
 		}
 
@@ -131892,7 +132235,7 @@ Simbol.prototype.animate = (function() {
 
 		/*
 		 * Sets a camera to position controllers properly
-		 * It needs to not include the added position by the 
+		 * It needs to not include the added position by the
 		 * fakeCamera and position the y axis with the camera
 		 */
 		this.vpMesh.updateMatrixWorld(true);
@@ -131919,15 +132262,17 @@ Simbol.prototype.animate = (function() {
 			poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
 			poseMatrix.decompose({}, cameraQuaternion, {});
 			locomotionRotation.setFromQuaternion(cameraQuaternion);
-			camera.rotation.x = -locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
+			camera.rotation.x = locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
 			camera.rotation.z = locomotionRotation.z;
 		}
 		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
 
 		// Interactions
-		const position = controller === camera ? cameraPosition : controller.position;
-		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-		this.interactions.update(position, quaternion);
+		if (this.interactions) {
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
+		}
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);

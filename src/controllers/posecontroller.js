@@ -373,7 +373,7 @@ PoseController.prototype.update = (function() {
 				this.position.add(this.offset);
 			} else {
 				cameraPosition.copy(camera.position);
-				cameraPosition.add(this.position)
+				cameraPosition.add(this.position);
 				this.position.copy(cameraPosition);
 			}
 

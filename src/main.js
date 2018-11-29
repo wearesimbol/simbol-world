@@ -19,7 +19,8 @@ import {Scene} from './scene/scene';
 new WebVRPolyfill();
 
 const defaultConfig = {
-	locomotion: true
+	locomotion: true,
+	interactions: true
 };
 
 /**
@@ -67,8 +68,10 @@ class Simbol extends EventEmitter {
 
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
-		this.interactions = new Interactions();
-		this.interactions.setUpEventListeners(this.controllers);
+		if (config.interactions) {
+			this.interactions = new Interactions();
+			this.interactions.setUpEventListeners(this.controllers);
+		}
 
 		if (config.locomotion) {
 			this.locomotion = new Locomotion();
@@ -101,7 +104,9 @@ class Simbol extends EventEmitter {
 				this.controllers.init(this.vpMesh);
 
 				// Adds the UI from other components into the scene
-				this.addToScene([...this.interactions.getMeshes()]);
+				if (this.interactions) {
+					this.addToScene([...this.interactions.getMeshes()]);
+				}
 				if (this.locomotion) {
 					this.addToScene([...this.locomotion.getMeshes()]);
 				}
@@ -134,10 +139,15 @@ class Simbol extends EventEmitter {
 	 */
 	addListeners(...components) {
 		for (const component of components) {
+			if (!component) {
+				return;
+			}
+
 			component.on('add', (event) => {
 				if (event.type === 'VirtualPersona') {
 					this.vpMesh = event.mesh;
 					this.controllers.updateControllers(this.vpMesh);
+					this._scene.camera.rotation.order = 'YXZ';
 					this.virtualPersona.eyeBone.add(this._scene.camera);
 					// Fix so it doesn't look backwards
 					this._scene.camera.rotation.y = Math.PI;
@@ -152,6 +162,14 @@ class Simbol extends EventEmitter {
 
 			component.on('remove', (event) => {
 				this.removeFromScene(event.mesh);
+			});
+
+			component.on('addanimatefunctions', (event) => {
+				this.addAnimateFunctions(event.functions);
+			});
+
+			component.on('addinteraction', (event) => {
+				this.addInteraction(event);
 			});
 
 			component.on('error', (event) => {
@@ -225,6 +243,18 @@ class Simbol extends EventEmitter {
 	 */
 	removeFromScene(mesh) {
 		this._scene.scene && this._scene.scene.remove(mesh);
+	}
+
+	addInteraction(config) {
+		switch(config.interaction) {
+		case 'selection':
+			this.interactions.selection.add(config.mesh);
+			if (config.callbacks) {
+				for (const callback of config.callbacks) {
+					config.mesh.on(callback.event, callback.callback);
+				}
+			}
+		}
 	}
 
 	/**
@@ -316,6 +346,8 @@ Simbol.prototype.animate = (function() {
 
 		if (!initialised) {
 			previousControllerQuaternion.copy(controller.quaternion);
+			// Hack to fix initial rotation due to Euler(0,0,0) being converted world-to-local is not 0
+			this.locomotion.orientation.euler.set(0.0001, 0.0001, 0, 'YXZ');
 			initialised = true;
 		}
 
@@ -376,7 +408,7 @@ Simbol.prototype.animate = (function() {
 
 		/*
 		 * Sets a camera to position controllers properly
-		 * It needs to not include the added position by the 
+		 * It needs to not include the added position by the
 		 * fakeCamera and position the y axis with the camera
 		 */
 		this.vpMesh.updateMatrixWorld(true);
@@ -403,15 +435,17 @@ Simbol.prototype.animate = (function() {
 			poseMatrix.multiplyMatrices(cameraWorldToLocal, poseMatrix);
 			poseMatrix.decompose({}, cameraQuaternion, {});
 			locomotionRotation.setFromQuaternion(cameraQuaternion);
-			camera.rotation.x = -locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
+			camera.rotation.x = locomotionRotation.x; // Negative sign fixes vertical rotation, so up is up and down is down on pc
 			camera.rotation.z = locomotionRotation.z;
 		}
 		camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, {});
 
 		// Interactions
-		const position = controller === camera ? cameraPosition : controller.position;
-		const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
-		this.interactions.update(position, quaternion);
+		if (this.interactions) {
+			const position = controller === camera ? cameraPosition : controller.position;
+			const quaternion = controller === camera ? cameraQuaternion : controller.quaternion;
+			this.interactions.update(position, quaternion);
+		}
 
 		// Controllers
 		const controllerIds = Object.keys(this.controllers.currentControllers);
