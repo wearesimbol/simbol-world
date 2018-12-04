@@ -51,8 +51,8 @@ class Simbol extends EventEmitter {
 	 * @param {string} config.hand - The user's preferred hand
 	 * @param {object} config.scene - Configuration object for a Simbol scene
 	 * @param {object} config.virtualPersona - Configuration object for a VirtualPersona
-	 * @param {object} config.virtualPersona.multiUser - Configuration object for a WebRTC based social experience. Can be set to false if you configure your own multiuser experience
-	 * @param {boolean} config.locomtion - Whether Simbol should provide locomotion utilities
+	 * @param {object} config.multiUser - Configuration object for a WebRTC based social experience. Can be set to false if you configure your own multiuser experience
+	 * @param {boolean} config.locomotion - Whether Simbol should provide locomotion utilities
 	 */
 	constructor(config = {locomotion: true}) {
 		super();
@@ -318,7 +318,6 @@ class Simbol extends EventEmitter {
 Simbol.prototype.animate = (function() {
 	let initialised = false;
 	const unalteredCamera = new THREE.Object3D();
-	const previousPosition = new THREE.Vector3();
 	const previousControllerQuaternion = new THREE.Quaternion();
 	previousControllerQuaternion.initialised = false;
 	const translationDirection = new THREE.Vector3();
@@ -354,7 +353,7 @@ Simbol.prototype.animate = (function() {
 		// Handle position
 		if (this.locomotion) {
 			// Resets position, specially due to running #add methods on it
-			this.vpMesh.position.copy(previousPosition);
+			this.vpMesh.position.copy(this.virtualPersona.position);
 
 			// Translation
 			if (this.locomotion.translatingZ || this.locomotion.translatingX) {
@@ -395,13 +394,13 @@ Simbol.prototype.animate = (function() {
 		}
 
 		// VP height
-		if (!this.vpMesh.position.equals(previousPosition)) {
+		if (!this.vpMesh.position.equals(this.virtualPersona.position)) {
 			this.virtualPersona.setFloorHeight(this._scene);
 		}
 
 		this.vpMesh.position.setY(this.virtualPersona.floorHeight);
 
-		previousPosition.copy(this.vpMesh.position);
+		this.virtualPersona.position.copy(this.vpMesh.position);
 		if (controller.quaternion) {
 			previousControllerQuaternion.copy(controller.quaternion);
 		}
@@ -420,7 +419,7 @@ Simbol.prototype.animate = (function() {
 		if (Utils.isPresenting) {
 			this.virtualPersona.vrControls.update();
 
-			this.vpMesh.position.add(this.virtualPersona.fakeCamera.position);
+			this.vpMesh.position.addVectors(this.virtualPersona.position, this.virtualPersona.fakeCamera.position);
 			locomotionRotation.copy(this.virtualPersona.fakeCamera.rotation);
 		} else if (this.locomotion) {
 			locomotionRotation.copy(this.locomotion.orientation.euler);

@@ -57,15 +57,15 @@ function getDeepValue(object, value) {
  */
 function setDeepValue(object, key, value) {
 	const pathArray = key.split('.');
-	if (object[pathArray[0]]) {
-		if (pathArray.length === 1) {
-			object[pathArray[0]] = value;
-			return object[pathArray[0]];
-		} else {
-			return setDeepValue(object[pathArray[0]], pathArray.slice(1).join('.'), value);
-		}
+	if (pathArray.length === 1) {
+		object[pathArray[0]] = value;
+		return object[pathArray[0]];
 	} else {
-		return undefined;
+		if (object[pathArray[0]]) {
+			return setDeepValue(object[pathArray[0]], pathArray.slice(1).join('.'), value);
+		} else {
+			return undefined;
+		}
 	}
 }
 
@@ -889,11 +889,11 @@ class MultiUser extends EventEmitter {
 			payload.animatedValues[key] = getDeepValue(object.object3D, key);
 		}
 
-		const positionBuffer = new ArrayBuffer(16);
-		positionBuffer[0] = object3D.position.x;
-		positionBuffer[1] = object3D.position.y;
-		positionBuffer[2] = object3D.position.z;
-		positionBuffer[3] = object3D.rotation.y;
+		// const positionBuffer = new ArrayBuffer(16);
+		// positionBuffer[0] = object3D.position.x;
+		// positionBuffer[1] = object3D.position.y;
+		// positionBuffer[2] = object3D.position.z;
+		// positionBuffer[3] = object3D.rotation.y;
 
 		this.broadcast(JSON.stringify(payload));
 	}

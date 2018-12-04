@@ -83,6 +83,7 @@ class VirtualPersona extends EventEmitter {
 		});
 		this.vrControls.userHeight = 0;
 		this.fakeCamera = fakeCamera;
+		this.position = new THREE.Vector3();
 
 		this._floorRayCaster = new THREE.Raycaster();
 		// TODO: Avoid the user from floating. Probably not necessary?
