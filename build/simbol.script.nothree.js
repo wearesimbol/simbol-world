@@ -17222,7 +17222,6 @@ var Simbol = (function (exports) {
 		 * @private
 		 */
 		_peerData(data) {
-			// console.log(data)
 			const string = this.multiUser._decodeBuffer(data);
 			data = JSON.parse(string);
 
@@ -17320,7 +17319,6 @@ var Simbol = (function (exports) {
 					object.scale = [...data.scale];
 				}
 
-				// if (object.id === 'vr-ide-scene') console.log(object, data.animatedValues)
 				for (const key of Object.keys(data.animatedValues || {})) {
 					object.animatedValues[key] = data.animatedValues[key];
 				}

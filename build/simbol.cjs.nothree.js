@@ -17223,7 +17223,6 @@ class MultiUser extends eventemitter3 {
 	 * @private
 	 */
 	_peerData(data) {
-		// console.log(data)
 		const string = this.multiUser._decodeBuffer(data);
 		data = JSON.parse(string);
 
@@ -17321,7 +17320,6 @@ class MultiUser extends eventemitter3 {
 				object.scale = [...data.scale];
 			}
 
-			// if (object.id === 'vr-ide-scene') console.log(object, data.animatedValues)
 			for (const key of Object.keys(data.animatedValues || {})) {
 				object.animatedValues[key] = data.animatedValues[key];
 			}
