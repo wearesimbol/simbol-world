@@ -13,6 +13,10 @@ class Interactions extends EventEmitter {
 	constructor(config = {}) {
 		super();
 
+		if (typeof config !== 'object') {
+			config = {};
+		}
+
 		this.selection = new Selection(config.selection);
 	}
 

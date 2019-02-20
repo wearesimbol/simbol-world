@@ -77,7 +77,6 @@ class Selection extends EventEmitter {
 		super();
 
 		this.rayCaster = new THREE.Raycaster();
-		console.log(config.distance)
 		this.rayCaster.far = config.distance;
 
 		this.reticle = this._createReticle();
