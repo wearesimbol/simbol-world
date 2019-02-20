@@ -8664,7 +8664,6 @@ var Simbol = (function (exports) {
 			super();
 
 			this.rayCaster = new THREE.Raycaster();
-			console.log(config.distance);
 			this.rayCaster.far = config.distance;
 
 			this.reticle = this._createReticle();
@@ -8968,6 +8967,10 @@ var Simbol = (function (exports) {
 		 */
 		constructor(config = {}) {
 			super();
+
+			if (typeof config !== 'object') {
+				config = {};
+			}
 
 			this.selection = new Selection(config.selection);
 		}

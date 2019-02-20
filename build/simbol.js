@@ -55950,7 +55950,6 @@ class Selection extends eventemitter3 {
 		super();
 
 		this.rayCaster = new Raycaster();
-		console.log(config.distance);
 		this.rayCaster.far = config.distance;
 
 		this.reticle = this._createReticle();
@@ -56254,6 +56253,10 @@ class Interactions extends eventemitter3 {
 	 */
 	constructor(config = {}) {
 		super();
+
+		if (typeof config !== 'object') {
+			config = {};
+		}
 
 		this.selection = new Selection(config.selection);
 	}
