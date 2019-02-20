@@ -8653,12 +8653,16 @@ class Selection extends eventemitter3 {
 
 	/**
 	 * Initializes a Selection instance
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {number} configdistance - How far the reticle should go (Default: 10)
 	 */
-	constructor() {
+	constructor(config = {distance: 10}) {
 		super();
 
 		this.rayCaster = new THREE.Raycaster();
-		this.rayCaster.far = 10;
+		console.log(config.distance);
+		this.rayCaster.far = config.distance;
 
 		this.reticle = this._createReticle();
 	}
@@ -8955,11 +8959,14 @@ class Interactions extends eventemitter3 {
 
 	/**
 	 * Constructs an Interactions instance by initialising all interactions
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {object} config.selection - Selection configuration object
 	 */
-	constructor() {
+	constructor(config = {}) {
 		super();
 
-		this.selection = new Selection();
+		this.selection = new Selection(config.selection);
 	}
 
 	/**
@@ -84593,7 +84600,7 @@ class Simbol extends eventemitter3 {
 	 * @param {object} config.multiUser - Configuration object for a WebRTC based social experience. Can be set to false if you configure your own multiuser experience
 	 * @param {boolean} config.locomotion - Whether Simbol should provide locomotion utilities
 	 */
-	constructor(config = {locomotion: true}) {
+	constructor(config = {}) {
 		super();
 
 		config = Object.assign({}, defaultConfig$3, config);
@@ -84608,7 +84615,7 @@ class Simbol extends eventemitter3 {
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
 		if (config.interactions) {
-			this.interactions = new Interactions();
+			this.interactions = new Interactions(config.interactions);
 			this.interactions.setUpEventListeners(this.controllers);
 		}
 

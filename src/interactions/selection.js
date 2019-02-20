@@ -69,12 +69,16 @@ class Selection extends EventEmitter {
 
 	/**
 	 * Initializes a Selection instance
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {number} configdistance - How far the reticle should go (Default: 10)
 	 */
-	constructor() {
+	constructor(config = {distance: 10}) {
 		super();
 
 		this.rayCaster = new THREE.Raycaster();
-		this.rayCaster.far = 10;
+		console.log(config.distance)
+		this.rayCaster.far = config.distance;
 
 		this.reticle = this._createReticle();
 	}

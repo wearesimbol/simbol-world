@@ -6,11 +6,14 @@ class Interactions extends EventEmitter {
 
 	/**
 	 * Constructs an Interactions instance by initialising all interactions
+	 *
+	 * @param {object} config - Configuration object
+	 * @param {object} config.selection - Selection configuration object
 	 */
-	constructor() {
+	constructor(config = {}) {
 		super();
 
-		this.selection = new Selection();
+		this.selection = new Selection(config.selection);
 	}
 
 	/**

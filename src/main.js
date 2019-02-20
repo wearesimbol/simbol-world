@@ -54,7 +54,7 @@ class Simbol extends EventEmitter {
 	 * @param {object} config.multiUser - Configuration object for a WebRTC based social experience. Can be set to false if you configure your own multiuser experience
 	 * @param {boolean} config.locomotion - Whether Simbol should provide locomotion utilities
 	 */
-	constructor(config = {locomotion: true}) {
+	constructor(config = {}) {
 		super();
 
 		config = Object.assign({}, defaultConfig, config);
@@ -69,7 +69,7 @@ class Simbol extends EventEmitter {
 		this.controllers = new Controllers(this._scene.canvas, this.hand);
 
 		if (config.interactions) {
-			this.interactions = new Interactions();
+			this.interactions = new Interactions(config.interactions);
 			this.interactions.setUpEventListeners(this.controllers);
 		}
 
